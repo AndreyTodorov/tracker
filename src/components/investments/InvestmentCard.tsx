@@ -2,7 +2,7 @@ import { Trash2, TrendingUp, TrendingDown, User } from 'lucide-react';
 import type { Investment } from '../../types';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { formatCurrency, formatPercentage, formatDate, getColorClass, getBgColorClass } from '../../utils/formatters';
+import { formatCurrency, formatCryptoPrice, formatPercentage, formatDate, getColorClass, getBgColorClass } from '../../utils/formatters';
 import { calculateProfit } from '../../utils/calculations';
 import { useAuth } from '../../context/AuthContext';
 import { deleteInvestment } from '../../services/investment.service';
@@ -44,6 +44,9 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
         <div>
           <h3 className="text-xl font-bold">{investment.assetName}</h3>
           <p className="text-sm text-gray-400 uppercase">{investment.assetSymbol}</p>
+          {investment.name && (
+            <p className="text-xs text-blue-400 mt-1">📝 {investment.name}</p>
+          )}
         </div>
         {isOwner && (
           <Button
@@ -61,11 +64,11 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
           <div className="text-xs text-gray-400 mb-1">Buy Price</div>
-          <div className="font-medium">{formatCurrency(investment.buyPrice)}</div>
+          <div className="font-medium">{formatCryptoPrice(investment.buyPrice)}</div>
         </div>
         <div>
           <div className="text-xs text-gray-400 mb-1">Current Price</div>
-          <div className="font-medium">{formatCurrency(price)}</div>
+          <div className="font-medium">{formatCryptoPrice(price)}</div>
         </div>
         <div>
           <div className="text-xs text-gray-400 mb-1">Quantity</div>

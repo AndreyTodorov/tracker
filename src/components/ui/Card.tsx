@@ -1,26 +1,41 @@
-import type { HTMLAttributes, ReactNode } from 'react';
+import { forwardRef } from 'react';
+import type { HTMLAttributes } from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '../../lib/utils';
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode;
-  variant?: 'default' | 'strong';
-  hover?: boolean;
-}
+const cardVariants = cva(
+  'rounded-xl transition-all duration-300',
+  {
+    variants: {
+      variant: {
+        default: 'glass',
+        strong: 'glass-strong',
+      },
+      hover: {
+        true: 'hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/20',
+        false: '',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      hover: false,
+    },
+  }
+);
 
-export const Card = ({ children, variant = 'default', hover = false, className = '', ...props }: CardProps) => {
-  const baseStyles = 'rounded-xl transition-all duration-300';
-  const variants = {
-    default: 'glass',
-    strong: 'glass-strong',
-  };
+export interface CardProps
+  extends HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof cardVariants> {}
 
-  const hoverStyles = hover ? 'hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/20' : '';
-
-  return (
-    <div
-      className={`${baseStyles} ${variants[variant]} ${hoverStyles} ${className}`}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-};
+export const Card = forwardRef<HTMLDivElement, CardProps>(
+  ({ className, variant, hover, ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={cn(cardVariants({ variant, hover, className }))}
+        {...props}
+      />
+    );
+  }
+);
+Card.displayName = 'Card';

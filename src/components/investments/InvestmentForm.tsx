@@ -10,6 +10,7 @@ import { addInvestment } from '../../services/investment.service';
 import { useAuth } from '../../context/AuthContext';
 
 interface InvestmentFormData {
+  name?: string;
   buyPrice: number;
   investmentAmount: number;
 }
@@ -26,7 +27,7 @@ export const InvestmentForm = () => {
   const [success, setSuccess] = useState(false);
   const [assetError, setAssetError] = useState('');
 
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<InvestmentFormData>();
+  const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<InvestmentFormData>();
 
   const buyPrice = watch('buyPrice');
   const investmentAmount = watch('investmentAmount');
@@ -102,7 +103,8 @@ export const InvestmentForm = () => {
         selectedAsset.name,
         selectedAsset.id,
         data.buyPrice,
-        data.investmentAmount
+        data.investmentAmount,
+        data.name
       );
 
       // Reset form
@@ -149,12 +151,30 @@ export const InvestmentForm = () => {
         {/* Current Price Display */}
         {currentPrice && selectedAsset && (
           <div className="p-3 rounded-lg glass">
-            <div className="text-sm text-gray-400">Current Price</div>
+            <div className="flex items-center justify-between mb-1">
+              <div className="text-sm text-gray-400">Current Price</div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setValue('buyPrice', currentPrice)}
+              >
+                Use as Buy Price
+              </Button>
+            </div>
             <div className="text-xl font-bold text-green-400">
-              ${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+              ${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
             </div>
           </div>
         )}
+
+        {/* Investment Name (Optional) */}
+        <Input
+          label="Investment Name (Optional)"
+          type="text"
+          placeholder="e.g., Main Portfolio, Testing, Long-term..."
+          {...register('name')}
+        />
 
         {/* Buy Price */}
         <Input

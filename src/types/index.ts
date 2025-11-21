@@ -18,6 +18,7 @@ export interface Investment {
   quantity: number;
   purchaseDate: number;
   createdAt: number;
+  name?: string; // Optional name for the investment (e.g., "testing", "main", etc.)
 }
 
 export interface CryptoPrice {

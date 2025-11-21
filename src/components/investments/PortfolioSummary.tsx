@@ -8,6 +8,10 @@ interface PortfolioSummaryProps {
 }
 
 export const PortfolioSummary = ({ portfolio }: PortfolioSummaryProps) => {
+  // Count unique assets by symbol
+  const uniqueAssets = new Set(portfolio.investments.map(inv => inv.assetSymbol)).size;
+  const totalInvestments = portfolio.investments.length;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       {/* Total Value */}
@@ -48,9 +52,9 @@ export const PortfolioSummary = ({ portfolio }: PortfolioSummaryProps) => {
           </div>
           <div className="text-sm text-gray-400">Assets</div>
         </div>
-        <div className="text-2xl font-bold">{portfolio.investments.length}</div>
+        <div className="text-2xl font-bold">{uniqueAssets}</div>
         <div className="text-xs text-gray-500 mt-1">
-          Cryptocurrencies tracked
+          {totalInvestments} {totalInvestments === 1 ? 'investment' : 'investments'}
         </div>
       </Card>
     </div>

@@ -19,7 +19,8 @@ export const addInvestment = async (
   assetName: string,
   assetSymbol: string,
   buyPrice: number,
-  investmentAmount: number
+  investmentAmount: number,
+  name?: string
 ): Promise<string> => {
   const quantity = investmentAmount / buyPrice;
 
@@ -33,6 +34,7 @@ export const addInvestment = async (
     quantity,
     purchaseDate: Date.now(),
     createdAt: Date.now(),
+    ...(name && { name }), // Only include name if provided
   };
 
   const newInvestmentRef = push(ref(db, 'investments'));

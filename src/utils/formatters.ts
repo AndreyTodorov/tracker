@@ -9,6 +9,15 @@ export const formatCurrency = (amount: number, currency = 'USD'): string => {
   }).format(amount);
 };
 
+export const formatCryptoPrice = (price: number): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  }).format(price);
+};
+
 export const formatPercentage = (percentage: number): string => {
   const sign = percentage >= 0 ? '+' : '';
   return `${sign}${percentage.toFixed(2)}%`;
