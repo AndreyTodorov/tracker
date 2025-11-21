@@ -1,36 +1,39 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { PlusCircle, Search } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card } from '../ui/Card';
+import { Combobox, type ComboboxOption } from '../ui/Combobox';
 import { searchCrypto, getCryptoDetails } from '../../services/coingecko.service';
 import { addInvestment } from '../../services/investment.service';
 import { useAuth } from '../../context/AuthContext';
 
 interface InvestmentFormData {
-  assetSearch: string;
   buyPrice: number;
   investmentAmount: number;
 }
 
 export const InvestmentForm = () => {
   const { currentUser, userData } = useAuth();
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<ComboboxOption[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<any | null>(null);
+  const [selectedValue, setSelectedValue] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [success, setSuccess] = useState(false);
+  const [assetError, setAssetError] = useState('');
 
-  const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<InvestmentFormData>();
+  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<InvestmentFormData>();
 
-  const searchQuery = watch('assetSearch');
   const buyPrice = watch('buyPrice');
   const investmentAmount = watch('investmentAmount');
 
   const quantity = buyPrice && investmentAmount ? investmentAmount / buyPrice : 0;
 
+  // Search for cryptocurrencies
   useEffect(() => {
     if (!searchQuery || searchQuery.length < 2) {
       setSearchResults([]);
@@ -39,28 +42,55 @@ export const InvestmentForm = () => {
 
     const delaySearch = setTimeout(async () => {
       setIsSearching(true);
-      const results = await searchCrypto(searchQuery);
-      setSearchResults(results);
-      setIsSearching(false);
+      try {
+        const results = await searchCrypto(searchQuery);
+        const options: ComboboxOption[] = results.map((result: any) => ({
+          value: result.id,
+          label: `${result.name} (${result.symbol?.toUpperCase()})`,
+          icon: result.thumb,
+        }));
+        setSearchResults(options);
+      } catch (error) {
+        console.error('Error searching crypto:', error);
+      } finally {
+        setIsSearching(false);
+      }
     }, 300);
 
     return () => clearTimeout(delaySearch);
   }, [searchQuery]);
 
-  const handleSelectAsset = async (asset: any) => {
-    setSelectedAsset(asset);
-    setValue('assetSearch', asset.name);
-    setSearchResults([]);
+  const handleSelectAsset = async (value: string) => {
+    setSelectedValue(value);
+    setAssetError('');
 
-    // Fetch current price
-    const details = await getCryptoDetails(asset.id);
-    if (details) {
-      setCurrentPrice(details.current_price);
+    if (!value) {
+      setSelectedAsset(null);
+      setCurrentPrice(null);
+      return;
+    }
+
+    // Fetch full asset details and current price
+    try {
+      const details = await getCryptoDetails(value);
+      if (details) {
+        setSelectedAsset({
+          id: details.id,
+          name: details.name,
+          symbol: details.symbol,
+        });
+        setCurrentPrice(details.current_price);
+      }
+    } catch (error) {
+      console.error('Error fetching asset details:', error);
     }
   };
 
   const onSubmit = async (data: InvestmentFormData) => {
-    if (!currentUser || !userData || !selectedAsset) return;
+    if (!currentUser || !userData || !selectedAsset) {
+      setAssetError('Please select a cryptocurrency');
+      return;
+    }
 
     setIsSubmitting(true);
     setSuccess(false);
@@ -78,7 +108,10 @@ export const InvestmentForm = () => {
       // Reset form
       reset();
       setSelectedAsset(null);
+      setSelectedValue('');
       setCurrentPrice(null);
+      setSearchQuery('');
+      setSearchResults([]);
       setSuccess(true);
 
       setTimeout(() => setSuccess(false), 3000);
@@ -99,49 +132,22 @@ export const InvestmentForm = () => {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Asset Search */}
-        <div className="relative">
-          <div className="relative">
-            <Input
-              label="Search Cryptocurrency"
-              placeholder="e.g., Bitcoin, Dogecoin, Ethereum"
-              {...register('assetSearch', { required: 'Please select a cryptocurrency' })}
-              error={errors.assetSearch?.message}
-            />
-            <Search size={20} className="absolute right-3 top-9 text-gray-400" />
-          </div>
-
-          {/* Search Results Dropdown */}
-          {searchResults.length > 0 && (
-            <Card className="absolute z-10 w-full mt-2 p-2 max-h-60 overflow-y-auto">
-              {searchResults.map((result) => (
-                <button
-                  key={result.id}
-                  type="button"
-                  onClick={() => handleSelectAsset(result)}
-                  className="w-full text-left p-3 rounded-lg hover:bg-white/10 transition-colors flex items-center gap-3"
-                >
-                  {result.thumb && (
-                    <img src={result.thumb} alt={result.name} className="w-6 h-6 rounded-full" />
-                  )}
-                  <div>
-                    <div className="font-medium">{result.name}</div>
-                    <div className="text-sm text-gray-400 uppercase">{result.symbol}</div>
-                  </div>
-                </button>
-              ))}
-            </Card>
-          )}
-
-          {isSearching && (
-            <div className="absolute right-3 top-9">
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            </div>
-          )}
-        </div>
+        {/* Cryptocurrency Search with Combobox */}
+        <Combobox
+          options={searchResults}
+          value={selectedValue}
+          onSelect={handleSelectAsset}
+          onSearchChange={setSearchQuery}
+          placeholder="Select cryptocurrency..."
+          searchPlaceholder="Type to search Bitcoin, Ethereum, Dogecoin..."
+          emptyText={searchQuery.length < 2 ? 'Type at least 2 characters...' : 'No cryptocurrencies found.'}
+          label="Select Cryptocurrency"
+          error={assetError}
+          isLoading={isSearching}
+        />
 
         {/* Current Price Display */}
-        {currentPrice && (
+        {currentPrice && selectedAsset && (
           <div className="p-3 rounded-lg glass">
             <div className="text-sm text-gray-400">Current Price</div>
             <div className="text-xl font-bold text-green-400">
@@ -177,11 +183,11 @@ export const InvestmentForm = () => {
         />
 
         {/* Calculated Quantity */}
-        {quantity > 0 && (
+        {quantity > 0 && selectedAsset && (
           <div className="p-3 rounded-lg glass">
             <div className="text-sm text-gray-400">Quantity</div>
             <div className="text-xl font-bold">
-              {quantity.toLocaleString('en-US', { maximumFractionDigits: 8 })} {selectedAsset?.symbol.toUpperCase()}
+              {quantity.toLocaleString('en-US', { maximumFractionDigits: 8 })} {selectedAsset.symbol?.toUpperCase()}
             </div>
           </div>
         )}

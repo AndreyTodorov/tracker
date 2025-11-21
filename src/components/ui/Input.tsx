@@ -1,38 +1,39 @@
 import { forwardRef } from 'react';
 import type { InputHTMLAttributes } from 'react';
+import { cn } from '../../lib/utils';
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   helperText?: string;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, className = '', ...props }, ref) => {
+  ({ label, error, helperText, className, ...props }, ref) => {
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-gray-200 mb-1">
+          <label className="block text-sm font-medium text-gray-200 mb-1.5">
             {label}
           </label>
         )}
         <input
+          className={cn(
+            'flex h-10 w-full rounded-lg glass bg-white/5 px-4 py-2 text-white placeholder:text-gray-400',
+            'transition-all duration-200',
+            'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/10',
+            'disabled:cursor-not-allowed disabled:opacity-50',
+            error && 'ring-2 ring-red-500 focus:ring-red-500',
+            className
+          )}
           ref={ref}
-          className={`
-            w-full px-4 py-2 glass rounded-lg
-            bg-white/5 text-white placeholder-gray-400
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/10
-            transition-all duration-200
-            ${error ? 'ring-2 ring-red-500' : ''}
-            ${className}
-          `}
           {...props}
         />
         {error && (
-          <p className="mt-1 text-sm text-red-400">{error}</p>
+          <p className="mt-1.5 text-sm text-red-400">{error}</p>
         )}
         {helperText && !error && (
-          <p className="mt-1 text-sm text-gray-400">{helperText}</p>
+          <p className="mt-1.5 text-sm text-gray-400">{helperText}</p>
         )}
       </div>
     );
