@@ -30,20 +30,28 @@ This guide will walk you through setting up Firebase for the Investment Portfoli
 
 ## Step 4: Configure Firestore Security Rules
 
-1. In Firestore Database, click on the "Rules" tab
-2. Replace the rules with the following:
+### Method 1: Copy from the firestore.rules file (Recommended)
+
+1. Open the `firestore.rules` file in your project root
+2. Copy ALL the contents
+3. In Firebase Console, go to Firestore Database → "Rules" tab
+4. **Delete everything** in the rules editor
+5. Paste the contents from `firestore.rules`
+6. Click "Publish"
+
+### Method 2: Copy from here (if you get parse errors, try Method 1)
+
+In Firestore Database, click on the "Rules" tab and paste this:
 
 ```
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read and write their own user document
     match /users/{userId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Users can read all investments but only write their own
     match /investments/{investmentId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
@@ -53,7 +61,14 @@ service cloud.firestore {
 }
 ```
 
-3. Click "Publish"
+### Troubleshooting Rules Errors
+
+If you get "Line 1: Parse error":
+- Make sure you **delete all existing rules** first
+- Copy the entire content including `rules_version = '2';`
+- Don't copy line numbers if they appear
+- Make sure there are no extra spaces at the beginning
+- Try copying from the `firestore.rules` file instead of this markdown
 
 ## Step 5: Register Your Web App
 
