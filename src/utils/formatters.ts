@@ -1,5 +1,4 @@
 import { format } from 'date-fns';
-import { Timestamp } from 'firebase/firestore';
 
 export const formatCurrency = (amount: number, currency = 'USD'): string => {
   return new Intl.NumberFormat('en-US', {
@@ -15,12 +14,14 @@ export const formatPercentage = (percentage: number): string => {
   return `${sign}${percentage.toFixed(2)}%`;
 };
 
-export const formatDate = (timestamp: Timestamp): string => {
-  return format(timestamp.toDate(), 'MMM dd, yyyy');
+export const formatDate = (timestamp: number | Date): string => {
+  const date = typeof timestamp === 'number' ? new Date(timestamp) : timestamp;
+  return format(date, 'MMM dd, yyyy');
 };
 
-export const formatDateTime = (timestamp: Timestamp): string => {
-  return format(timestamp.toDate(), 'MMM dd, yyyy HH:mm');
+export const formatDateTime = (timestamp: number | Date): string => {
+  const date = typeof timestamp === 'number' ? new Date(timestamp) : timestamp;
+  return format(date, 'MMM dd, yyyy HH:mm');
 };
 
 export const getColorClass = (value: number): string => {

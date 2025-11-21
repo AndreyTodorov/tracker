@@ -1,16 +1,15 @@
 import {
-  collection,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
+  ref,
+  push,
+  set,
+  remove,
+  onValue,
+  get,
   query,
-  where,
-  onSnapshot,
-  Timestamp,
-  getDocs,
-  arrayUnion,
-} from 'firebase/firestore';
+  orderByChild,
+  equalTo,
+  update,
+} from 'firebase/database';
 import { db } from '../config/firebase';
 import type { Investment } from '../types';
 
@@ -32,39 +31,43 @@ export const addInvestment = async (
     buyPrice,
     investmentAmount,
     quantity,
-    purchaseDate: Timestamp.now(),
-    createdAt: Timestamp.now(),
+    purchaseDate: Date.now(),
+    createdAt: Date.now(),
   };
 
-  const docRef = await addDoc(collection(db, 'investments'), investmentData);
-  return docRef.id;
+  const newInvestmentRef = push(ref(db, 'investments'));
+  await set(newInvestmentRef, investmentData);
+  return newInvestmentRef.key!;
 };
 
 export const updateInvestment = async (
   investmentId: string,
   updates: Partial<Investment>
 ): Promise<void> => {
-  const investmentRef = doc(db, 'investments', investmentId);
-  await updateDoc(investmentRef, updates);
+  const investmentRef = ref(db, `investments/${investmentId}`);
+  await update(investmentRef, updates);
 };
 
 export const deleteInvestment = async (investmentId: string): Promise<void> => {
-  const investmentRef = doc(db, 'investments', investmentId);
-  await deleteDoc(investmentRef);
+  const investmentRef = ref(db, `investments/${investmentId}`);
+  await remove(investmentRef);
 };
 
 export const subscribeToUserInvestments = (
   userId: string,
   callback: (investments: Investment[]) => void
 ): (() => void) => {
-  const q = query(collection(db, 'investments'), where('userId', '==', userId));
+  const investmentsRef = ref(db, 'investments');
+  const userQuery = query(investmentsRef, orderByChild('userId'), equalTo(userId));
 
-  return onSnapshot(q, (snapshot) => {
-    const investments: Investment[] = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Investment[];
-
+  return onValue(userQuery, (snapshot) => {
+    const investments: Investment[] = [];
+    snapshot.forEach((childSnapshot) => {
+      investments.push({
+        id: childSnapshot.key!,
+        ...childSnapshot.val(),
+      } as Investment);
+    });
     callback(investments);
   });
 };
@@ -78,13 +81,25 @@ export const subscribeToSharedInvestments = (
     return () => {};
   }
 
-  // First get user IDs from share codes
+  // Get user IDs from share codes
   const getUserIdsFromShareCodes = async () => {
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('shareCode', 'in', shareCodes));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => doc.id);
+    const usersRef = ref(db, 'users');
+    const snapshot = await get(usersRef);
+    const userIds: string[] = [];
+
+    if (snapshot.exists()) {
+      const users = snapshot.val();
+      Object.entries(users).forEach(([userId, userData]: [string, any]) => {
+        if (shareCodes.includes(userData.shareCode)) {
+          userIds.push(userId);
+        }
+      });
+    }
+
+    return userIds;
   };
+
+  let unsubscribe: (() => void) | null = null;
 
   getUserIdsFromShareCodes().then((userIds) => {
     if (userIds.length === 0) {
@@ -92,32 +107,43 @@ export const subscribeToSharedInvestments = (
       return;
     }
 
-    const q = query(collection(db, 'investments'), where('userId', 'in', userIds));
+    const investmentsRef = ref(db, 'investments');
+    unsubscribe = onValue(investmentsRef, (snapshot) => {
+      const investments: Investment[] = [];
+      snapshot.forEach((childSnapshot) => {
+        const investment = {
+          id: childSnapshot.key!,
+          ...childSnapshot.val(),
+        } as Investment;
 
-    return onSnapshot(q, (snapshot) => {
-      const investments: Investment[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Investment[];
-
+        if (userIds.includes(investment.userId)) {
+          investments.push(investment);
+        }
+      });
       callback(investments);
     });
   });
 
-  return () => {};
+  return () => {
+    if (unsubscribe) {
+      unsubscribe();
+    }
+  };
 };
 
 export const subscribeToAllInvestments = (
   callback: (investments: Investment[]) => void
 ): (() => void) => {
-  const q = query(collection(db, 'investments'));
+  const investmentsRef = ref(db, 'investments');
 
-  return onSnapshot(q, (snapshot) => {
-    const investments: Investment[] = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Investment[];
-
+  return onValue(investmentsRef, (snapshot) => {
+    const investments: Investment[] = [];
+    snapshot.forEach((childSnapshot) => {
+      investments.push({
+        id: childSnapshot.key!,
+        ...childSnapshot.val(),
+      } as Investment);
+    });
     callback(investments);
   });
 };
@@ -127,32 +153,57 @@ export const addSharedPortfolio = async (
   shareCode: string
 ): Promise<boolean> => {
   // Verify share code exists
-  const usersRef = collection(db, 'users');
-  const q = query(usersRef, where('shareCode', '==', shareCode));
-  const snapshot = await getDocs(q);
+  const usersRef = ref(db, 'users');
+  const snapshot = await get(usersRef);
 
-  if (snapshot.empty) {
+  if (!snapshot.exists()) {
     return false;
   }
 
-  // Add to user's shared portfolios
-  const userRef = doc(db, 'users', userId);
-  await updateDoc(userRef, {
-    sharedPortfolios: arrayUnion(shareCode),
-  });
+  const users = snapshot.val();
+  const shareCodeExists = Object.values(users).some(
+    (user: any) => user.shareCode === shareCode
+  );
+
+  if (!shareCodeExists) {
+    return false;
+  }
+
+  // Get current user data
+  const userRef = ref(db, `users/${userId}`);
+  const userSnapshot = await get(userRef);
+
+  if (!userSnapshot.exists()) {
+    return false;
+  }
+
+  const userData = userSnapshot.val();
+  const sharedPortfolios = userData.sharedPortfolios || [];
+
+  // Add share code if not already present
+  if (!sharedPortfolios.includes(shareCode)) {
+    await update(userRef, {
+      sharedPortfolios: [...sharedPortfolios, shareCode],
+    });
+  }
 
   return true;
 };
 
 export const getUserByShareCode = async (shareCode: string): Promise<string | null> => {
-  const usersRef = collection(db, 'users');
-  const q = query(usersRef, where('shareCode', '==', shareCode));
-  const snapshot = await getDocs(q);
+  const usersRef = ref(db, 'users');
+  const snapshot = await get(usersRef);
 
-  if (snapshot.empty) {
+  if (!snapshot.exists()) {
     return null;
   }
 
-  const userData = snapshot.docs[0].data();
-  return userData.displayName || userData.email;
+  const users = snapshot.val();
+  for (const user of Object.values(users) as any[]) {
+    if (user.shareCode === shareCode) {
+      return user.displayName || user.email;
+    }
+  }
+
+  return null;
 };

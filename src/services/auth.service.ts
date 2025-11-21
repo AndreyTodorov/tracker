@@ -5,7 +5,7 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import type { User as FirebaseUser } from 'firebase/auth';
-import { doc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
+import { ref, set, get } from 'firebase/database';
 import { auth, db } from '../config/firebase';
 import type { User } from '../types';
 import { generateShareCode } from '../utils/calculations';
@@ -21,18 +21,18 @@ export const signUp = async (
   // Update profile with display name
   await updateProfile(user, { displayName });
 
-  // Create user document in Firestore
+  // Create user document in Realtime Database
   const shareCode = generateShareCode();
   const userDoc: User = {
     id: user.uid,
     email: user.email!,
     displayName,
-    createdAt: Timestamp.now(),
+    createdAt: Date.now(),
     shareCode,
     sharedPortfolios: [],
   };
 
-  await setDoc(doc(db, 'users', user.uid), userDoc);
+  await set(ref(db, `users/${user.uid}`), userDoc);
 
   return user;
 };
@@ -47,10 +47,10 @@ export const signOut = async (): Promise<void> => {
 };
 
 export const getUserData = async (userId: string): Promise<User | null> => {
-  const userDoc = await getDoc(doc(db, 'users', userId));
+  const userSnapshot = await get(ref(db, `users/${userId}`));
 
-  if (userDoc.exists()) {
-    return userDoc.data() as User;
+  if (userSnapshot.exists()) {
+    return userSnapshot.val() as User;
   }
 
   return null;

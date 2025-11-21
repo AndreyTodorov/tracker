@@ -1,10 +1,8 @@
-import { Timestamp } from 'firebase/firestore';
-
 export interface User {
   id: string;
   email: string;
   displayName: string;
-  createdAt: Timestamp;
+  createdAt: number;
   shareCode?: string;
   sharedPortfolios?: string[]; // Array of share codes user has joined
 }
@@ -18,8 +16,8 @@ export interface Investment {
   buyPrice: number;
   investmentAmount: number;
   quantity: number;
-  purchaseDate: Timestamp;
-  createdAt: Timestamp;
+  purchaseDate: number;
+  createdAt: number;
 }
 
 export interface CryptoPrice {
