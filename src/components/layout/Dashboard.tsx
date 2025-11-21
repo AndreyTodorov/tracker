@@ -38,8 +38,8 @@ export const Dashboard = () => {
       <main className="container mx-auto px-4 py-6">
         {/* Split View Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Side - Investment Form (40%) */}
-          <div className="lg:col-span-5 space-y-6">
+          {/* Left Side - Investment Form (33%) */}
+          <div className="lg:col-span-4 space-y-6">
             <InvestmentForm />
 
             {/* Last Update Info */}
@@ -56,8 +56,8 @@ export const Dashboard = () => {
             </div>
           </div>
 
-          {/* Right Side - Investment List (60%) */}
-          <div className="lg:col-span-7">
+          {/* Right Side - Investment List (67%) */}
+          <div className="lg:col-span-8">
             {/* Tabs */}
             <div className="flex gap-2 mb-6 overflow-x-auto">
               {tabs.map((tab) => (

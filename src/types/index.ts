@@ -19,6 +19,7 @@ export interface Investment {
   purchaseDate: number;
   createdAt: number;
   name?: string; // Optional name for the investment (e.g., "testing", "main", etc.)
+  currency: string; // Currency code (e.g., "USD", "EUR", "GBP")
 }
 
 export interface CryptoPrice {

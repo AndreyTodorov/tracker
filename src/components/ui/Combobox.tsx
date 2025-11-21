@@ -81,22 +81,23 @@ export function Combobox({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-          <Command shouldFilter={false}>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 bg-slate-900 border-2 border-white/20" align="start">
+          <Command shouldFilter={false} className="bg-slate-900">
             <CommandInput
               placeholder={searchPlaceholder}
               value={search}
               onValueChange={handleSearch}
+              className="text-white"
             />
-            <CommandList>
+            <CommandList className="bg-slate-900">
               {isLoading ? (
                 <div className="py-6 flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 </div>
               ) : options.length === 0 ? (
-                <CommandEmpty>{emptyText}</CommandEmpty>
+                <CommandEmpty className="text-gray-300">{emptyText}</CommandEmpty>
               ) : (
-                <CommandGroup>
+                <CommandGroup className="bg-slate-900">
                   {options.map((option) => (
                     <CommandItem
                       key={option.value}
@@ -106,17 +107,18 @@ export function Combobox({
                         setOpen(false);
                         setSearch('');
                       }}
+                      className="text-white data-[selected=true]:bg-blue-600 data-[selected=true]:text-white hover:bg-blue-700 cursor-pointer"
                     >
                       <Check
                         className={cn(
-                          'mr-2 h-4 w-4 flex-shrink-0',
+                          'mr-2 h-4 w-4 flex-shrink-0 text-white',
                           value === option.value ? 'opacity-100' : 'opacity-0'
                         )}
                       />
                       {option.icon && (
                         <img src={option.icon} alt="" className="mr-2 w-5 h-5 rounded-full flex-shrink-0" />
                       )}
-                      <span className="truncate">{option.label}</span>
+                      <span className="truncate text-white">{option.label}</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>

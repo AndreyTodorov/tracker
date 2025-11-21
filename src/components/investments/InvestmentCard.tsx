@@ -64,11 +64,11 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
           <div className="text-xs text-gray-400 mb-1">Buy Price</div>
-          <div className="font-medium">{formatCryptoPrice(investment.buyPrice)}</div>
+          <div className="font-medium">{formatCryptoPrice(investment.buyPrice, investment.currency)}</div>
         </div>
         <div>
           <div className="text-xs text-gray-400 mb-1">Current Price</div>
-          <div className="font-medium">{formatCryptoPrice(price)}</div>
+          <div className="font-medium">{formatCryptoPrice(price, investment.currency)}</div>
         </div>
         <div>
           <div className="text-xs text-gray-400 mb-1">Quantity</div>
@@ -78,7 +78,7 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
         </div>
         <div>
           <div className="text-xs text-gray-400 mb-1">Invested</div>
-          <div className="font-medium">{formatCurrency(investment.investmentAmount)}</div>
+          <div className="font-medium">{formatCurrency(investment.investmentAmount, investment.currency)}</div>
         </div>
       </div>
 
@@ -94,7 +94,7 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
             <div>
               <div className="text-xs text-gray-400">Profit/Loss</div>
               <div className={`text-2xl font-bold ${getColorClass(profit.absolute)}`}>
-                {formatCurrency(profit.absolute)}
+                {formatCurrency(profit.absolute, investment.currency)}
               </div>
             </div>
           </div>

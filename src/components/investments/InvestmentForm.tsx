@@ -13,6 +13,7 @@ interface InvestmentFormData {
   name?: string;
   buyPrice: number;
   investmentAmount: number;
+  currency: string;
 }
 
 export const InvestmentForm = () => {
@@ -27,7 +28,11 @@ export const InvestmentForm = () => {
   const [success, setSuccess] = useState(false);
   const [assetError, setAssetError] = useState('');
 
-  const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<InvestmentFormData>();
+  const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<InvestmentFormData>({
+    defaultValues: {
+      currency: 'EUR',
+    },
+  });
 
   const buyPrice = watch('buyPrice');
   const investmentAmount = watch('investmentAmount');
@@ -104,11 +109,14 @@ export const InvestmentForm = () => {
         selectedAsset.id,
         data.buyPrice,
         data.investmentAmount,
+        data.currency,
         data.name
       );
 
       // Reset form
-      reset();
+      reset({
+        currency: 'EUR',
+      });
       setSelectedAsset(null);
       setSelectedValue('');
       setCurrentPrice(null);
@@ -175,6 +183,25 @@ export const InvestmentForm = () => {
           placeholder="e.g., Main Portfolio, Testing, Long-term..."
           {...register('name')}
         />
+
+        {/* Currency Selection */}
+        <div>
+          <label className="block text-sm font-medium text-gray-200 mb-1.5">
+            Currency
+          </label>
+          <select
+            {...register('currency', { required: 'Currency is required' })}
+            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+          >
+            <option value="EUR" className="bg-slate-800">EUR (€)</option>
+            <option value="USD" className="bg-slate-800">USD ($)</option>
+            <option value="GBP" className="bg-slate-800">GBP (£)</option>
+            <option value="JPY" className="bg-slate-800">JPY (¥)</option>
+            <option value="CHF" className="bg-slate-800">CHF (Fr)</option>
+            <option value="CAD" className="bg-slate-800">CAD ($)</option>
+            <option value="AUD" className="bg-slate-800">AUD ($)</option>
+          </select>
+        </div>
 
         {/* Buy Price */}
         <Input

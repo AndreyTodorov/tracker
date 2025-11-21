@@ -9,10 +9,10 @@ export const formatCurrency = (amount: number, currency = 'USD'): string => {
   }).format(amount);
 };
 
-export const formatCryptoPrice = (price: number): string => {
+export const formatCryptoPrice = (price: number, currency = 'USD'): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 4,
   }).format(price);

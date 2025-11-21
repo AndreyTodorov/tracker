@@ -20,6 +20,7 @@ export const addInvestment = async (
   assetSymbol: string,
   buyPrice: number,
   investmentAmount: number,
+  currency: string,
   name?: string
 ): Promise<string> => {
   const quantity = investmentAmount / buyPrice;
@@ -32,6 +33,7 @@ export const addInvestment = async (
     buyPrice,
     investmentAmount,
     quantity,
+    currency,
     purchaseDate: Date.now(),
     createdAt: Date.now(),
     ...(name && { name }), // Only include name if provided
