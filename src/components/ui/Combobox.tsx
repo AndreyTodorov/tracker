@@ -81,23 +81,23 @@ export function Combobox({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 bg-slate-900 border-2 border-white/20" align="start">
-          <Command shouldFilter={false} className="bg-slate-900">
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 bg-slate-800/95 backdrop-blur-sm border border-white/20" align="start">
+          <Command shouldFilter={false} className="bg-transparent">
             <CommandInput
               placeholder={searchPlaceholder}
               value={search}
               onValueChange={handleSearch}
-              className="text-white"
+              className="text-gray-100"
             />
-            <CommandList className="bg-slate-900">
+            <CommandList className="bg-transparent">
               {isLoading ? (
                 <div className="py-6 flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 </div>
               ) : options.length === 0 ? (
-                <CommandEmpty className="text-gray-300">{emptyText}</CommandEmpty>
+                <CommandEmpty className="text-gray-400">{emptyText}</CommandEmpty>
               ) : (
-                <CommandGroup className="bg-slate-900">
+                <CommandGroup className="bg-transparent">
                   {options.map((option) => (
                     <CommandItem
                       key={option.value}
@@ -107,18 +107,18 @@ export function Combobox({
                         setOpen(false);
                         setSearch('');
                       }}
-                      className="text-white data-[selected=true]:bg-blue-600 data-[selected=true]:text-white hover:bg-blue-700 cursor-pointer"
+                      className="text-gray-200 data-[selected=true]:bg-white/10 data-[selected=true]:text-white hover:bg-white/5 cursor-pointer"
                     >
                       <Check
                         className={cn(
-                          'mr-2 h-4 w-4 flex-shrink-0 text-white',
+                          'mr-2 h-4 w-4 flex-shrink-0 text-blue-400',
                           value === option.value ? 'opacity-100' : 'opacity-0'
                         )}
                       />
                       {option.icon && (
                         <img src={option.icon} alt="" className="mr-2 w-5 h-5 rounded-full flex-shrink-0" />
                       )}
-                      <span className="truncate text-white">{option.label}</span>
+                      <span className="truncate">{option.label}</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>

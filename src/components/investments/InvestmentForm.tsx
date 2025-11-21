@@ -36,8 +36,23 @@ export const InvestmentForm = () => {
 
   const buyPrice = watch('buyPrice');
   const investmentAmount = watch('investmentAmount');
+  const currency = watch('currency');
 
   const quantity = buyPrice && investmentAmount ? investmentAmount / buyPrice : 0;
+
+  // Get currency symbol
+  const getCurrencySymbol = (curr: string) => {
+    const symbols: Record<string, string> = {
+      EUR: '€',
+      USD: '$',
+      GBP: '£',
+      JPY: '¥',
+      CHF: 'Fr',
+      CAD: 'C$',
+      AUD: 'A$',
+    };
+    return symbols[curr] || curr;
+  };
 
   // Search for cryptocurrencies
   useEffect(() => {
@@ -66,6 +81,24 @@ export const InvestmentForm = () => {
     return () => clearTimeout(delaySearch);
   }, [searchQuery]);
 
+  // Refetch price when currency changes
+  useEffect(() => {
+    if (selectedAsset && selectedValue) {
+      const fetchPriceInNewCurrency = async () => {
+        try {
+          const selectedCurrency = currency || 'EUR';
+          const details = await getCryptoDetails(selectedValue, selectedCurrency);
+          if (details) {
+            setCurrentPrice(details.current_price);
+          }
+        } catch (error) {
+          console.error('Error fetching price in new currency:', error);
+        }
+      };
+      fetchPriceInNewCurrency();
+    }
+  }, [currency, selectedAsset, selectedValue]);
+
   const handleSelectAsset = async (value: string) => {
     setSelectedValue(value);
     setAssetError('');
@@ -76,9 +109,10 @@ export const InvestmentForm = () => {
       return;
     }
 
-    // Fetch full asset details and current price
+    // Fetch full asset details and current price in selected currency
     try {
-      const details = await getCryptoDetails(value);
+      const selectedCurrency = currency || 'EUR';
+      const details = await getCryptoDetails(value, selectedCurrency);
       if (details) {
         setSelectedAsset({
           id: details.id,
@@ -160,7 +194,7 @@ export const InvestmentForm = () => {
         {currentPrice && selectedAsset && (
           <div className="p-3 rounded-lg glass">
             <div className="flex items-center justify-between mb-1">
-              <div className="text-sm text-gray-400">Current Price</div>
+              <div className="text-sm text-gray-400">Current Price ({currency || 'EUR'})</div>
               <Button
                 type="button"
                 variant="ghost"
@@ -171,7 +205,7 @@ export const InvestmentForm = () => {
               </Button>
             </div>
             <div className="text-xl font-bold text-green-400">
-              ${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+              {getCurrencySymbol(currency || 'EUR')}{currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
             </div>
           </div>
         )}
@@ -205,7 +239,7 @@ export const InvestmentForm = () => {
 
         {/* Buy Price */}
         <Input
-          label="Buy Price (USD)"
+          label={`Buy Price (${currency || 'EUR'})`}
           type="number"
           step="any"
           placeholder="0.00"
@@ -218,7 +252,7 @@ export const InvestmentForm = () => {
 
         {/* Investment Amount */}
         <Input
-          label="Investment Amount (USD)"
+          label={`Investment Amount (${currency || 'EUR'})`}
           type="number"
           step="any"
           placeholder="0.00"

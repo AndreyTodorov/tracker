@@ -108,10 +108,10 @@ export const getMultipleCryptoPrices = async (
   return prices;
 };
 
-export const getCryptoDetails = async (id: string): Promise<CoinGeckoResponse | null> => {
+export const getCryptoDetails = async (id: string, currency: string = 'usd'): Promise<CoinGeckoResponse | null> => {
   try {
     const response = await fetch(
-      `${COINGECKO_API_BASE}/coins/markets?vs_currency=usd&ids=${id}&order=market_cap_desc&per_page=1&page=1`
+      `${COINGECKO_API_BASE}/coins/markets?vs_currency=${currency.toLowerCase()}&ids=${id}&order=market_cap_desc&per_page=1&page=1`
     );
 
     if (!response.ok) {
