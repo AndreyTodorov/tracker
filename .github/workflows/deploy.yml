@@ -3,7 +3,6 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - claude/investment-portfolio-tracker-01GkaVw2FxB3ZfM8WJCk9WbL
       - main
 
   workflow_dispatch:
