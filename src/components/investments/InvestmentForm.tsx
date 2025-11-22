@@ -79,7 +79,7 @@ export const InvestmentForm = () => {
       } finally {
         setIsSearching(false);
       }
-    }, 300);
+    }, 500); // Increased from 300ms to reduce API requests
 
     return () => clearTimeout(delaySearch);
   }, [searchQuery, toast]);

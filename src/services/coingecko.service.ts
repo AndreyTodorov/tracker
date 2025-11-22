@@ -7,7 +7,7 @@ const VALID_CURRENCIES = ['usd', 'eur', 'gbp', 'jpy', 'chf', 'cad', 'aud'];
 
 // Cache to prevent excessive API calls
 const priceCache = new Map<string, { price: number; timestamp: number }>();
-const CACHE_DURATION = 30000; // 30 seconds
+const CACHE_DURATION = 60000; // 60 seconds (increased to reduce API requests)
 
 export const searchCrypto = async (query: string): Promise<CoinGeckoSearchResult[]> => {
   if (!query || typeof query !== 'string') {
@@ -21,6 +21,9 @@ export const searchCrypto = async (query: string): Promise<CoinGeckoSearchResult
     );
 
     if (!response.ok) {
+      if (response.status === 429) {
+        throw new Error('API rate limit exceeded. Please wait a moment before searching again.');
+      }
       throw new Error('Failed to search cryptocurrencies');
     }
 
@@ -28,6 +31,9 @@ export const searchCrypto = async (query: string): Promise<CoinGeckoSearchResult
     return data.coins?.slice(0, 10) || [];
   } catch (error) {
     console.error('Error searching crypto:', error);
+    if (error instanceof Error && error.message.includes('rate limit')) {
+      throw error; // Re-throw rate limit errors so they can be shown to user
+    }
     return [];
   }
 };
@@ -51,6 +57,10 @@ export const getCryptoPrice = async (symbol: string): Promise<number | null> => 
     );
 
     if (!response.ok) {
+      if (response.status === 429) {
+        console.warn('CoinGecko API rate limit exceeded');
+        return null;
+      }
       throw new Error('Failed to fetch crypto price');
     }
 
@@ -124,6 +134,10 @@ export const getMultipleCryptoPrices = async (
     );
 
     if (!response.ok) {
+      if (response.status === 429) {
+        console.warn('CoinGecko API rate limit exceeded for multiple prices');
+        return prices; // Return cached prices only
+      }
       throw new Error('Failed to fetch crypto prices');
     }
 
@@ -174,6 +188,9 @@ export const getCryptoDetails = async (id: string, currency: string = 'usd'): Pr
     );
 
     if (!response.ok) {
+      if (response.status === 429) {
+        throw new Error('API rate limit exceeded. Please wait a moment and try again.');
+      }
       throw new Error('Failed to fetch crypto details');
     }
 
@@ -181,6 +198,9 @@ export const getCryptoDetails = async (id: string, currency: string = 'usd'): Pr
     return data[0] || null;
   } catch (error) {
     console.error('Error fetching crypto details:', error);
+    if (error instanceof Error && error.message.includes('rate limit')) {
+      throw error; // Re-throw rate limit errors so they can be shown to user
+    }
     return null;
   }
 };

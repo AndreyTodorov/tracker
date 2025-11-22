@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getMultipleCryptoPrices } from '../services/coingecko.service';
 import type { Investment } from '../types';
 
-const UPDATE_INTERVAL = 30000; // 30 seconds
+const UPDATE_INTERVAL = 60000; // 60 seconds (reduced from 30s to avoid rate limiting)
 
 export const useCryptoPrices = (investments: Investment[]) => {
   const [prices, setPrices] = useState<Map<string, Map<string, number>>>(new Map());
