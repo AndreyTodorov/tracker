@@ -61,14 +61,6 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
     }
   }, [quantity, buyPrice, setValue]);
 
-  // Update quantity when investment amount or buy price changes
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const amount = parseFloat(e.target.value);
-    if (!isNaN(amount) && buyPrice) {
-      const calculatedQuantity = amount / buyPrice;
-      setValue('quantity', calculatedQuantity);
-    }
-  };
 
   const onSubmit = async (data: EditInvestmentFormData) => {
     setIsSubmitting(true);
@@ -184,7 +176,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
           {/* Quantity and Investment Amount Side by Side */}
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label={`Quantity`}
+              label="Quantity"
               type="number"
               step="any"
               placeholder="0.00"
@@ -195,25 +187,24 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
               error={errors.quantity?.message}
             />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-200 mb-1.5">
-                Investment Amount ({currency || investment.currency})
-              </label>
-              <input
-                type="number"
-                step="any"
-                placeholder="0.00"
-                {...register('investmentAmount', {
-                  required: 'Investment amount is required',
-                  min: { value: 0.01, message: 'Amount must be greater than 0' },
-                })}
-                onChange={handleAmountChange}
-                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
-              {errors.investmentAmount && (
-                <p className="mt-1.5 text-sm text-red-400">{errors.investmentAmount.message}</p>
-              )}
-            </div>
+            <Input
+              label={`Investment Amount (${currency || investment.currency})`}
+              type="number"
+              step="any"
+              placeholder="0.00"
+              {...register('investmentAmount', {
+                required: 'Investment amount is required',
+                min: { value: 0.01, message: 'Amount must be greater than 0' },
+                onChange: (e) => {
+                  const amount = parseFloat(e.target.value);
+                  if (!isNaN(amount) && buyPrice) {
+                    const calculatedQuantity = amount / buyPrice;
+                    setValue('quantity', calculatedQuantity);
+                  }
+                },
+              })}
+              error={errors.investmentAmount?.message}
+            />
           </div>
 
           {/* Success Message */}
