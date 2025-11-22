@@ -91,9 +91,9 @@ export const subscribeToSharedInvestments = (
     const userIds: string[] = [];
 
     if (snapshot.exists()) {
-      const users = snapshot.val();
-      Object.entries(users).forEach(([userId, userData]: [string, any]) => {
-        if (shareCodes.includes(userData.shareCode)) {
+      const users = snapshot.val() as Record<string, { shareCode?: string }>;
+      Object.entries(users).forEach(([userId, userData]) => {
+        if (userData.shareCode && shareCodes.includes(userData.shareCode)) {
           userIds.push(userId);
         }
       });
@@ -172,9 +172,9 @@ export const addSharedPortfolio = async (
     return false;
   }
 
-  const users = snapshot.val();
+  const users = snapshot.val() as Record<string, { shareCode?: string }>;
   const shareCodeExists = Object.values(users).some(
-    (user: any) => user.shareCode === shareCode
+    (user) => user.shareCode === shareCode
   );
 
   if (!shareCodeExists) {

@@ -4,6 +4,7 @@ import { UserPlus } from 'lucide-react';
 import { signUp } from '../../services/auth.service';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { useToast } from '../../context/ToastContext';
 
 interface RegisterFormData {
   displayName: string;
@@ -20,8 +21,26 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterFormData>();
+  const toast = useToast();
 
   const password = watch('password');
+
+  const getFirebaseErrorMessage = (error: any): string => {
+    const errorCode = error?.code || '';
+
+    switch (errorCode) {
+      case 'auth/email-already-in-use':
+        return 'This email is already registered. Please sign in instead.';
+      case 'auth/invalid-email':
+        return 'Invalid email address.';
+      case 'auth/weak-password':
+        return 'Password is too weak. Please use a stronger password.';
+      case 'auth/network-request-failed':
+        return 'Network error. Please check your connection.';
+      default:
+        return error?.message || 'Failed to create account. Please try again.';
+    }
+  };
 
   const onSubmit = async (data: RegisterFormData) => {
     setError('');
@@ -29,8 +48,11 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
 
     try {
       await signUp(data.email, data.password, data.displayName);
+      toast.success('Account created successfully! Welcome aboard!');
     } catch (err: any) {
-      setError(err.message || 'Failed to create account');
+      const errorMessage = getFirebaseErrorMessage(err);
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

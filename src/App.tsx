@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import { AuthLayout } from './components/auth/AuthLayout';
 import { Dashboard } from './components/layout/Dashboard';
 import { PublicPortfolio } from './components/public/PublicPortfolio';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
 import { ErrorBoundary } from './components/error/ErrorBoundary';
+import { ToastContainer } from './components/ui/ToastContainer';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { currentUser, loading } = useAuth();
@@ -38,9 +40,11 @@ function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter basename="/tracker">
-        <AuthProvider>
-          <ErrorBoundary>
-            <Routes>
+        <ToastProvider>
+          <AuthProvider>
+            <ToastContainer />
+            <ErrorBoundary>
+              <Routes>
               {/* Public Routes */}
               <Route
                 path="/public"
@@ -74,9 +78,10 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-            </Routes>
-          </ErrorBoundary>
-        </AuthProvider>
+              </Routes>
+            </ErrorBoundary>
+          </AuthProvider>
+        </ToastProvider>
       </BrowserRouter>
     </ErrorBoundary>
   );

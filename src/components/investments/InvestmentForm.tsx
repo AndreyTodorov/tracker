@@ -8,6 +8,7 @@ import { Combobox, type ComboboxOption } from '../ui/Combobox';
 import { searchCrypto, getCryptoDetails } from '../../services/coingecko.service';
 import { addInvestment } from '../../services/investment.service';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 interface InvestmentFormData {
   name?: string;
@@ -19,6 +20,7 @@ interface InvestmentFormData {
 
 export const InvestmentForm = () => {
   const { currentUser, userData } = useAuth();
+  const toast = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<ComboboxOption[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<any | null>(null);
@@ -26,7 +28,6 @@ export const InvestmentForm = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
-  const [success, setSuccess] = useState(false);
   const [assetError, setAssetError] = useState('');
   const [lastEditedField, setLastEditedField] = useState<'amount' | 'quantity' | null>(null);
 
@@ -73,13 +74,14 @@ export const InvestmentForm = () => {
         setSearchResults(options);
       } catch (error) {
         console.error('Error searching crypto:', error);
+        toast.error('Failed to search cryptocurrencies. Please try again.');
       } finally {
         setIsSearching(false);
       }
     }, 300);
 
     return () => clearTimeout(delaySearch);
-  }, [searchQuery]);
+  }, [searchQuery, toast]);
 
   // Refetch price when currency changes
   useEffect(() => {
@@ -93,11 +95,12 @@ export const InvestmentForm = () => {
           }
         } catch (error) {
           console.error('Error fetching price in new currency:', error);
+          toast.error('Failed to fetch current price. Please try again.');
         }
       };
       fetchPriceInNewCurrency();
     }
-  }, [currency, selectedAsset, selectedValue]);
+  }, [currency, selectedAsset, selectedValue, toast]);
 
   // Update investment amount when quantity or buy price changes
   // But only if the user is NOT currently editing the amount field
@@ -134,17 +137,20 @@ export const InvestmentForm = () => {
       }
     } catch (error) {
       console.error('Error fetching asset details:', error);
+      toast.error('Failed to fetch cryptocurrency details. Please try selecting again.');
+      setSelectedAsset(null);
+      setCurrentPrice(null);
     }
   };
 
   const onSubmit = async (data: InvestmentFormData) => {
     if (!currentUser || !userData || !selectedAsset) {
       setAssetError('Please select a cryptocurrency');
+      toast.error('Please select a cryptocurrency before adding an investment');
       return;
     }
 
     setIsSubmitting(true);
-    setSuccess(false);
 
     try {
       await addInvestment(
@@ -168,11 +174,12 @@ export const InvestmentForm = () => {
       setCurrentPrice(null);
       setSearchQuery('');
       setSearchResults([]);
-      setSuccess(true);
 
-      setTimeout(() => setSuccess(false), 3000);
-    } catch (error) {
+      toast.success('Investment added successfully!');
+    } catch (error: any) {
       console.error('Error adding investment:', error);
+      const errorMessage = error?.message || 'Failed to add investment. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -302,13 +309,6 @@ export const InvestmentForm = () => {
             error={errors.investmentAmount?.message}
           />
         </div>
-
-        {/* Success Message */}
-        {success && (
-          <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/50">
-            <p className="text-green-400 text-sm font-medium">Investment added successfully!</p>
-          </div>
-        )}
 
         {/* Submit Button */}
         <Button

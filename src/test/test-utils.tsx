@@ -1,6 +1,7 @@
 import { type ReactElement } from 'react';
 import { render, type RenderOptions } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { ToastProvider } from '../context/ToastContext';
 
 // Mock AuthProvider for testing
 export const MockAuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -14,7 +15,9 @@ interface AllProvidersProps {
 const AllProviders = ({ children }: AllProvidersProps) => {
   return (
     <BrowserRouter>
-      <MockAuthProvider>{children}</MockAuthProvider>
+      <ToastProvider>
+        <MockAuthProvider>{children}</MockAuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   );
 };

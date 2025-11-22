@@ -8,6 +8,7 @@ import { calculateProfit } from '../../utils/calculations';
 import { useAuth } from '../../context/AuthContext';
 import { deleteInvestment } from '../../services/investment.service';
 import { EditInvestmentModal } from './EditInvestmentModal';
+import { useToast } from '../../context/ToastContext';
 
 interface InvestmentCardProps {
   investment: Investment;
@@ -16,19 +17,29 @@ interface InvestmentCardProps {
 
 export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps) => {
   const { currentUser } = useAuth();
+  const toast = useToast();
   const isOwner = currentUser?.uid === investment.userId;
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const price = currentPrice || investment.buyPrice;
   const profit = calculateProfit(investment.buyPrice, price, investment.quantity);
 
   const handleDelete = async () => {
-    if (confirm('Are you sure you want to delete this investment?')) {
-      try {
-        await deleteInvestment(investment.id);
-      } catch (error) {
-        console.error('Error deleting investment:', error);
-      }
+    if (!confirm('Are you sure you want to delete this investment?')) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await deleteInvestment(investment.id);
+      toast.success('Investment deleted successfully!');
+    } catch (error: any) {
+      console.error('Error deleting investment:', error);
+      const errorMessage = error?.message || 'Failed to delete investment. Please try again.';
+      toast.error(errorMessage);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -62,6 +73,7 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
               size="sm"
               onClick={() => setIsEditModalOpen(true)}
               className="text-blue-400 hover:text-blue-300"
+              disabled={isDeleting}
             >
               <Pencil size={18} />
             </Button>
@@ -70,6 +82,8 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
               size="sm"
               onClick={handleDelete}
               className="text-red-400 hover:text-red-300"
+              isLoading={isDeleting}
+              disabled={isDeleting}
             >
               <Trash2 size={18} />
             </Button>
