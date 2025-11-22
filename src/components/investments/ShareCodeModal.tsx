@@ -21,7 +21,7 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
   const [joinSuccess, setJoinSuccess] = useState('');
 
   const publicLink = userData?.shareCode
-    ? `${window.location.origin}/public?code=${userData.shareCode}`
+    ? `${window.location.origin}/tracker/public?code=${userData.shareCode}`
     : '';
 
   const handleCopy = () => {
