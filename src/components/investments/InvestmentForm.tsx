@@ -273,7 +273,7 @@ export const InvestmentForm = () => {
           />
 
           <Input
-            label={`Investment Amount (${currency || 'EUR'})`}
+            label={`Amount (${currency || 'EUR'})`}
             type="number"
             step="any"
             placeholder="0.00"

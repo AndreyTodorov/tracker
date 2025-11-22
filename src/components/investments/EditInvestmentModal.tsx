@@ -191,7 +191,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
             />
 
             <Input
-              label={`Investment Amount (${currency || investment.currency})`}
+              label={`Amount (${currency || investment.currency})`}
               type="number"
               step="any"
               placeholder="0.00"
