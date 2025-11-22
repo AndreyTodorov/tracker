@@ -1,7 +1,6 @@
-import { ReactElement } from 'react';
-import { render, RenderOptions } from '@testing-library/react';
+import { type ReactElement } from 'react';
+import { render, type RenderOptions } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from '../context/AuthContext';
 
 // Mock AuthProvider for testing
 export const MockAuthProvider = ({ children }: { children: React.ReactNode }) => {

@@ -21,7 +21,6 @@ describe('Button Component', () => {
 
   it('should not call onClick when disabled', async () => {
     const handleClick = vi.fn();
-    const user = userEvent.setup();
 
     render(<Button disabled onClick={handleClick}>Click me</Button>);
 

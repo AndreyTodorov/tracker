@@ -103,8 +103,14 @@ export const subscribeToSharedInvestments = (
   };
 
   let unsubscribe: (() => void) | null = null;
+  let cancelled = false;
 
   getUserIdsFromShareCodes().then((userIds) => {
+    // Don't set up subscription if already cancelled
+    if (cancelled) {
+      return;
+    }
+
     if (userIds.length === 0) {
       callback([]);
       return;
@@ -125,9 +131,12 @@ export const subscribeToSharedInvestments = (
       });
       callback(investments);
     });
+  }).catch((error) => {
+    console.error('Error fetching user IDs from share codes:', error);
   });
 
   return () => {
+    cancelled = true;
     if (unsubscribe) {
       unsubscribe();
     }

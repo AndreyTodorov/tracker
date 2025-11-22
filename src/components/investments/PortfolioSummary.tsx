@@ -1,4 +1,4 @@
-import { TrendingUp, Wallet, PieChart } from 'lucide-react';
+import { TrendingUp, Wallet, PieChart, AlertTriangle } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { formatCurrency, formatPercentage, getColorClass } from '../../utils/formatters';
 import type { Portfolio } from '../../types';
@@ -12,8 +12,33 @@ export const PortfolioSummary = ({ portfolio }: PortfolioSummaryProps) => {
   const uniqueAssets = new Set(portfolio.investments.map(inv => inv.assetSymbol)).size;
   const totalInvestments = portfolio.investments.length;
 
+  // Detect multiple currencies
+  const currencies = new Set(portfolio.investments.map(inv => inv.currency));
+  const hasMixedCurrencies = currencies.size > 1;
+  const currencyList = Array.from(currencies).join(', ');
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <>
+      {hasMixedCurrencies && (
+        <div className="mb-4 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={20} className="text-yellow-400 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-yellow-400 mb-1">
+                Mixed Currency Warning
+              </p>
+              <p className="text-xs text-gray-300">
+                Your portfolio contains investments in multiple currencies ({currencyList}).
+                Total values are calculated by adding amounts without currency conversion,
+                which may not reflect accurate totals. Consider using a single currency or
+                implementing currency conversion for accurate portfolio tracking.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       {/* Total Value */}
       <Card className="p-4">
         <div className="flex items-center gap-3 mb-2">
@@ -58,5 +83,6 @@ export const PortfolioSummary = ({ portfolio }: PortfolioSummaryProps) => {
         </div>
       </Card>
     </div>
+    </>
   );
 };
