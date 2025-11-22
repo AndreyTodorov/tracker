@@ -20,11 +20,10 @@ export const addInvestment = async (
   assetSymbol: string,
   buyPrice: number,
   investmentAmount: number,
+  quantity: number,
   currency: string,
   name?: string
 ): Promise<string> => {
-  const quantity = investmentAmount / buyPrice;
-
   const investmentData = {
     userId,
     userName,

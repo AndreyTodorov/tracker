@@ -1,4 +1,5 @@
-import { Trash2, TrendingUp, TrendingDown, User } from 'lucide-react';
+import { Trash2, TrendingUp, TrendingDown, User, Pencil } from 'lucide-react';
+import { useState } from 'react';
 import type { Investment } from '../../types';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -6,6 +7,7 @@ import { formatCurrency, formatCryptoPrice, formatPercentage, formatDate, getCol
 import { calculateProfit } from '../../utils/calculations';
 import { useAuth } from '../../context/AuthContext';
 import { deleteInvestment } from '../../services/investment.service';
+import { EditInvestmentModal } from './EditInvestmentModal';
 
 interface InvestmentCardProps {
   investment: Investment;
@@ -15,6 +17,7 @@ interface InvestmentCardProps {
 export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps) => {
   const { currentUser } = useAuth();
   const isOwner = currentUser?.uid === investment.userId;
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const price = currentPrice || investment.buyPrice;
   const profit = calculateProfit(investment.buyPrice, price, investment.quantity);
@@ -41,22 +44,36 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
 
       {/* Asset Name */}
       <div className="flex items-center justify-between mb-3">
-        <div>
-          <h3 className="text-xl font-bold">{investment.assetName}</h3>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-xl font-bold">{investment.assetName}</h3>
+            {investment.name && (
+              <span className="text-xs text-blue-400 px-2 py-1 rounded-full bg-blue-500/10 border border-blue-500/30">
+                📝 {investment.name}
+              </span>
+            )}
+          </div>
           <p className="text-sm text-gray-400 uppercase">{investment.assetSymbol}</p>
-          {investment.name && (
-            <p className="text-xs text-blue-400 mt-1">📝 {investment.name}</p>
-          )}
         </div>
         {isOwner && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDelete}
-            className="text-red-400 hover:text-red-300"
-          >
-            <Trash2 size={18} />
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditModalOpen(true)}
+              className="text-blue-400 hover:text-blue-300"
+            >
+              <Pencil size={18} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDelete}
+              className="text-red-400 hover:text-red-300"
+            >
+              <Trash2 size={18} />
+            </Button>
+          </div>
         )}
       </div>
 
@@ -117,6 +134,16 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
             <span className="text-xs text-green-400 font-medium">LIVE</span>
           </div>
         </div>
+      )}
+
+      {/* Edit Investment Modal */}
+      {isOwner && (
+        <EditInvestmentModal
+          investment={investment}
+          currentPrice={price}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+        />
       )}
     </Card>
   );

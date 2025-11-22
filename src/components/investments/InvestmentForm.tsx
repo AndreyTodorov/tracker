@@ -13,6 +13,7 @@ interface InvestmentFormData {
   name?: string;
   buyPrice: number;
   investmentAmount: number;
+  quantity: number;
   currency: string;
 }
 
@@ -35,10 +36,8 @@ export const InvestmentForm = () => {
   });
 
   const buyPrice = watch('buyPrice');
-  const investmentAmount = watch('investmentAmount');
+  const quantity = watch('quantity');
   const currency = watch('currency');
-
-  const quantity = buyPrice && investmentAmount ? investmentAmount / buyPrice : 0;
 
   // Get currency symbol
   const getCurrencySymbol = (curr: string) => {
@@ -99,6 +98,14 @@ export const InvestmentForm = () => {
     }
   }, [currency, selectedAsset, selectedValue]);
 
+  // Update investment amount when quantity or buy price changes
+  useEffect(() => {
+    if (buyPrice && quantity) {
+      const calculatedAmount = buyPrice * quantity;
+      setValue('investmentAmount', calculatedAmount);
+    }
+  }, [quantity, buyPrice, setValue]);
+
   const handleSelectAsset = async (value: string) => {
     setSelectedValue(value);
     setAssetError('');
@@ -143,6 +150,7 @@ export const InvestmentForm = () => {
         selectedAsset.id,
         data.buyPrice,
         data.investmentAmount,
+        data.quantity,
         data.currency,
         data.name
       );
@@ -250,28 +258,46 @@ export const InvestmentForm = () => {
           error={errors.buyPrice?.message}
         />
 
-        {/* Investment Amount */}
-        <Input
-          label={`Investment Amount (${currency || 'EUR'})`}
-          type="number"
-          step="any"
-          placeholder="0.00"
-          {...register('investmentAmount', {
-            required: 'Investment amount is required',
-            min: { value: 0.01, message: 'Amount must be greater than 0' },
-          })}
-          error={errors.investmentAmount?.message}
-        />
+        {/* Quantity and Investment Amount Side by Side */}
+        <div className="grid grid-cols-2 gap-4">
+          <Input
+            label="Quantity"
+            type="number"
+            step="any"
+            placeholder="0.00"
+            {...register('quantity', {
+              required: 'Quantity is required',
+              min: { value: 0.00000001, message: 'Quantity must be greater than 0' },
+            })}
+            error={errors.quantity?.message}
+          />
 
-        {/* Calculated Quantity */}
-        {quantity > 0 && selectedAsset && (
-          <div className="p-3 rounded-lg glass">
-            <div className="text-sm text-gray-400">Quantity</div>
-            <div className="text-xl font-bold">
-              {quantity.toLocaleString('en-US', { maximumFractionDigits: 8 })} {selectedAsset.symbol?.toUpperCase()}
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-200 mb-1.5">
+              Investment Amount ({currency || 'EUR'})
+            </label>
+            <input
+              type="number"
+              step="any"
+              placeholder="0.00"
+              {...register('investmentAmount', {
+                required: 'Investment amount is required',
+                min: { value: 0.01, message: 'Amount must be greater than 0' },
+              })}
+              onChange={(e) => {
+                const amount = parseFloat(e.target.value);
+                if (!isNaN(amount) && buyPrice) {
+                  const calculatedQuantity = amount / buyPrice;
+                  setValue('quantity', calculatedQuantity);
+                }
+              }}
+              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+            {errors.investmentAmount && (
+              <p className="mt-1.5 text-sm text-red-400">{errors.investmentAmount.message}</p>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Success Message */}
         {success && (
