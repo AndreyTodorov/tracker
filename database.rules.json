@@ -1,13 +1,13 @@
 {
   "rules": {
     "users": {
+      ".read": true,
       "$uid": {
-        ".read": "auth != null",
         ".write": "auth != null && auth.uid === $uid"
       }
     },
     "investments": {
-      ".read": "auth != null",
+      ".read": true,
       ".indexOn": "userId",
       "$investmentId": {
         ".write": "auth != null && (!data.exists() || data.child('userId').val() === auth.uid)"

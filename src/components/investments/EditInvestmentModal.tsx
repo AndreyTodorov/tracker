@@ -24,6 +24,7 @@ interface EditInvestmentModalProps {
 export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose }: EditInvestmentModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [lastEditedField, setLastEditedField] = useState<'amount' | 'quantity' | null>(null);
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<EditInvestmentFormData>({
     defaultValues: {
@@ -54,12 +55,15 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
   };
 
   // Update investment amount when quantity or buy price changes
+  // But only if the user is NOT currently editing the amount field
   useEffect(() => {
-    if (buyPrice && quantity) {
+    if (buyPrice && quantity && lastEditedField !== 'amount') {
       const calculatedAmount = buyPrice * quantity;
-      setValue('investmentAmount', calculatedAmount);
+      // Round to avoid floating point precision issues
+      const roundedAmount = Math.round(calculatedAmount * 100) / 100;
+      setValue('investmentAmount', roundedAmount);
     }
-  }, [quantity, buyPrice, setValue]);
+  }, [quantity, buyPrice, setValue, lastEditedField]);
 
 
   const onSubmit = async (data: EditInvestmentFormData) => {
@@ -186,12 +190,16 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
               {...register('quantity', {
                 required: 'Quantity is required',
                 min: { value: 0.00000001, message: 'Quantity must be greater than 0' },
+                onChange: () => {
+                  setLastEditedField('quantity');
+                  // Let the useEffect handle the amount calculation
+                },
               })}
               error={errors.quantity?.message}
             />
 
             <Input
-              label={`Investment Amount (${currency || investment.currency})`}
+              label={`Amount (${currency || investment.currency})`}
               type="number"
               step="any"
               placeholder="0.00"
@@ -199,10 +207,13 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
                 required: 'Investment amount is required',
                 min: { value: 0.01, message: 'Amount must be greater than 0' },
                 onChange: (e) => {
+                  setLastEditedField('amount');
                   const amount = parseFloat(e.target.value);
-                  if (!isNaN(amount) && buyPrice) {
+                  if (!isNaN(amount) && buyPrice && amount > 0) {
                     const calculatedQuantity = amount / buyPrice;
-                    setValue('quantity', calculatedQuantity);
+                    // Round to 8 decimal places for crypto precision
+                    const roundedQuantity = Math.round(calculatedQuantity * 100000000) / 100000000;
+                    setValue('quantity', roundedQuantity);
                   }
                 },
               })}

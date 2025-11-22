@@ -210,3 +210,54 @@ export const getUserByShareCode = async (shareCode: string): Promise<string | nu
 
   return null;
 };
+
+export const getPublicPortfolio = async (
+  shareCode: string
+): Promise<{ investments: Investment[]; ownerName: string } | null> => {
+  try {
+    // Find user by share code
+    const usersRef = ref(db, 'users');
+    const usersSnapshot = await get(usersRef);
+
+    if (!usersSnapshot.exists()) {
+      return null;
+    }
+
+    const users = usersSnapshot.val();
+    let targetUserId: string | null = null;
+    let ownerName = '';
+
+    // Find the user with matching share code
+    for (const [userId, userData] of Object.entries(users) as [string, any][]) {
+      if (userData.shareCode === shareCode) {
+        targetUserId = userId;
+        ownerName = userData.displayName || userData.email;
+        break;
+      }
+    }
+
+    if (!targetUserId) {
+      return null;
+    }
+
+    // Get investments for this user
+    const investmentsRef = ref(db, 'investments');
+    const investmentsQuery = query(investmentsRef, orderByChild('userId'), equalTo(targetUserId));
+    const investmentsSnapshot = await get(investmentsQuery);
+
+    const investments: Investment[] = [];
+    if (investmentsSnapshot.exists()) {
+      investmentsSnapshot.forEach((childSnapshot) => {
+        investments.push({
+          id: childSnapshot.key!,
+          ...childSnapshot.val(),
+        } as Investment);
+      });
+    }
+
+    return { investments, ownerName };
+  } catch (error) {
+    console.error('Error fetching public portfolio:', error);
+    return null;
+  }
+};

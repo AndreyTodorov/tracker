@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Copy, Check, Share2, Plus } from 'lucide-react';
+import { Copy, Check, Share2, Plus, Link } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -14,16 +14,29 @@ interface ShareCodeModalProps {
 export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
   const { userData, currentUser } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [joinCode, setJoinCode] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const [joinError, setJoinError] = useState('');
   const [joinSuccess, setJoinSuccess] = useState('');
+
+  const publicLink = userData?.shareCode
+    ? `${window.location.origin}/tracker/public?code=${userData.shareCode}`
+    : '';
 
   const handleCopy = () => {
     if (userData?.shareCode) {
       navigator.clipboard.writeText(userData.shareCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleCopyLink = () => {
+    if (publicLink) {
+      navigator.clipboard.writeText(publicLink);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
     }
   };
 
@@ -103,6 +116,30 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
             >
               {copied ? <Check size={20} /> : <Copy size={20} />}
             </Button>
+          </div>
+
+          {/* Public Link */}
+          <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+            <div className="flex items-center gap-2 mb-2">
+              <Link size={16} className="text-blue-400" />
+              <p className="text-sm font-medium text-blue-400">Public Link</p>
+            </div>
+            <p className="text-xs text-gray-400 mb-2">
+              Share this link to let anyone view your portfolio without logging in
+            </p>
+            <div className="flex gap-2">
+              <div className="flex-1 glass rounded-lg px-3 py-2 overflow-hidden">
+                <p className="text-xs text-gray-300 truncate">{publicLink}</p>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleCopyLink}
+                className="px-3"
+              >
+                {linkCopied ? <Check size={16} /> : <Copy size={16} />}
+              </Button>
+            </div>
           </div>
         </div>
 

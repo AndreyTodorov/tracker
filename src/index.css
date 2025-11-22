@@ -4,22 +4,32 @@
 
 @layer base {
   body {
-    @apply bg-slate-950;
+    @apply bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950;
     @apply text-white min-h-screen;
     @apply antialiased;
+    background-attachment: fixed;
   }
 }
 
 @layer utilities {
   .card-surface {
-    @apply bg-slate-900 border border-slate-700;
+    @apply bg-slate-900/80 border border-slate-700/60 backdrop-blur-sm;
   }
 
   .card-surface-hover {
-    @apply bg-slate-900 border border-slate-700 hover:bg-slate-800 hover:border-slate-600;
+    @apply bg-slate-900/80 border border-slate-700/60 hover:bg-slate-800/90 hover:border-slate-600/70 backdrop-blur-sm;
+    transition: all 0.2s ease-in-out;
   }
 
   .input-surface {
-    @apply bg-slate-800 border border-slate-700;
+    @apply bg-slate-800/80 border border-slate-700/60 backdrop-blur-sm;
+  }
+
+  .glass {
+    @apply bg-slate-800/40 backdrop-blur-md border border-slate-700/50;
+  }
+
+  .glass-strong {
+    @apply bg-slate-800/60 backdrop-blur-lg border border-slate-600/60;
   }
 }
