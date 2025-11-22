@@ -21,12 +21,7 @@ export const PublicPortfolio = () => {
   const [error, setError] = useState('');
   const [portfolioOwner, setPortfolioOwner] = useState('');
 
-  // Extract unique crypto symbols for price fetching
-  const cryptoSymbols = useMemo(() => {
-    return Array.from(new Set(investments.map((inv) => inv.assetSymbol.toLowerCase())));
-  }, [investments]);
-
-  const { prices, lastUpdate } = useCryptoPrices(cryptoSymbols);
+  const { prices, lastUpdate } = useCryptoPrices(investments);
 
   // Calculate portfolio stats
   const portfolio = useMemo(() => {

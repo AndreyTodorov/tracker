@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { getMultipleCryptoPrices } from '../services/coingecko.service';
+import type { Investment } from '../types';
 
 const UPDATE_INTERVAL = 30000; // 30 seconds
 
-export const useCryptoPrices = (symbols: string[]) => {
-  const [prices, setPrices] = useState<Map<string, number>>(new Map());
+export const useCryptoPrices = (investments: Investment[]) => {
+  const [prices, setPrices] = useState<Map<string, Map<string, number>>>(new Map());
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   useEffect(() => {
-    if (symbols.length === 0) {
+    if (investments.length === 0) {
       setPrices(new Map());
       setLoading(false);
       return;
@@ -17,7 +18,11 @@ export const useCryptoPrices = (symbols: string[]) => {
 
     const fetchPrices = async () => {
       try {
-        const newPrices = await getMultipleCryptoPrices(symbols);
+        // Extract unique symbols and currencies
+        const symbols = [...new Set(investments.map(inv => inv.assetSymbol))];
+        const currencies = [...new Set(investments.map(inv => inv.currency))];
+
+        const newPrices = await getMultipleCryptoPrices(symbols, currencies);
         setPrices(newPrices);
         setLastUpdate(new Date());
       } catch (error) {
@@ -34,7 +39,7 @@ export const useCryptoPrices = (symbols: string[]) => {
     const interval = setInterval(fetchPrices, UPDATE_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [symbols.join(',')]);
+  }, [investments.map(inv => `${inv.assetSymbol}-${inv.currency}`).sort().join(',')]);
 
   return { prices, loading, lastUpdate };
 };

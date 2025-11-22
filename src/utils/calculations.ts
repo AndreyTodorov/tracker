@@ -18,13 +18,14 @@ export const calculateProfit = (
 
 export const calculatePortfolioStats = (
   investments: Investment[],
-  prices: Map<string, number>
+  prices: Map<string, Map<string, number>>
 ): Portfolio => {
   let totalValue = 0;
   let totalInvested = 0;
 
   investments.forEach((investment) => {
-    const currentPrice = prices.get(investment.assetSymbol.toLowerCase()) || investment.buyPrice;
+    const symbolPrices = prices.get(investment.assetSymbol.toLowerCase());
+    const currentPrice = symbolPrices?.get(investment.currency.toLowerCase()) || investment.buyPrice;
     const currentValue = currentPrice * investment.quantity;
     const investedAmount = investment.buyPrice * investment.quantity;
 
