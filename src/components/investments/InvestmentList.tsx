@@ -5,7 +5,7 @@ import { TrendingUp } from 'lucide-react';
 
 interface InvestmentListProps {
   investments: Investment[];
-  prices: Map<string, number>;
+  prices: Map<string, Map<string, number>>;
   loading: boolean;
 }
 
@@ -34,13 +34,18 @@ export const InvestmentList = ({ investments, prices, loading }: InvestmentListP
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {investments.map((investment) => (
-        <InvestmentCard
-          key={investment.id}
-          investment={investment}
-          currentPrice={prices.get(investment.assetSymbol.toLowerCase())}
-        />
-      ))}
+      {investments.map((investment) => {
+        const symbolPrices = prices.get(investment.assetSymbol.toLowerCase());
+        const currentPrice = symbolPrices?.get(investment.currency.toLowerCase());
+
+        return (
+          <InvestmentCard
+            key={investment.id}
+            investment={investment}
+            currentPrice={currentPrice}
+          />
+        );
+      })}
     </div>
   );
 };

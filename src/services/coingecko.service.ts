@@ -60,18 +60,25 @@ export const getCryptoPrice = async (symbol: string): Promise<number | null> => 
 };
 
 export const getMultipleCryptoPrices = async (
-  symbols: string[]
-): Promise<Map<string, number>> => {
-  const prices = new Map<string, number>();
+  symbols: string[],
+  currencies: string[] = ['usd']
+): Promise<Map<string, Map<string, number>>> => {
+  const prices = new Map<string, Map<string, number>>();
   const symbolsToFetch: string[] = [];
 
-  // Check cache for each symbol
+  // Normalize currencies to lowercase
+  const normalizedCurrencies = currencies.map(c => c.toLowerCase());
+  const currenciesString = normalizedCurrencies.join(',');
+
+  // Check cache for each symbol (for now, simplified - cache only USD)
   symbols.forEach((symbol) => {
     const normalizedSymbol = symbol.toLowerCase();
     const cached = priceCache.get(normalizedSymbol);
 
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      prices.set(normalizedSymbol, cached.price);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION && currencies.length === 1 && currencies[0].toLowerCase() === 'usd') {
+      const currencyPrices = new Map<string, number>();
+      currencyPrices.set('usd', cached.price);
+      prices.set(normalizedSymbol, currencyPrices);
     } else {
       symbolsToFetch.push(normalizedSymbol);
     }
@@ -85,7 +92,7 @@ export const getMultipleCryptoPrices = async (
   try {
     const idsString = symbolsToFetch.join(',');
     const response = await fetch(
-      `${COINGECKO_API_BASE}/simple/price?ids=${idsString}&vs_currencies=usd&include_24hr_change=true`
+      `${COINGECKO_API_BASE}/simple/price?ids=${idsString}&vs_currencies=${currenciesString}&include_24hr_change=true`
     );
 
     if (!response.ok) {
@@ -95,10 +102,24 @@ export const getMultipleCryptoPrices = async (
     const data = await response.json();
 
     symbolsToFetch.forEach((symbol) => {
-      const price = data[symbol]?.usd;
-      if (price) {
-        prices.set(symbol, price);
-        priceCache.set(symbol, { price, timestamp: Date.now() });
+      const symbolData = data[symbol];
+      if (symbolData) {
+        const currencyPrices = new Map<string, number>();
+        normalizedCurrencies.forEach((currency) => {
+          const price = symbolData[currency];
+          if (price !== undefined) {
+            currencyPrices.set(currency, price);
+          }
+        });
+
+        if (currencyPrices.size > 0) {
+          prices.set(symbol, currencyPrices);
+          // Cache USD price if available
+          const usdPrice = symbolData.usd;
+          if (usdPrice) {
+            priceCache.set(symbol, { price: usdPrice, timestamp: Date.now() });
+          }
+        }
       }
     });
   } catch (error) {
