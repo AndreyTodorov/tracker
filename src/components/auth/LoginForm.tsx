@@ -21,8 +21,8 @@ export const LoginForm = ({ onToggleMode }: LoginFormProps) => {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
   const toast = useToast();
 
-  const getFirebaseErrorMessage = (error: any): string => {
-    const errorCode = error?.code || '';
+  const getFirebaseErrorMessage = (error: unknown): string => {
+    const errorCode = (error as { code?: string })?.code || '';
 
     switch (errorCode) {
       case 'auth/user-not-found':
@@ -36,7 +36,7 @@ export const LoginForm = ({ onToggleMode }: LoginFormProps) => {
       case 'auth/user-disabled':
         return 'This account has been disabled.';
       default:
-        return error?.message || 'Failed to sign in. Please try again.';
+        return (error as { message?: string })?.message || 'Failed to sign in. Please try again.';
     }
   };
 
@@ -47,7 +47,7 @@ export const LoginForm = ({ onToggleMode }: LoginFormProps) => {
     try {
       await signIn(data.email, data.password);
       toast.success('Welcome back!');
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMessage = getFirebaseErrorMessage(err);
       setError(errorMessage);
       toast.error(errorMessage);

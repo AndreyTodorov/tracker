@@ -25,8 +25,8 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
 
   const password = watch('password');
 
-  const getFirebaseErrorMessage = (error: any): string => {
-    const errorCode = error?.code || '';
+  const getFirebaseErrorMessage = (error: unknown): string => {
+    const errorCode = (error as { code?: string })?.code || '';
 
     switch (errorCode) {
       case 'auth/email-already-in-use':
@@ -38,7 +38,7 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
       case 'auth/network-request-failed':
         return 'Network error. Please check your connection.';
       default:
-        return error?.message || 'Failed to create account. Please try again.';
+        return (error as { message?: string })?.message || 'Failed to create account. Please try again.';
     }
   };
 
@@ -49,7 +49,7 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
     try {
       await signUp(data.email, data.password, data.displayName);
       toast.success('Account created successfully! Welcome aboard!');
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMessage = getFirebaseErrorMessage(err);
       setError(errorMessage);
       toast.error(errorMessage);

@@ -83,9 +83,9 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
       setTimeout(() => {
         onClose();
       }, 500);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating investment:', error);
-      const errorMessage = error?.message || 'Failed to update investment. Please try again.';
+      const errorMessage = (error as { message?: string })?.message || 'Failed to update investment. Please try again.';
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);

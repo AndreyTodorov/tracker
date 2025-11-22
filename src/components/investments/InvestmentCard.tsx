@@ -34,9 +34,9 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
     try {
       await deleteInvestment(investment.id);
       toast.success('Investment deleted successfully!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting investment:', error);
-      const errorMessage = error?.message || 'Failed to delete investment. Please try again.';
+      const errorMessage = (error as { message?: string })?.message || 'Failed to delete investment. Please try again.';
       toast.error(errorMessage);
     } finally {
       setIsDeleting(false);

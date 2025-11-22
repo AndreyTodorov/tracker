@@ -53,7 +53,7 @@ export const PublicPortfolio = () => {
         setInvestments([]);
         setPortfolioOwner('');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load portfolio. Please try again.');
       setInvestments([]);
       setPortfolioOwner('');
@@ -165,7 +165,7 @@ export const PublicPortfolio = () => {
                 <div className="flex items-center justify-center gap-2">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                   <span className="text-xs text-gray-400">
-                    Last updated: {formatDateTime(lastUpdate as any)}
+                    Last updated: {formatDateTime(lastUpdate)}
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">

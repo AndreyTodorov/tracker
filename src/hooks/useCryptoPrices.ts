@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getMultipleCryptoPrices } from '../services/coingecko.service';
 import type { Investment } from '../types';
 
@@ -8,6 +8,12 @@ export const useCryptoPrices = (investments: Investment[]) => {
   const [prices, setPrices] = useState<Map<string, Map<string, number>>>(new Map());
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
+  // Create a stable dependency key for the investments
+  const investmentsKey = useMemo(
+    () => investments.map(inv => `${inv.assetSymbol}-${inv.currency}`).sort().join(','),
+    [investments]
+  );
 
   useEffect(() => {
     if (investments.length === 0) {
@@ -39,7 +45,7 @@ export const useCryptoPrices = (investments: Investment[]) => {
     const interval = setInterval(fetchPrices, UPDATE_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [investments.map(inv => `${inv.assetSymbol}-${inv.currency}`).sort().join(',')]);
+  }, [investmentsKey, investments]);
 
   return { prices, loading, lastUpdate };
 };

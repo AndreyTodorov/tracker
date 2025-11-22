@@ -14,6 +14,8 @@ export const useInvestments = (tab: TabType) => {
 
   useEffect(() => {
     if (!currentUser) {
+      // Reset state when user logs out
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInvestments([]);
       setLoading(false);
       return;

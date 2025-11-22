@@ -177,9 +177,9 @@ export const InvestmentForm = () => {
       setSearchResults([]);
 
       toast.success('Investment added successfully!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error adding investment:', error);
-      const errorMessage = error?.message || 'Failed to add investment. Please try again.';
+      const errorMessage = (error as { message?: string })?.message || 'Failed to add investment. Please try again.';
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
