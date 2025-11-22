@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/Modal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { updateInvestment } from '../../services/investment.service';
@@ -68,7 +68,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
 
     try {
       await updateInvestment(investment.id, {
-        name: data.name || undefined,
+        ...(data.name && { name: data.name }),
         buyPrice: data.buyPrice,
         investmentAmount: data.investmentAmount,
         quantity: data.quantity,
@@ -105,6 +105,9 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
       <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>Edit Investment</DialogTitle>
+          <DialogDescription>
+            Update your investment details including buy price, quantity, and currency.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">

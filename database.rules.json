@@ -8,6 +8,7 @@
     },
     "investments": {
       ".read": "auth != null",
+      ".indexOn": "userId",
       "$investmentId": {
         ".write": "auth != null && (!data.exists() || data.child('userId').val() === auth.uid)"
       }
