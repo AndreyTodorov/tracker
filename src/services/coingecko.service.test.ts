@@ -9,7 +9,7 @@ import {
 } from './coingecko.service';
 
 // Mock fetch globally
-global.fetch = vi.fn();
+globalThis.fetch = vi.fn() as typeof fetch;
 
 describe('CoinGecko Service', () => {
   beforeEach(() => {
