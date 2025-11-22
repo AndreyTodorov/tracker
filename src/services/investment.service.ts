@@ -13,6 +13,38 @@ import {
 import { db } from '../config/firebase';
 import type { Investment } from '../types';
 
+// Type for user data from database
+interface UserData {
+  email: string;
+  displayName: string;
+  shareCode?: string;
+  sharedPortfolios?: string[];
+}
+
+// Supported currencies
+const VALID_CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD'];
+
+// Input validation helper
+const validateInvestmentInput = (
+  buyPrice: number,
+  investmentAmount: number,
+  quantity: number,
+  currency: string
+): void => {
+  if (buyPrice <= 0) {
+    throw new Error('Buy price must be greater than 0');
+  }
+  if (investmentAmount <= 0) {
+    throw new Error('Investment amount must be greater than 0');
+  }
+  if (quantity <= 0) {
+    throw new Error('Quantity must be greater than 0');
+  }
+  if (!VALID_CURRENCIES.includes(currency.toUpperCase())) {
+    throw new Error(`Invalid currency. Supported currencies: ${VALID_CURRENCIES.join(', ')}`);
+  }
+};
+
 export const addInvestment = async (
   userId: string,
   userName: string,
@@ -24,6 +56,12 @@ export const addInvestment = async (
   currency: string,
   name?: string
 ): Promise<string> => {
+  // Validate inputs
+  if (!userId || !userName || !assetName || !assetSymbol) {
+    throw new Error('Missing required fields');
+  }
+  validateInvestmentInput(buyPrice, investmentAmount, quantity, currency);
+
   const investmentData = {
     userId,
     userName,
@@ -32,7 +70,7 @@ export const addInvestment = async (
     buyPrice,
     investmentAmount,
     quantity,
-    currency,
+    currency: currency.toUpperCase(),
     purchaseDate: Date.now(),
     createdAt: Date.now(),
     ...(name && { name }), // Only include name if provided
@@ -47,11 +85,40 @@ export const updateInvestment = async (
   investmentId: string,
   updates: Partial<Investment>
 ): Promise<void> => {
+  // Validate investmentId
+  if (!investmentId) {
+    throw new Error('Investment ID is required');
+  }
+
+  // Validate numeric fields if provided
+  if (updates.buyPrice !== undefined && updates.buyPrice <= 0) {
+    throw new Error('Buy price must be greater than 0');
+  }
+  if (updates.investmentAmount !== undefined && updates.investmentAmount <= 0) {
+    throw new Error('Investment amount must be greater than 0');
+  }
+  if (updates.quantity !== undefined && updates.quantity <= 0) {
+    throw new Error('Quantity must be greater than 0');
+  }
+  if (updates.currency !== undefined && !VALID_CURRENCIES.includes(updates.currency.toUpperCase())) {
+    throw new Error(`Invalid currency. Supported currencies: ${VALID_CURRENCIES.join(', ')}`);
+  }
+
+  // Normalize currency to uppercase if provided
+  const normalizedUpdates = {
+    ...updates,
+    ...(updates.currency && { currency: updates.currency.toUpperCase() }),
+  };
+
   const investmentRef = ref(db, `investments/${investmentId}`);
-  await update(investmentRef, updates);
+  await update(investmentRef, normalizedUpdates);
 };
 
 export const deleteInvestment = async (investmentId: string): Promise<void> => {
+  if (!investmentId) {
+    throw new Error('Investment ID is required');
+  }
+
   const investmentRef = ref(db, `investments/${investmentId}`);
   await remove(investmentRef);
 };
@@ -164,6 +231,14 @@ export const addSharedPortfolio = async (
   userId: string,
   shareCode: string
 ): Promise<boolean> => {
+  // Validate inputs
+  if (!userId) {
+    throw new Error('User ID is required');
+  }
+  if (!shareCode) {
+    throw new Error('Share code is required');
+  }
+
   // Verify share code exists
   const usersRef = ref(db, 'users');
   const snapshot = await get(usersRef);
@@ -203,6 +278,10 @@ export const addSharedPortfolio = async (
 };
 
 export const getUserByShareCode = async (shareCode: string): Promise<string | null> => {
+  if (!shareCode) {
+    throw new Error('Share code is required');
+  }
+
   const usersRef = ref(db, 'users');
   const snapshot = await get(usersRef);
 
@@ -210,8 +289,8 @@ export const getUserByShareCode = async (shareCode: string): Promise<string | nu
     return null;
   }
 
-  const users = snapshot.val();
-  for (const user of Object.values(users) as any[]) {
+  const users = snapshot.val() as Record<string, UserData>;
+  for (const user of Object.values(users)) {
     if (user.shareCode === shareCode) {
       return user.displayName || user.email;
     }
@@ -224,6 +303,10 @@ export const getPublicPortfolio = async (
   shareCode: string
 ): Promise<{ investments: Investment[]; ownerName: string } | null> => {
   try {
+    if (!shareCode) {
+      throw new Error('Share code is required');
+    }
+
     // Find user by share code
     const usersRef = ref(db, 'users');
     const usersSnapshot = await get(usersRef);
@@ -232,12 +315,12 @@ export const getPublicPortfolio = async (
       return null;
     }
 
-    const users = usersSnapshot.val();
+    const users = usersSnapshot.val() as Record<string, UserData>;
     let targetUserId: string | null = null;
     let ownerName = '';
 
     // Find the user with matching share code
-    for (const [userId, userData] of Object.entries(users) as [string, any][]) {
+    for (const [userId, userData] of Object.entries(users)) {
       if (userData.shareCode === shareCode) {
         targetUserId = userId;
         ownerName = userData.displayName || userData.email;

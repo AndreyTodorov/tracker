@@ -9,6 +9,7 @@ import { searchCrypto, getCryptoDetails } from '../../services/coingecko.service
 import { addInvestment } from '../../services/investment.service';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import type { SelectedCryptoAsset, CoinGeckoSearchResult } from '../../types';
 
 interface InvestmentFormData {
   name?: string;
@@ -23,7 +24,7 @@ export const InvestmentForm = () => {
   const toast = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<ComboboxOption[]>([]);
-  const [selectedAsset, setSelectedAsset] = useState<any | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<SelectedCryptoAsset | null>(null);
   const [selectedValue, setSelectedValue] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,7 +67,7 @@ export const InvestmentForm = () => {
       setIsSearching(true);
       try {
         const results = await searchCrypto(searchQuery);
-        const options: ComboboxOption[] = results.map((result: any) => ({
+        const options: ComboboxOption[] = results.map((result: CoinGeckoSearchResult) => ({
           value: result.id,
           label: `${result.name} (${result.symbol?.toUpperCase()})`,
           icon: result.thumb,

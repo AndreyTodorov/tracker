@@ -42,7 +42,21 @@ export interface CoinGeckoResponse {
   symbol: string;
   name: string;
   current_price: number;
-  price_change_percentage_24h: number;
+  price_change_percentage_24h?: number;
+  thumb?: string; // Icon URL for search results
+}
+
+export interface CoinGeckoSearchResult {
+  id: string;
+  symbol: string;
+  name: string;
+  thumb?: string;
+}
+
+export interface SelectedCryptoAsset {
+  id: string;
+  name: string;
+  symbol: string;
 }
 
 export type TabType = 'my' | 'shared' | 'all';
