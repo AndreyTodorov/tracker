@@ -81,7 +81,7 @@ export function Combobox({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 bg-slate-800/95 backdrop-blur-sm border border-white/20" align="start">
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 bg-slate-900 border border-slate-600" align="start">
           <Command shouldFilter={false} className="bg-transparent">
             <CommandInput
               placeholder={searchPlaceholder}
@@ -107,7 +107,7 @@ export function Combobox({
                         setOpen(false);
                         setSearch('');
                       }}
-                      className="text-gray-200 data-[selected=true]:bg-white/10 data-[selected=true]:text-white hover:bg-white/5 cursor-pointer"
+                      className="text-gray-200 data-[selected=true]:bg-slate-700 data-[selected=true]:text-white hover:bg-slate-800 cursor-pointer"
                     >
                       <Check
                         className={cn(

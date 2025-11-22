@@ -8,11 +8,11 @@ const cardVariants = cva(
   {
     variants: {
       variant: {
-        default: 'glass',
-        strong: 'glass-strong',
+        default: 'bg-slate-900 border border-slate-700',
+        strong: 'bg-slate-800 border border-slate-600',
       },
       hover: {
-        true: 'hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/20',
+        true: 'hover:bg-slate-800 hover:border-slate-600 hover:shadow-lg',
         false: '',
       },
     },

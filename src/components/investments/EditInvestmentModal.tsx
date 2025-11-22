@@ -117,14 +117,14 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
           {/* Asset Info (Read-only) */}
-          <div className="p-3 rounded-lg glass">
+          <div className="p-3 rounded-lg bg-slate-900 border border-slate-700">
             <div className="text-sm text-gray-400 mb-1">Asset</div>
             <div className="text-lg font-bold">{investment.assetName}</div>
             <div className="text-sm text-gray-400 uppercase">{investment.assetSymbol}</div>
           </div>
 
           {/* Current Price Display */}
-          <div className="p-3 rounded-lg glass">
+          <div className="p-3 rounded-lg bg-slate-900 border border-slate-700">
             <div className="flex items-center justify-between mb-1">
               <div className="text-sm text-gray-400">Current Price ({currency || investment.currency})</div>
               <Button
@@ -156,7 +156,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
             </label>
             <select
               {...register('currency', { required: 'Currency is required' })}
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             >
               <option value="EUR" className="bg-slate-800">EUR (€)</option>
               <option value="USD" className="bg-slate-800">USD ($)</option>
@@ -208,7 +208,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
                   min: { value: 0.01, message: 'Amount must be greater than 0' },
                 })}
                 onChange={handleAmountChange}
-                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
               {errors.investmentAmount && (
                 <p className="mt-1.5 text-sm text-red-400">{errors.investmentAmount.message}</p>

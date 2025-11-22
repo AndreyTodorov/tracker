@@ -22,7 +22,7 @@ export const CommandInput = forwardRef<
   React.ElementRef<typeof CommandPrimitive.Input>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
 >(({ className, ...props }, ref) => (
-  <div className="flex items-center border-b border-white/10 px-3" cmdk-input-wrapper="">
+  <div className="flex items-center border-b border-slate-700 px-3" cmdk-input-wrapper="">
     <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
     <CommandPrimitive.Input
       ref={ref}
@@ -81,7 +81,7 @@ export const CommandSeparator = forwardRef<
 >(({ className, ...props }, ref) => (
   <CommandPrimitive.Separator
     ref={ref}
-    className={cn('-mx-1 h-px bg-white/10', className)}
+    className={cn('-mx-1 h-px bg-slate-700', className)}
     {...props}
   />
 ));
@@ -96,7 +96,7 @@ export const CommandItem = forwardRef<
     className={cn(
       'relative flex cursor-pointer select-none items-center rounded-lg px-2 py-2 text-sm outline-none',
       'data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50',
-      'data-[selected=true]:bg-white/10 hover:bg-white/5',
+      'data-[selected=true]:bg-slate-700 hover:bg-slate-800',
       className
     )}
     {...props}

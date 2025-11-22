@@ -107,7 +107,7 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-white/10" />
+        <div className="border-t border-slate-700" />
 
         {/* Join Portfolio */}
         <div>
@@ -149,7 +149,7 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
         {/* Joined Portfolios */}
         {userData?.sharedPortfolios && userData.sharedPortfolios.length > 0 && (
           <>
-            <div className="border-t border-white/10" />
+            <div className="border-t border-slate-700" />
             <div>
               <h3 className="text-lg font-semibold mb-3">Joined Portfolios</h3>
               <div className="space-y-2">

@@ -36,7 +36,7 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
     <Card hover className="p-6 relative">
       {/* User Info */}
       <div className="flex items-center gap-2 mb-4">
-        <div className="p-1.5 rounded-full bg-white/10">
+        <div className="p-1.5 rounded-full bg-slate-700">
           <User size={14} className="text-gray-400" />
         </div>
         <span className="text-sm text-gray-400">{investment.userName}</span>

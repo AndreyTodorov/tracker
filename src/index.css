@@ -4,18 +4,22 @@
 
 @layer base {
   body {
-    @apply bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900;
+    @apply bg-slate-950;
     @apply text-white min-h-screen;
     @apply antialiased;
   }
 }
 
 @layer utilities {
-  .glass {
-    @apply bg-white/10 backdrop-blur-md border border-white/20;
+  .card-surface {
+    @apply bg-slate-900 border border-slate-700;
   }
 
-  .glass-strong {
-    @apply bg-white/20 backdrop-blur-lg border border-white/30;
+  .card-surface-hover {
+    @apply bg-slate-900 border border-slate-700 hover:bg-slate-800 hover:border-slate-600;
+  }
+
+  .input-surface {
+    @apply bg-slate-800 border border-slate-700;
   }
 }

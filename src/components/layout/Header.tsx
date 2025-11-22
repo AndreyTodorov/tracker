@@ -19,7 +19,7 @@ export const Header = () => {
 
   return (
     <>
-      <header className="glass-strong border-b border-white/10 sticky top-0 z-40">
+      <header className="glass-strong border-b border-slate-700 sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}

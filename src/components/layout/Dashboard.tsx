@@ -69,7 +69,7 @@ export const Dashboard = () => {
                     ${
                       activeTab === tab.id
                         ? 'glass-strong text-white'
-                        : 'glass hover:bg-white/10 text-gray-400'
+                        : 'glass hover:bg-slate-700 text-gray-400'
                     }
                   `}
                 >

@@ -21,7 +21,7 @@ export const InvestmentList = ({ investments, prices, loading }: InvestmentListP
   if (investments.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="p-4 rounded-full bg-white/5 mb-4">
+        <div className="p-4 rounded-full bg-slate-800 mb-4">
           <TrendingUp size={48} className="text-gray-400" />
         </div>
         <h3 className="text-xl font-bold mb-2">No Investments Yet</h3>
