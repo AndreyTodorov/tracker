@@ -35,7 +35,7 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/tracker">
       <AuthProvider>
         <Routes>
           {/* Public Routes */}
