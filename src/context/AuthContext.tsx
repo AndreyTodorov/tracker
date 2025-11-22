@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -40,8 +41,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setCurrentUser(user);
 
       if (user) {
-        const data = await getUserData(user.uid);
-        setUserData(data);
+        try {
+          const data = await getUserData(user.uid);
+          setUserData(data);
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          // Set userData to null but keep user authenticated
+          setUserData(null);
+          // User can still use the app, but some features might be limited
+        }
       } else {
         setUserData(null);
       }

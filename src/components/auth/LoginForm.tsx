@@ -4,6 +4,7 @@ import { LogIn } from 'lucide-react';
 import { signIn } from '../../services/auth.service';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { useToast } from '../../context/ToastContext';
 
 interface LoginFormData {
   email: string;
@@ -18,6 +19,26 @@ export const LoginForm = ({ onToggleMode }: LoginFormProps) => {
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
+  const toast = useToast();
+
+  const getFirebaseErrorMessage = (error: unknown): string => {
+    const errorCode = (error as { code?: string })?.code || '';
+
+    switch (errorCode) {
+      case 'auth/user-not-found':
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential':
+        return 'Invalid email or password. Please try again.';
+      case 'auth/too-many-requests':
+        return 'Too many failed login attempts. Please try again later.';
+      case 'auth/network-request-failed':
+        return 'Network error. Please check your connection.';
+      case 'auth/user-disabled':
+        return 'This account has been disabled.';
+      default:
+        return (error as { message?: string })?.message || 'Failed to sign in. Please try again.';
+    }
+  };
 
   const onSubmit = async (data: LoginFormData) => {
     setError('');
@@ -25,8 +46,11 @@ export const LoginForm = ({ onToggleMode }: LoginFormProps) => {
 
     try {
       await signIn(data.email, data.password);
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign in');
+      toast.success('Welcome back!');
+    } catch (err: unknown) {
+      const errorMessage = getFirebaseErrorMessage(err);
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

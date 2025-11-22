@@ -1,9 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import { AuthLayout } from './components/auth/AuthLayout';
 import { Dashboard } from './components/layout/Dashboard';
 import { PublicPortfolio } from './components/public/PublicPortfolio';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
+import { ErrorBoundary } from './components/error/ErrorBoundary';
+import { ToastContainer } from './components/ui/ToastContainer';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { currentUser, loading } = useAuth();
@@ -35,34 +38,52 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
 
 function App() {
   return (
-    <BrowserRouter basename="/tracker">
-      <AuthProvider>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/public" element={<PublicPortfolio />} />
+    <ErrorBoundary>
+      <BrowserRouter basename="/tracker">
+        <ToastProvider>
+          <AuthProvider>
+            <ToastContainer />
+            <ErrorBoundary>
+              <Routes>
+              {/* Public Routes */}
+              <Route
+                path="/public"
+                element={
+                  <ErrorBoundary>
+                    <PublicPortfolio />
+                  </ErrorBoundary>
+                }
+              />
 
-          {/* Auth Routes */}
-          <Route
-            path="/login"
-            element={
-              <AuthRoute>
-                <AuthLayout />
-              </AuthRoute>
-            }
-          />
+              {/* Auth Routes */}
+              <Route
+                path="/login"
+                element={
+                  <AuthRoute>
+                    <ErrorBoundary>
+                      <AuthLayout />
+                    </ErrorBoundary>
+                  </AuthRoute>
+                }
+              />
 
-          {/* Protected Routes */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+              {/* Protected Routes */}
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <ErrorBoundary>
+                      <Dashboard />
+                    </ErrorBoundary>
+                  </ProtectedRoute>
+                }
+              />
+              </Routes>
+            </ErrorBoundary>
+          </AuthProvider>
+        </ToastProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

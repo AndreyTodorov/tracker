@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { updateInvestment } from '../../services/investment.service';
 import type { Investment } from '../../types';
+import { useToast } from '../../context/ToastContext';
 
 interface EditInvestmentFormData {
   name?: string;
@@ -22,8 +23,8 @@ interface EditInvestmentModalProps {
 }
 
 export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose }: EditInvestmentModalProps) => {
+  const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [lastEditedField, setLastEditedField] = useState<'amount' | 'quantity' | null>(null);
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<EditInvestmentFormData>({
@@ -68,7 +69,6 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
 
   const onSubmit = async (data: EditInvestmentFormData) => {
     setIsSubmitting(true);
-    setSuccess(false);
 
     try {
       await updateInvestment(investment.id, {
@@ -79,13 +79,14 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
         currency: data.currency,
       });
 
-      setSuccess(true);
+      toast.success('Investment updated successfully!');
       setTimeout(() => {
-        setSuccess(false);
         onClose();
-      }, 1500);
-    } catch (error) {
+      }, 500);
+    } catch (error: unknown) {
       console.error('Error updating investment:', error);
+      const errorMessage = (error as { message?: string })?.message || 'Failed to update investment. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -220,13 +221,6 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
               error={errors.investmentAmount?.message}
             />
           </div>
-
-          {/* Success Message */}
-          {success && (
-            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/50">
-              <p className="text-green-400 text-sm font-medium">Investment updated successfully!</p>
-            </div>
-          )}
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-2">

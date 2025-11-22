@@ -84,7 +84,7 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
       } else {
         setJoinError('Invalid share code. Please check and try again.');
       }
-    } catch (error) {
+    } catch {
       setJoinError('Failed to join portfolio. Please try again.');
     } finally {
       setIsJoining(false);
