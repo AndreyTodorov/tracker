@@ -113,6 +113,7 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
               variant="secondary"
               onClick={handleCopy}
               className="px-4"
+              aria-label="Copy share code"
             >
               {copied ? <Check size={20} /> : <Copy size={20} />}
             </Button>
@@ -136,6 +137,7 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
                 size="sm"
                 onClick={handleCopyLink}
                 className="px-3"
+                aria-label="Copy public link"
               >
                 {linkCopied ? <Check size={16} /> : <Copy size={16} />}
               </Button>
