@@ -240,10 +240,11 @@ export const InvestmentForm = () => {
 
         {/* Currency Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-200 mb-1.5">
+          <label htmlFor="currency" className="block text-sm font-medium text-gray-200 mb-1.5">
             Currency
           </label>
           <select
+            id="currency"
             {...register('currency', { required: 'Currency is required' })}
             className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           >

@@ -74,6 +74,7 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
               onClick={() => setIsEditModalOpen(true)}
               className="text-blue-400 hover:text-blue-300"
               disabled={isDeleting}
+              aria-label="Edit investment"
             >
               <Pencil size={18} />
             </Button>
@@ -84,6 +85,7 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
               className="text-red-400 hover:text-red-300"
               isLoading={isDeleting}
               disabled={isDeleting}
+              aria-label="Delete investment"
             >
               <Trash2 size={18} />
             </Button>

@@ -57,6 +57,7 @@ export const Header = () => {
                 size="sm"
                 onClick={handleSignOut}
                 className="text-red-400 hover:text-red-300"
+                aria-label="Sign out"
               >
                 <LogOut size={18} />
               </Button>

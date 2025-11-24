@@ -88,6 +88,7 @@ export const AuthLayout = () => {
                     onClick={handleViewPublicPortfolio}
                     disabled={shareCode.trim().length !== 8}
                     className="px-4"
+                    aria-label="View portfolio"
                   >
                     <ArrowRight size={18} />
                   </Button>
