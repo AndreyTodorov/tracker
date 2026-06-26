@@ -11,8 +11,6 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
-    "emulators": "firebase emulators:start",
-    "dev:emulator": "concurrently -n emulators,vite -c blue,green \"firebase emulators:start\" \"vite --mode emulator\"",
     "emulators:docker": "docker compose up",
     "dev:docker": "concurrently -n docker,vite -c blue,green \"docker compose up\" \"vite --mode emulator\""
   },
@@ -50,7 +48,6 @@
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
-    "firebase-tools": "^13.35.1",
     "globals": "^16.5.0",
     "happy-dom": "^20.0.10",
     "jsdom": "^27.2.0",

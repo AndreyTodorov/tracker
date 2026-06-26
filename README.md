@@ -76,86 +76,43 @@ The app will be available at `http://localhost:5173`
 This connects to your **real** Firebase project (the values in `.env`). To
 develop against a local, throwaway database instead, use the emulator below.
 
-## 🧪 Local Development with the Firebase Emulator
+## 🧪 Local Development with the Firebase Emulator (Docker)
 
-Don't want to touch your production database while developing? The project is
-wired up for the **Firebase Local Emulator Suite**, which runs Authentication
-and the Realtime Database entirely on your machine — isolated from production
-and starting from an empty dataset. No real Firebase credentials (or even a
-`.env` file) are required.
+Don't want to touch your production database — or install Java — while
+developing? The emulators (Authentication + Realtime Database) run in a
+**Docker container**, isolated from production and starting from an empty
+dataset. No JDK, no `firebase-tools`, and no real Firebase credentials are
+needed on your machine; you only run Vite on the host.
 
-**Prerequisite — Java (JDK):** the Auth and Database emulators run on the JVM.
-```bash
-java -version            # verify a JDK is installed
-brew install openjdk@17  # macOS, if you don't have one
-```
-> The pinned `firebase-tools` (v13) works with **JDK 17+**. Newer
-> `firebase-tools` (v14+) require **JDK 21+** — install a newer JDK if you
-> bump that dependency.
+**Prerequisite:** Docker Desktop running.
 
 **Run the app against the emulator (one command):**
 ```bash
-pnpm dev:emulator
+pnpm dev:docker
 ```
-This starts the emulators and the Vite dev server together. Then open:
+This starts the emulator container and the Vite dev server together. Then open:
 - **App:** `http://localhost:5173`
 - **Emulator UI** (inspect/edit Auth users & DB data): `http://localhost:4000`
 
-Or run the emulators on their own:
+Or run just the emulators:
 ```bash
-pnpm emulators   # Auth :9099, Database :9000, UI :4000
+pnpm emulators:docker   # docker compose up
 ```
 
 **How it works:**
-- `pnpm dev:emulator` runs Vite in `--mode emulator`, loading
-  [`.env.emulator`](./.env.emulator). That file sets
-  `VITE_USE_FIREBASE_EMULATOR=true` plus throwaway config, so
-  `src/config/firebase.ts` redirects all Auth and Database traffic to the local
-  emulators instead of production.
-- The emulator enforces the same rules from
-  [`database.rules.json`](./database.rules.json), so you test against the real
-  security model.
-- Data lives in memory and resets when you stop the emulator. To persist it
-  between runs, export on exit and import next time:
-  ```bash
-  # first run creates the snapshot on exit
-  firebase emulators:start --export-on-exit=./.emulator-data
-  # later runs restore it
-  firebase emulators:start --import=./.emulator-data --export-on-exit=./.emulator-data
-  ```
-  (`./.emulator-data` is git-ignored.)
-- Plain `pnpm dev` is unaffected — it still uses your real project via `.env`.
-
-### Run the emulator in Docker (no local Java)
-
-Don't want a JDK on your machine at all? Run the emulators in a container —
-Java and `firebase-tools` live inside the image; you only run Vite on the host.
-
-**Prerequisite:** Docker Desktop running. No Java, no `firebase-tools` needed locally.
-
-```bash
-pnpm dev:docker        # builds the image (first run), starts emulators + Vite
-```
-Then open the **App** at `http://localhost:5173` and the **Emulator UI** at
-`http://localhost:4000`. Or run just the emulators:
-
-```bash
-pnpm emulators:docker  # docker compose up
-```
-
-**How it works:**
-- `docker/Dockerfile` installs a JRE + `firebase-tools` and pre-caches the
+- Vite runs in `--mode emulator`, loading [`.env.emulator`](./.env.emulator),
+  which sets `VITE_USE_FIREBASE_EMULATOR=true` plus throwaway config so
+  `src/config/firebase.ts` redirects all Auth and Database traffic to the
+  container (`127.0.0.1:9099/9000`) instead of production.
+- `docker/Dockerfile` bundles a JRE + `firebase-tools` and pre-caches the
   emulator JARs; `docker-compose.yml` publishes ports `9099` (auth),
   `9000` (database), `4000` (UI), `4400` (hub).
-- `docker/firebase.json` binds the emulators to `0.0.0.0` so the host browser
-  can reach them through the published ports — your host `firebase.json` is
-  left as-is.
-- The container loads the same `database.rules.json` (bind-mounted) and runs
-  the `demo-tracker` demo project, so no credentials or login are needed.
-- Data persists in a named Docker volume across restarts; remove it with
+- The container loads the same [`database.rules.json`](./database.rules.json)
+  (bind-mounted) and runs the `demo-tracker` demo project, so you test against
+  the real security model with no login.
+- Data persists in a named Docker volume across restarts; wipe it with
   `docker compose down -v`.
-- The app connects to `127.0.0.1:9099/9000` exactly as in the non-Docker flow,
-  so no code changes are required.
+- Plain `pnpm dev` is unaffected — it still uses your real project via `.env`.
 
 ## 🏗️ Building for Production
 
