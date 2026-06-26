@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { signUp } from '../../services/auth.service';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -19,10 +19,10 @@ interface RegisterFormProps {
 export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterFormData>();
+  const { register, handleSubmit, control, formState: { errors } } = useForm<RegisterFormData>();
   const toast = useToast();
 
-  const password = watch('password');
+  const password = useWatch({ control, name: 'password' });
 
   const getFirebaseErrorMessage = (error: unknown): string => {
     const errorCode = (error as { code?: string })?.code || '';

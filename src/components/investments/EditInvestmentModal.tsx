@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -28,7 +28,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastEditedField, setLastEditedField] = useState<'amount' | 'quantity' | null>(null);
 
-  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<EditInvestmentFormData>({
+  const { register, handleSubmit, control, setValue, reset, formState: { errors } } = useForm<EditInvestmentFormData>({
     defaultValues: {
       name: investment.name || '',
       buyPrice: investment.buyPrice,
@@ -38,9 +38,9 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
     },
   });
 
-  const buyPrice = watch('buyPrice');
-  const quantity = watch('quantity');
-  const currency = watch('currency');
+  const buyPrice = useWatch({ control, name: 'buyPrice' });
+  const quantity = useWatch({ control, name: 'quantity' });
+  const currency = useWatch({ control, name: 'currency' });
 
 
   // Update investment amount when quantity or buy price changes

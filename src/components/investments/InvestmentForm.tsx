@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { PlusCircle } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -33,19 +33,21 @@ export const InvestmentForm = () => {
   const [assetError, setAssetError] = useState('');
   const [lastEditedField, setLastEditedField] = useState<'amount' | 'quantity' | null>(null);
 
-  const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<InvestmentFormData>({
+  const { register, handleSubmit, control, reset, setValue, formState: { errors } } = useForm<InvestmentFormData>({
     defaultValues: {
       currency: 'EUR',
     },
   });
 
-  const buyPrice = watch('buyPrice');
-  const quantity = watch('quantity');
-  const currency = watch('currency');
+  const buyPrice = useWatch({ control, name: 'buyPrice' });
+  const quantity = useWatch({ control, name: 'quantity' });
+  const currency = useWatch({ control, name: 'currency' });
 
   // Search for cryptocurrencies
   useEffect(() => {
     if (!searchQuery || searchQuery.length < 2) {
+      // Clearing results in response to the query input changing.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSearchResults([]);
       return;
     }

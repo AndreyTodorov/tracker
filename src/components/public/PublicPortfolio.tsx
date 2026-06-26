@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { InvestmentList } from '../investments/InvestmentList';
@@ -30,16 +30,7 @@ export const PublicPortfolio = () => {
     return calculatePortfolioStats(investments, prices);
   }, [investments, prices]);
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (shareCode) {
-      loadPortfolio(shareCode);
-    }
-    // loadPortfolio is stable enough for this view; re-run when inputs change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shareCode, currentUser, authLoading]);
-
-  const loadPortfolio = async (code: string) => {
+  const loadPortfolio = useCallback(async (code: string) => {
     if (!code || code.length !== 8) {
       setError('Share code must be 8 characters');
       return;
@@ -70,7 +61,16 @@ export const PublicPortfolio = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (shareCode) {
+      // Loading portfolio data in response to the share code / auth changing.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      loadPortfolio(shareCode);
+    }
+  }, [shareCode, authLoading, loadPortfolio]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

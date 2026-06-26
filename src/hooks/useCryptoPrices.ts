@@ -25,6 +25,8 @@ export const useCryptoPrices = (investments: Investment[]) => {
 
   useEffect(() => {
     if (symbols.length === 0) {
+      // Intentionally syncing state to the (empty) investments prop.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPrices(new Map());
       setLoading(false);
       return;
