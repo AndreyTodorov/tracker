@@ -4,7 +4,7 @@ A beautiful, real-time cryptocurrency investment portfolio tracker built with Re
 
 ## ✨ Features
 
-- **Real-time Price Updates**: Crypto prices update automatically every 30 seconds via CoinGecko API
+- **Real-time Price Updates**: Crypto prices update automatically every 60 seconds via CoinGecko API
 - **Multi-User Support**: Full authentication system with email/password
 - **Portfolio Sharing**: Generate unique share codes to let friends view your investments
 - **Beautiful UI**: Modern glass-morphism design with smooth animations
@@ -20,7 +20,7 @@ A beautiful, real-time cryptocurrency investment portfolio tracker built with Re
 
 - **Frontend**: React 19, TypeScript, Vite
 - **Styling**: Tailwind CSS with custom glass-morphism effects
-- **Backend**: Firebase (Authentication + Firestore)
+- **Backend**: Firebase (Authentication + Realtime Database)
 - **API**: CoinGecko (free tier)
 - **Deployment**: GitHub Pages
 - **Forms**: React Hook Form
@@ -45,13 +45,17 @@ pnpm install
 Follow the detailed guide in [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) to:
 - Create a Firebase project
 - Enable Authentication (Email/Password)
-- Set up Firestore database
+- Set up the Realtime Database
 - Configure security rules
 - Get your Firebase credentials
 
+> Prefer not to set up a real Firebase project yet? Skip ahead to
+> [Local Development with the Firebase Emulator](#-local-development-with-the-firebase-emulator)
+> to run everything offline.
+
 4. **Configure environment variables**
 
-Create a `.env` file in the root directory:
+Create a `.env` file in the root directory (copy from [`.env.example`](./.env.example)):
 ```env
 VITE_FIREBASE_API_KEY=your_api_key
 VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
@@ -59,6 +63,7 @@ VITE_FIREBASE_PROJECT_ID=your_project_id
 VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
+VITE_FIREBASE_DATABASE_URL=https://your_project_id-default-rtdb.firebaseio.com
 ```
 
 5. **Run the development server**
@@ -67,6 +72,59 @@ pnpm dev
 ```
 
 The app will be available at `http://localhost:5173`
+
+This connects to your **real** Firebase project (the values in `.env`). To
+develop against a local, throwaway database instead, use the emulator below.
+
+## 🧪 Local Development with the Firebase Emulator
+
+Don't want to touch your production database while developing? The project is
+wired up for the **Firebase Local Emulator Suite**, which runs Authentication
+and the Realtime Database entirely on your machine — isolated from production
+and starting from an empty dataset. No real Firebase credentials (or even a
+`.env` file) are required.
+
+**Prerequisite — Java (JDK):** the Auth and Database emulators run on the JVM.
+```bash
+java -version            # verify a JDK is installed
+brew install openjdk@17  # macOS, if you don't have one
+```
+> The pinned `firebase-tools` (v13) works with **JDK 17+**. Newer
+> `firebase-tools` (v14+) require **JDK 21+** — install a newer JDK if you
+> bump that dependency.
+
+**Run the app against the emulator (one command):**
+```bash
+pnpm dev:emulator
+```
+This starts the emulators and the Vite dev server together. Then open:
+- **App:** `http://localhost:5173`
+- **Emulator UI** (inspect/edit Auth users & DB data): `http://localhost:4000`
+
+Or run the emulators on their own:
+```bash
+pnpm emulators   # Auth :9099, Database :9000, UI :4000
+```
+
+**How it works:**
+- `pnpm dev:emulator` runs Vite in `--mode emulator`, loading
+  [`.env.emulator`](./.env.emulator). That file sets
+  `VITE_USE_FIREBASE_EMULATOR=true` plus throwaway config, so
+  `src/config/firebase.ts` redirects all Auth and Database traffic to the local
+  emulators instead of production.
+- The emulator enforces the same rules from
+  [`database.rules.json`](./database.rules.json), so you test against the real
+  security model.
+- Data lives in memory and resets when you stop the emulator. To persist it
+  between runs, export on exit and import next time:
+  ```bash
+  # first run creates the snapshot on exit
+  firebase emulators:start --export-on-exit=./.emulator-data
+  # later runs restore it
+  firebase emulators:start --import=./.emulator-data --export-on-exit=./.emulator-data
+  ```
+  (`./.emulator-data` is git-ignored.)
+- Plain `pnpm dev` is unaffected — it still uses your real project via `.env`.
 
 ## 🏗️ Building for Production
 
