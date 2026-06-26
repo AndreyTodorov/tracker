@@ -103,6 +103,20 @@ describe('InvestmentCard Component', () => {
     expect(screen.getByText('Invested')).toBeInTheDocument();
   });
 
+  it('should display current value (current price x quantity) in the investment currency', () => {
+    const investment = mockInvestment({
+      buyPrice: 50000,
+      quantity: 0.02,
+      currency: 'USD',
+    });
+
+    render(<InvestmentCard investment={investment} currentPrice={60000} />);
+
+    expect(screen.getByText('Current Value')).toBeInTheDocument();
+    // 60000 * 0.02 = 1200
+    expect(screen.getByText('$1,200.00')).toBeInTheDocument();
+  });
+
   it('should show profit with positive value', () => {
     const investment = mockInvestment({
       buyPrice: 50000,
