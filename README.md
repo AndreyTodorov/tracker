@@ -126,6 +126,37 @@ pnpm emulators   # Auth :9099, Database :9000, UI :4000
   (`./.emulator-data` is git-ignored.)
 - Plain `pnpm dev` is unaffected — it still uses your real project via `.env`.
 
+### Run the emulator in Docker (no local Java)
+
+Don't want a JDK on your machine at all? Run the emulators in a container —
+Java and `firebase-tools` live inside the image; you only run Vite on the host.
+
+**Prerequisite:** Docker Desktop running. No Java, no `firebase-tools` needed locally.
+
+```bash
+pnpm dev:docker        # builds the image (first run), starts emulators + Vite
+```
+Then open the **App** at `http://localhost:5173` and the **Emulator UI** at
+`http://localhost:4000`. Or run just the emulators:
+
+```bash
+pnpm emulators:docker  # docker compose up
+```
+
+**How it works:**
+- `docker/Dockerfile` installs a JRE + `firebase-tools` and pre-caches the
+  emulator JARs; `docker-compose.yml` publishes ports `9099` (auth),
+  `9000` (database), `4000` (UI), `4400` (hub).
+- `docker/firebase.json` binds the emulators to `0.0.0.0` so the host browser
+  can reach them through the published ports — your host `firebase.json` is
+  left as-is.
+- The container loads the same `database.rules.json` (bind-mounted) and runs
+  the `demo-tracker` demo project, so no credentials or login are needed.
+- Data persists in a named Docker volume across restarts; remove it with
+  `docker compose down -v`.
+- The app connects to `127.0.0.1:9099/9000` exactly as in the non-Docker flow,
+  so no code changes are required.
+
 ## 🏗️ Building for Production
 
 ```bash
