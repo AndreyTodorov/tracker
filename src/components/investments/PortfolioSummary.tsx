@@ -16,6 +16,9 @@ export const PortfolioSummary = ({ portfolio }: PortfolioSummaryProps) => {
   const currencies = new Set(portfolio.investments.map(inv => inv.currency));
   const hasMixedCurrencies = currencies.size > 1;
   const currencyList = Array.from(currencies).join(', ');
+  // Format totals in the portfolio's own currency (the first one when mixed —
+  // the warning above explains that mixed totals aren't meaningful).
+  const displayCurrency = Array.from(currencies)[0] || 'USD';
 
   return (
     <>
@@ -47,9 +50,9 @@ export const PortfolioSummary = ({ portfolio }: PortfolioSummaryProps) => {
           </div>
           <div className="text-sm text-gray-400">Total Value</div>
         </div>
-        <div className="text-2xl font-bold">{formatCurrency(portfolio.totalValue)}</div>
+        <div className="text-2xl font-bold">{formatCurrency(portfolio.totalValue, displayCurrency)}</div>
         <div className="text-xs text-gray-500 mt-1">
-          Invested: {formatCurrency(portfolio.totalInvested)}
+          Invested: {formatCurrency(portfolio.totalInvested, displayCurrency)}
         </div>
       </Card>
 
@@ -62,7 +65,7 @@ export const PortfolioSummary = ({ portfolio }: PortfolioSummaryProps) => {
           <div className="text-sm text-gray-400">Total Profit/Loss</div>
         </div>
         <div className={`text-2xl font-bold ${getColorClass(portfolio.totalProfit)}`}>
-          {formatCurrency(portfolio.totalProfit)}
+          {formatCurrency(portfolio.totalProfit, displayCurrency)}
         </div>
         <div className={`text-xs mt-1 ${getColorClass(portfolio.totalProfitPercentage)}`}>
           {formatPercentage(portfolio.totalProfitPercentage)}

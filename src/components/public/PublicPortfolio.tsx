@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { InvestmentList } from '../investments/InvestmentList';
 import { PortfolioSummary } from '../investments/PortfolioSummary';
 import { Input } from '../ui/Input';
@@ -13,6 +14,7 @@ import type { Investment } from '../../types';
 import { formatDateTime } from '../../utils/formatters';
 
 export const PublicPortfolio = () => {
+  const { currentUser, loading: authLoading } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [shareCode, setShareCode] = useState(searchParams.get('code') || '');
   const [inputCode, setInputCode] = useState('');
@@ -29,14 +31,22 @@ export const PublicPortfolio = () => {
   }, [investments, prices]);
 
   useEffect(() => {
+    if (authLoading) return;
     if (shareCode) {
       loadPortfolio(shareCode);
     }
-  }, [shareCode]);
+    // loadPortfolio is stable enough for this view; re-run when inputs change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shareCode, currentUser, authLoading]);
 
   const loadPortfolio = async (code: string) => {
     if (!code || code.length !== 8) {
       setError('Share code must be 8 characters');
+      return;
+    }
+
+    if (!currentUser) {
+      setError('Please sign in to view shared portfolios.');
       return;
     }
 
@@ -128,7 +138,17 @@ export const PublicPortfolio = () => {
                   <Lock size={20} className="text-blue-400 mt-0.5" />
                   <div className="text-sm text-gray-300">
                     <p className="font-medium text-blue-400 mb-1">Privacy Note</p>
-                    <p>You can only view portfolios that have been shared with you. Share codes are 8-character unique identifiers.</p>
+                    <p>
+                      You need a signed-in account to view a shared portfolio. Share codes are
+                      8-character identifiers given to you by the portfolio owner.
+                    </p>
+                    {!authLoading && !currentUser && (
+                      <p className="mt-2">
+                        <Link to="/login" className="text-blue-400 underline hover:text-blue-300">
+                          Sign in to continue
+                        </Link>
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -169,7 +189,7 @@ export const PublicPortfolio = () => {
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Prices update every 30 seconds
+                  Prices update every 60 seconds
                 </p>
               </div>
             )}

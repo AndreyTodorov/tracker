@@ -158,6 +158,7 @@ export const InvestmentForm = () => {
         currentUser.uid,
         userData.displayName,
         selectedAsset.name,
+        selectedAsset.symbol.toUpperCase(),
         selectedAsset.id,
         data.buyPrice,
         data.investmentAmount,
@@ -266,7 +267,10 @@ export const InvestmentForm = () => {
           placeholder="0.00"
           {...register('buyPrice', {
             required: 'Buy price is required',
+            valueAsNumber: true,
             min: { value: 0.000001, message: 'Price must be greater than 0' },
+            // Editing the price re-derives the amount from price × quantity.
+            onChange: () => setLastEditedField(null),
           })}
           error={errors.buyPrice?.message}
         />
@@ -280,6 +284,7 @@ export const InvestmentForm = () => {
             placeholder="0.00"
             {...register('quantity', {
               required: 'Quantity is required',
+              valueAsNumber: true,
               min: { value: 0.00000001, message: 'Quantity must be greater than 0' },
               onChange: () => {
                 setLastEditedField('quantity');
@@ -296,6 +301,7 @@ export const InvestmentForm = () => {
             placeholder="0.00"
             {...register('investmentAmount', {
               required: 'Investment amount is required',
+              valueAsNumber: true,
               min: { value: 0.01, message: 'Amount must be greater than 0' },
               onChange: (e) => {
                 setLastEditedField('amount');

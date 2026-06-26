@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Copy, Check, Share2, Plus, Link } from 'lucide-react';
+import { Copy, Check, Share2, Plus, Link, X } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useAuth } from '../../context/AuthContext';
-import { addSharedPortfolio, getUserByShareCode } from '../../services/investment.service';
+import { addSharedPortfolio, getUserByShareCode, removeSharedPortfolio } from '../../services/investment.service';
 
 interface ShareCodeModalProps {
   isOpen: boolean;
@@ -24,17 +24,27 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
     ? `${window.location.origin}/tracker/public?code=${userData.shareCode}`
     : '';
 
-  const handleCopy = () => {
-    if (userData?.shareCode) {
-      navigator.clipboard.writeText(userData.shareCode);
+  const copyToClipboard = async (text: string): Promise<boolean> => {
+    if (!navigator.clipboard?.writeText) {
+      return false;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleCopy = async () => {
+    if (userData?.shareCode && (await copyToClipboard(userData.shareCode))) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
-  const handleCopyLink = () => {
-    if (publicLink) {
-      navigator.clipboard.writeText(publicLink);
+  const handleCopyLink = async () => {
+    if (publicLink && (await copyToClipboard(publicLink))) {
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
     }
@@ -74,13 +84,10 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
       const success = await addSharedPortfolio(currentUser.uid, joinCode.trim().toUpperCase());
 
       if (success) {
+        // userData is a live subscription, so the joined list updates on its own.
         setJoinSuccess(`Successfully joined ${userName}'s portfolio!`);
         setJoinCode('');
-        setTimeout(() => {
-          setJoinSuccess('');
-          onClose();
-          window.location.reload(); // Reload to update shared portfolios
-        }, 2000);
+        setTimeout(() => setJoinSuccess(''), 4000);
       } else {
         setJoinError('Invalid share code. Please check and try again.');
       }
@@ -88,6 +95,15 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
       setJoinError('Failed to join portfolio. Please try again.');
     } finally {
       setIsJoining(false);
+    }
+  };
+
+  const handleLeavePortfolio = async (code: string) => {
+    if (!currentUser) return;
+    try {
+      await removeSharedPortfolio(currentUser.uid, code);
+    } catch {
+      setJoinError('Failed to leave portfolio. Please try again.');
     }
   };
 
@@ -195,7 +211,18 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
                 {userData.sharedPortfolios.map((code) => (
                   <div key={code} className="glass rounded-lg p-3 flex items-center justify-between">
                     <span className="font-mono">{code}</span>
-                    <Check size={16} className="text-green-400" />
+                    <div className="flex items-center gap-2">
+                      <Check size={16} className="text-green-400" />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleLeavePortfolio(code)}
+                        className="text-red-400 hover:text-red-300"
+                        aria-label={`Leave portfolio ${code}`}
+                      >
+                        <X size={16} />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>

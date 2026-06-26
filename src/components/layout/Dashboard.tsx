@@ -46,7 +46,7 @@ export const Dashboard = () => {
                 </span>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Prices update every 30 seconds
+                Prices update every 60 seconds
               </p>
             </div>
           </div>

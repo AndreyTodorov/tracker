@@ -38,47 +38,6 @@ export const searchCrypto = async (query: string): Promise<CoinGeckoSearchResult
   }
 };
 
-export const getCryptoPrice = async (symbol: string): Promise<number | null> => {
-  if (!symbol || typeof symbol !== 'string') {
-    throw new Error('Symbol must be a non-empty string');
-  }
-
-  const normalizedSymbol = symbol.toLowerCase();
-
-  // Check cache first
-  const cached = priceCache.get(normalizedSymbol);
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.price;
-  }
-
-  try {
-    const response = await fetch(
-      `${COINGECKO_API_BASE}/simple/price?ids=${normalizedSymbol}&vs_currencies=usd`
-    );
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        console.warn('CoinGecko API rate limit exceeded');
-        return null;
-      }
-      throw new Error('Failed to fetch crypto price');
-    }
-
-    const data = await response.json();
-    const price = data[normalizedSymbol]?.usd;
-
-    if (price) {
-      priceCache.set(normalizedSymbol, { price, timestamp: Date.now() });
-      return price;
-    }
-
-    return null;
-  } catch (error) {
-    console.error('Error fetching crypto price:', error);
-    return null;
-  }
-};
-
 export const getMultipleCryptoPrices = async (
   symbols: string[],
   currencies: string[] = ['usd']

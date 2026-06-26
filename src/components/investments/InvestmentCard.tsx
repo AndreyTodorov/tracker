@@ -111,7 +111,7 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
         </div>
         <div>
           <div className="text-xs text-gray-400 mb-1">Invested</div>
-          <div className="font-medium">{formatCurrency(investment.investmentAmount, investment.currency)}</div>
+          <div className="font-medium">{formatCurrency(investment.buyPrice * investment.quantity, investment.currency)}</div>
         </div>
       </div>
 

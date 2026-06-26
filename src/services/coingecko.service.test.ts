@@ -2,7 +2,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   searchCrypto,
-  getCryptoPrice,
   getMultipleCryptoPrices,
   getCryptoDetails,
   clearPriceCache,
@@ -105,85 +104,6 @@ describe('CoinGecko Service', () => {
     });
   });
 
-  describe('getCryptoPrice', () => {
-    it('should throw error for non-string symbol', async () => {
-      await expect(getCryptoPrice(123 as any)).rejects.toThrow(
-        'Symbol must be a non-empty string'
-      );
-    });
-
-    it('should throw error for empty symbol', async () => {
-      await expect(getCryptoPrice('')).rejects.toThrow(
-        'Symbol must be a non-empty string'
-      );
-    });
-
-    it('should successfully fetch crypto price', async () => {
-      (fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ bitcoin: { usd: 50000 } }),
-      });
-
-      const result = await getCryptoPrice('bitcoin');
-      expect(result).toBe(50000);
-    });
-
-    it('should normalize symbol to lowercase', async () => {
-      (fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ bitcoin: { usd: 50000 } }),
-      });
-
-      await getCryptoPrice('BITCOIN');
-      expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('ids=bitcoin')
-      );
-    });
-
-    it('should return cached price within cache duration', async () => {
-      (fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ bitcoin: { usd: 50000 } }),
-      });
-
-      // First call - should fetch
-      const result1 = await getCryptoPrice('bitcoin');
-      expect(result1).toBe(50000);
-      expect(fetch).toHaveBeenCalledTimes(1);
-
-      // Second call - should use cache
-      const result2 = await getCryptoPrice('bitcoin');
-      expect(result2).toBe(50000);
-      expect(fetch).toHaveBeenCalledTimes(1); // Still 1, not called again
-    });
-
-    it('should handle 429 rate limit by returning null', async () => {
-      (fetch as any).mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-      });
-
-      const result = await getCryptoPrice('bitcoin');
-      expect(result).toBeNull();
-    });
-
-    it('should return null for non-existent symbol', async () => {
-      (fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({}),
-      });
-
-      const result = await getCryptoPrice('nonexistent');
-      expect(result).toBeNull();
-    });
-
-    it('should handle network errors by returning null', async () => {
-      (fetch as any).mockRejectedValueOnce(new Error('Network error'));
-
-      const result = await getCryptoPrice('bitcoin');
-      expect(result).toBeNull();
-    });
-  });
 
   describe('getMultipleCryptoPrices', () => {
     it('should throw error for empty symbols array', async () => {
@@ -445,11 +365,11 @@ describe('CoinGecko Service', () => {
         json: async () => ({ bitcoin: { usd: 50000 } }),
       });
 
-      await getCryptoPrice('bitcoin');
+      await getMultipleCryptoPrices(['bitcoin'], ['usd']);
       expect(fetch).toHaveBeenCalledTimes(1);
 
-      // Verify cache is used
-      await getCryptoPrice('bitcoin');
+      // Verify cache is used (no new fetch)
+      await getMultipleCryptoPrices(['bitcoin'], ['usd']);
       expect(fetch).toHaveBeenCalledTimes(1);
 
       // Clear cache
@@ -461,9 +381,9 @@ describe('CoinGecko Service', () => {
         json: async () => ({ bitcoin: { usd: 51000 } }),
       });
 
-      const result = await getCryptoPrice('bitcoin');
+      const result = await getMultipleCryptoPrices(['bitcoin'], ['usd']);
       expect(fetch).toHaveBeenCalledTimes(2);
-      expect(result).toBe(51000);
+      expect(result.get('bitcoin')?.get('usd')).toBe(51000);
     });
   });
 });

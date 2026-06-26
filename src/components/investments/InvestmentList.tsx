@@ -1,6 +1,7 @@
 import type { Investment } from '../../types';
 import { InvestmentCard } from './InvestmentCard';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
+import { getPriceKey } from '../../utils/calculations';
 import { TrendingUp } from 'lucide-react';
 
 interface InvestmentListProps {
@@ -35,7 +36,7 @@ export const InvestmentList = ({ investments, prices, loading }: InvestmentListP
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {investments.map((investment) => {
-        const symbolPrices = prices.get(investment.assetSymbol.toLowerCase());
+        const symbolPrices = prices.get(getPriceKey(investment));
         const currentPrice = symbolPrices?.get(investment.currency.toLowerCase());
 
         return (
