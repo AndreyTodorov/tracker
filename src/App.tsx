@@ -1,12 +1,27 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
-import { AuthLayout } from './components/auth/AuthLayout';
-import { Dashboard } from './components/layout/Dashboard';
-import { PublicPortfolio } from './components/public/PublicPortfolio';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
 import { ErrorBoundary } from './components/error/ErrorBoundary';
 import { ToastContainer } from './components/ui/ToastContainer';
+
+// Route components are code-split so each entry only ships what it needs.
+const AuthLayout = lazy(() =>
+  import('./components/auth/AuthLayout').then((m) => ({ default: m.AuthLayout }))
+);
+const Dashboard = lazy(() =>
+  import('./components/layout/Dashboard').then((m) => ({ default: m.Dashboard }))
+);
+const PublicPortfolio = lazy(() =>
+  import('./components/public/PublicPortfolio').then((m) => ({ default: m.PublicPortfolio }))
+);
+
+const RouteFallback = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <LoadingSpinner size="lg" />
+  </div>
+);
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { currentUser, loading } = useAuth();
@@ -44,6 +59,7 @@ function App() {
           <AuthProvider>
             <ToastContainer />
             <ErrorBoundary>
+              <Suspense fallback={<RouteFallback />}>
               <Routes>
               {/* Public Routes */}
               <Route
@@ -78,7 +94,11 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
+              {/* Unknown paths fall back to the dashboard (or login if signed out) */}
+              <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
+              </Suspense>
             </ErrorBoundary>
           </AuthProvider>
         </ToastProvider>

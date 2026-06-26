@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../config/firebase';
-import { getUserData } from '../services/auth.service';
+import { subscribeToUserData } from '../services/auth.service';
 import type { User } from '../types';
 
 interface AuthContextType {
@@ -37,27 +37,34 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    let unsubscribeUserData: (() => void) | undefined;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
 
-      if (user) {
-        try {
-          const data = await getUserData(user.uid);
-          setUserData(data);
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-          // Set userData to null but keep user authenticated
-          setUserData(null);
-          // User can still use the app, but some features might be limited
-        }
-      } else {
-        setUserData(null);
+      // Tear down any previous user-data listener before (re)subscribing.
+      if (unsubscribeUserData) {
+        unsubscribeUserData();
+        unsubscribeUserData = undefined;
       }
 
-      setLoading(false);
+      if (user) {
+        unsubscribeUserData = subscribeToUserData(user.uid, (data) => {
+          setUserData(data);
+          setLoading(false);
+        });
+      } else {
+        setUserData(null);
+        setLoading(false);
+      }
     });
 
-    return unsubscribe;
+    return () => {
+      if (unsubscribeUserData) {
+        unsubscribeUserData();
+      }
+      unsubscribeAuth();
+    };
   }, []);
 
   const value = {

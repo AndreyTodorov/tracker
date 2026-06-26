@@ -50,6 +50,7 @@ export const addInvestment = async (
   userName: string,
   assetName: string,
   assetSymbol: string,
+  coinId: string,
   buyPrice: number,
   investmentAmount: number,
   quantity: number,
@@ -57,7 +58,7 @@ export const addInvestment = async (
   name?: string
 ): Promise<string> => {
   // Validate inputs
-  if (!userId || !userName || !assetName || !assetSymbol) {
+  if (!userId || !userName || !assetName || !assetSymbol || !coinId) {
     throw new Error('Missing required fields');
   }
   validateInvestmentInput(buyPrice, investmentAmount, quantity, currency);
@@ -67,6 +68,7 @@ export const addInvestment = async (
     userName,
     assetName,
     assetSymbol,
+    coinId,
     buyPrice,
     investmentAmount,
     quantity,
@@ -169,11 +171,11 @@ export const subscribeToSharedInvestments = (
     return userIds;
   };
 
-  let unsubscribe: (() => void) | null = null;
   let cancelled = false;
+  const unsubscribers: (() => void)[] = [];
 
   getUserIdsFromShareCodes().then((userIds) => {
-    // Don't set up subscription if already cancelled
+    // Don't set up subscriptions if already cancelled
     if (cancelled) {
       return;
     }
@@ -184,19 +186,24 @@ export const subscribeToSharedInvestments = (
     }
 
     const investmentsRef = ref(db, 'investments');
-    unsubscribe = onValue(investmentsRef, (snapshot) => {
-      const investments: Investment[] = [];
-      snapshot.forEach((childSnapshot) => {
-        const investment = {
-          id: childSnapshot.key!,
-          ...childSnapshot.val(),
-        } as Investment;
+    // One indexed query per user (uses .indexOn "userId") instead of scanning
+    // the whole table. Keep each user's latest result and merge on any update.
+    const investmentsByUser = new Map<string, Investment[]>();
 
-        if (userIds.includes(investment.userId)) {
-          investments.push(investment);
-        }
+    userIds.forEach((userId) => {
+      const userQuery = query(investmentsRef, orderByChild('userId'), equalTo(userId));
+      const unsubscribe = onValue(userQuery, (snapshot) => {
+        const userInvestments: Investment[] = [];
+        snapshot.forEach((childSnapshot) => {
+          userInvestments.push({
+            id: childSnapshot.key!,
+            ...childSnapshot.val(),
+          } as Investment);
+        });
+        investmentsByUser.set(userId, userInvestments);
+        callback(Array.from(investmentsByUser.values()).flat());
       });
-      callback(investments);
+      unsubscribers.push(unsubscribe);
     });
   }).catch((error) => {
     console.error('Error fetching user IDs from share codes:', error);
@@ -204,9 +211,7 @@ export const subscribeToSharedInvestments = (
 
   return () => {
     cancelled = true;
-    if (unsubscribe) {
-      unsubscribe();
-    }
+    unsubscribers.forEach((unsubscribe) => unsubscribe());
   };
 };
 
@@ -275,6 +280,32 @@ export const addSharedPortfolio = async (
   }
 
   return true;
+};
+
+export const removeSharedPortfolio = async (
+  userId: string,
+  shareCode: string
+): Promise<void> => {
+  if (!userId) {
+    throw new Error('User ID is required');
+  }
+  if (!shareCode) {
+    throw new Error('Share code is required');
+  }
+
+  const userRef = ref(db, `users/${userId}`);
+  const userSnapshot = await get(userRef);
+
+  if (!userSnapshot.exists()) {
+    return;
+  }
+
+  const userData = userSnapshot.val();
+  const sharedPortfolios: string[] = userData.sharedPortfolios || [];
+
+  await update(userRef, {
+    sharedPortfolios: sharedPortfolios.filter((code) => code !== shareCode),
+  });
 };
 
 export const getUserByShareCode = async (shareCode: string): Promise<string | null> => {

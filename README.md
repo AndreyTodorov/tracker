@@ -4,7 +4,7 @@ A beautiful, real-time cryptocurrency investment portfolio tracker built with Re
 
 ## ✨ Features
 
-- **Real-time Price Updates**: Crypto prices update automatically every 30 seconds via CoinGecko API
+- **Real-time Price Updates**: Crypto prices update automatically every 60 seconds via CoinGecko API
 - **Multi-User Support**: Full authentication system with email/password
 - **Portfolio Sharing**: Generate unique share codes to let friends view your investments
 - **Beautiful UI**: Modern glass-morphism design with smooth animations
@@ -20,7 +20,7 @@ A beautiful, real-time cryptocurrency investment portfolio tracker built with Re
 
 - **Frontend**: React 19, TypeScript, Vite
 - **Styling**: Tailwind CSS with custom glass-morphism effects
-- **Backend**: Firebase (Authentication + Firestore)
+- **Backend**: Firebase (Authentication + Realtime Database)
 - **API**: CoinGecko (free tier)
 - **Deployment**: GitHub Pages
 - **Forms**: React Hook Form
@@ -45,13 +45,17 @@ pnpm install
 Follow the detailed guide in [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) to:
 - Create a Firebase project
 - Enable Authentication (Email/Password)
-- Set up Firestore database
+- Set up the Realtime Database
 - Configure security rules
 - Get your Firebase credentials
 
+> Prefer not to set up a real Firebase project yet? Skip ahead to
+> [Local Development with the Firebase Emulator](#-local-development-with-the-firebase-emulator)
+> to run everything offline.
+
 4. **Configure environment variables**
 
-Create a `.env` file in the root directory:
+Create a `.env` file in the root directory (copy from [`.env.example`](./.env.example)):
 ```env
 VITE_FIREBASE_API_KEY=your_api_key
 VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
@@ -59,6 +63,7 @@ VITE_FIREBASE_PROJECT_ID=your_project_id
 VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
+VITE_FIREBASE_DATABASE_URL=https://your_project_id-default-rtdb.firebaseio.com
 ```
 
 5. **Run the development server**
@@ -67,6 +72,47 @@ pnpm dev
 ```
 
 The app will be available at `http://localhost:5173`
+
+This connects to your **real** Firebase project (the values in `.env`). To
+develop against a local, throwaway database instead, use the emulator below.
+
+## 🧪 Local Development with the Firebase Emulator (Docker)
+
+Don't want to touch your production database — or install Java — while
+developing? The emulators (Authentication + Realtime Database) run in a
+**Docker container**, isolated from production and starting from an empty
+dataset. No JDK, no `firebase-tools`, and no real Firebase credentials are
+needed on your machine; you only run Vite on the host.
+
+**Prerequisite:** Docker Desktop running.
+
+**Run the app against the emulator (one command):**
+```bash
+pnpm dev:docker
+```
+This starts the emulator container and the Vite dev server together. Then open:
+- **App:** `http://localhost:5173`
+- **Emulator UI** (inspect/edit Auth users & DB data): `http://localhost:4000`
+
+Or run just the emulators:
+```bash
+pnpm emulators:docker   # docker compose up
+```
+
+**How it works:**
+- Vite runs in `--mode emulator`, loading [`.env.emulator`](./.env.emulator),
+  which sets `VITE_USE_FIREBASE_EMULATOR=true` plus throwaway config so
+  `src/config/firebase.ts` redirects all Auth and Database traffic to the
+  container (`127.0.0.1:9099/9000`) instead of production.
+- `docker/Dockerfile` bundles a JRE + `firebase-tools` and pre-caches the
+  emulator JARs; `docker-compose.yml` publishes ports `9099` (auth),
+  `9000` (database), `4000` (UI), `4400` (hub).
+- The container loads the same [`database.rules.json`](./database.rules.json)
+  (bind-mounted) and runs the `demo-tracker` demo project, so you test against
+  the real security model with no login.
+- Data persists in a named Docker volume across restarts; wipe it with
+  `docker compose down -v`.
+- Plain `pnpm dev` is unaffected — it still uses your real project via `.env`.
 
 ## 🏗️ Building for Production
 

@@ -3,6 +3,7 @@ import {
   calculateProfit,
   calculatePortfolioStats,
   generateShareCode,
+  getPriceKey,
 } from './calculations';
 import type { Investment } from '../types';
 
@@ -46,6 +47,27 @@ describe('calculateProfit', () => {
     const result = calculateProfit(1, 1000000, 1);
     expect(result.absolute).toBe(999999);
     expect(result.percentage).toBeCloseTo(99999900, 0);
+  });
+
+  it('should not return NaN/Infinity when invested amount is zero', () => {
+    const zeroQuantity = calculateProfit(100, 150, 0);
+    expect(zeroQuantity.absolute).toBe(0);
+    expect(zeroQuantity.percentage).toBe(0);
+
+    const zeroBuyPrice = calculateProfit(0, 150, 2);
+    expect(Number.isFinite(zeroBuyPrice.percentage)).toBe(true);
+    expect(zeroBuyPrice.percentage).toBe(0);
+  });
+});
+
+describe('getPriceKey', () => {
+  it('should prefer coinId when present', () => {
+    expect(getPriceKey({ coinId: 'Bitcoin', assetSymbol: 'BTC' })).toBe('bitcoin');
+  });
+
+  it('should fall back to assetSymbol for legacy records without coinId', () => {
+    expect(getPriceKey({ assetSymbol: 'Ethereum' })).toBe('ethereum');
+    expect(getPriceKey({ coinId: '', assetSymbol: 'Solana' })).toBe('solana');
   });
 });
 

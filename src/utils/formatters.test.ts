@@ -22,6 +22,11 @@ describe('formatCurrency', () => {
     expect(formatCurrency(1234.56, 'GBP')).toBe('£1,234.56');
   });
 
+  it('should use the currency\'s natural precision for zero-decimal currencies (JPY)', () => {
+    // JPY has no minor unit, so it must round to whole yen rather than ¥1,234.50.
+    expect(formatCurrency(1234.5, 'JPY')).toBe('¥1,235');
+  });
+
   it('should default to USD when no currency provided', () => {
     const result = formatCurrency(100);
     expect(result).toContain('$');

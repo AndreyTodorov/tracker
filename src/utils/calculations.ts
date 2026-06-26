@@ -1,5 +1,10 @@
 import type { Investment, Portfolio } from '../types';
 
+// The key used to look up live prices for an investment. New records store the
+// CoinGecko id in `coinId`; legacy records kept it in `assetSymbol`.
+export const getPriceKey = (investment: Pick<Investment, 'coinId' | 'assetSymbol'>): string =>
+  (investment.coinId || investment.assetSymbol).toLowerCase();
+
 export const calculateProfit = (
   buyPrice: number,
   currentPrice: number,
@@ -8,7 +13,7 @@ export const calculateProfit = (
   const currentValue = currentPrice * quantity;
   const investedAmount = buyPrice * quantity;
   const absolute = currentValue - investedAmount;
-  const percentage = ((absolute / investedAmount) * 100);
+  const percentage = investedAmount > 0 ? (absolute / investedAmount) * 100 : 0;
 
   return {
     absolute: Number(absolute.toFixed(2)),
@@ -24,7 +29,7 @@ export const calculatePortfolioStats = (
   let totalInvested = 0;
 
   investments.forEach((investment) => {
-    const symbolPrices = prices.get(investment.assetSymbol.toLowerCase());
+    const symbolPrices = prices.get(getPriceKey(investment));
     const currentPrice = symbolPrices?.get(investment.currency.toLowerCase()) || investment.buyPrice;
     const currentValue = currentPrice * investment.quantity;
     const investedAmount = investment.buyPrice * investment.quantity;

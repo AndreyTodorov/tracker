@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "emulators:docker": "docker compose up",
+    "dev:docker": "concurrently -n docker,vite -c blue,green \"docker compose up\" \"vite --mode emulator\""
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -42,14 +44,16 @@
     "@vitest/coverage-v8": "^4.0.13",
     "@vitest/ui": "^4.0.13",
     "autoprefixer": "^10.4.22",
+    "concurrently": "^10.0.3",
     "eslint": "^9.39.1",
-    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
     "happy-dom": "^20.0.10",
     "jsdom": "^27.2.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.18",
+    "tailwindcss-animate": "^1.0.7",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4",

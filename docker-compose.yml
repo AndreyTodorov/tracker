@@ -1,0 +1,29 @@
+services:
+  emulators:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: tracker-emulators
+    ports:
+      - "9099:9099" # Authentication
+      - "9000:9000" # Realtime Database
+      - "4000:4000" # Emulator UI
+      - "4400:4400" # Emulator Hub (used by the UI)
+    volumes:
+      # Live rules — edit database.rules.json without rebuilding the image.
+      - ./database.rules.json:/app/database.rules.json:ro
+      # Persist emulator data across restarts (named volume, not a host dir,
+      # so there are no root-owned files left in your working tree).
+      - emulator-data:/app/.emulator-data
+    # Import a previous snapshot only if one exists (first run has none),
+    # and always export on shutdown.
+    command:
+      - sh
+      - -c
+      - >
+        firebase emulators:start --project demo-tracker
+        --export-on-exit=/app/.emulator-data
+        $([ -f /app/.emulator-data/firebase-export-metadata.json ] && echo --import=/app/.emulator-data)
+
+volumes:
+  emulator-data:

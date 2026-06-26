@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getDatabase } from 'firebase/database';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getDatabase, connectDatabaseEmulator } from 'firebase/database';
 
 // Validate required environment variables
 const requiredEnvVars = [
@@ -41,5 +41,14 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase services
 export const auth = getAuth(app);
 export const db = getDatabase(app);
+
+// Connect to the Firebase Local Emulator Suite when explicitly enabled
+// (via `.env.emulator` + `pnpm dev:emulator`). This keeps local development
+// fully isolated from the production project — no real reads or writes.
+if (import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true') {
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+  connectDatabaseEmulator(db, '127.0.0.1', 9000);
+  console.info('[firebase] Connected to local emulators (Auth :9099, Database :9000)');
+}
 
 export default app;

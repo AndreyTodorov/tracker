@@ -47,107 +47,110 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
     <Card hover className="p-6 relative">
       {/* User Info */}
       <div className="flex items-center gap-2 mb-4">
-        <div className="p-1.5 rounded-full bg-slate-700">
-          <User size={14} className="text-gray-400" />
+        <div className="grid place-items-center w-6 h-6 rounded-full bg-surface2 border border-line">
+          <User size={12} className="text-muted" />
         </div>
-        <span className="text-sm text-gray-400">{investment.userName}</span>
+        <span className="text-sm text-muted">{investment.userName}</span>
       </div>
 
       {/* Asset Name */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex-1">
+      <div className="flex items-start justify-between mb-4 gap-3">
+        <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-xl font-bold">{investment.assetName}</h3>
+            <h3 className="text-xl font-bold tracking-tight">{investment.assetName}</h3>
             {investment.name && (
-              <span className="text-xs text-blue-400 px-2 py-1 rounded-full bg-blue-500/10 border border-blue-500/30">
-                📝 {investment.name}
+              <span className="text-[11px] text-accent px-2 py-0.5 rounded-md bg-accent/10 border border-accent/25">
+                {investment.name}
               </span>
             )}
           </div>
-          <p className="text-sm text-gray-400 uppercase">{investment.assetSymbol}</p>
+          <p className="text-xs text-muted uppercase tracking-widest font-mono mt-0.5">{investment.assetSymbol}</p>
         </div>
         {isOwner && (
-          <div className="flex gap-2">
+          <div className="flex gap-1 -mr-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsEditModalOpen(true)}
-              className="text-blue-400 hover:text-blue-300"
+              className="text-muted hover:text-accent hover:bg-accent/10"
               disabled={isDeleting}
               aria-label="Edit investment"
             >
-              <Pencil size={18} />
+              <Pencil size={16} />
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleDelete}
-              className="text-red-400 hover:text-red-300"
+              className="text-muted hover:text-loss hover:bg-loss/10"
               isLoading={isDeleting}
               disabled={isDeleting}
               aria-label="Delete investment"
             >
-              <Trash2 size={18} />
+              <Trash2 size={16} />
             </Button>
           </div>
         )}
       </div>
 
       {/* Purchase Info */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-4">
         <div>
-          <div className="text-xs text-gray-400 mb-1">Buy Price</div>
-          <div className="font-medium">{formatCryptoPrice(investment.buyPrice, investment.currency)}</div>
+          <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Buy Price</div>
+          <div className="tnum text-sm text-content">{formatCryptoPrice(investment.buyPrice, investment.currency)}</div>
         </div>
         <div>
-          <div className="text-xs text-gray-400 mb-1">Current Price</div>
-          <div className="font-medium">{formatCryptoPrice(price, investment.currency)}</div>
+          <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Current Price</div>
+          <div className="tnum text-sm text-content">{formatCryptoPrice(price, investment.currency)}</div>
         </div>
         <div>
-          <div className="text-xs text-gray-400 mb-1">Quantity</div>
-          <div className="font-medium">
+          <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Quantity</div>
+          <div className="tnum text-sm text-content">
             {investment.quantity.toLocaleString('en-US', { maximumFractionDigits: 8 })}
           </div>
         </div>
         <div>
-          <div className="text-xs text-gray-400 mb-1">Invested</div>
-          <div className="font-medium">{formatCurrency(investment.investmentAmount, investment.currency)}</div>
+          <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Invested</div>
+          <div className="tnum text-sm text-content">{formatCurrency(investment.buyPrice * investment.quantity, investment.currency)}</div>
         </div>
       </div>
 
       {/* Profit/Loss */}
-      <div className={`p-4 rounded-lg ${getBgColorClass(profit.absolute)}`}>
+      <div className={`p-4 rounded-lg border border-line ${getBgColorClass(profit.absolute)}`}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             {profit.absolute >= 0 ? (
               <TrendingUp size={20} className="text-profit" />
             ) : (
               <TrendingDown size={20} className="text-loss" />
             )}
             <div>
-              <div className="text-xs text-gray-400">Profit/Loss</div>
-              <div className={`text-2xl font-bold ${getColorClass(profit.absolute)}`}>
+              <div className="text-[11px] text-muted uppercase tracking-wider">Profit/Loss</div>
+              <div className={`tnum text-2xl font-semibold ${getColorClass(profit.absolute)}`}>
                 {formatCurrency(profit.absolute, investment.currency)}
               </div>
             </div>
           </div>
-          <div className={`text-xl font-bold ${getColorClass(profit.percentage)}`}>
+          <div className={`tnum text-lg font-semibold ${getColorClass(profit.percentage)}`}>
             {formatPercentage(profit.percentage)}
           </div>
         </div>
       </div>
 
       {/* Purchase Date */}
-      <div className="mt-3 text-xs text-gray-500 text-right">
+      <div className="mt-3 text-[11px] text-muted text-right">
         Purchased {formatDate(investment.purchaseDate)}
       </div>
 
       {/* Live Update Indicator */}
       {currentPrice && currentPrice !== investment.buyPrice && (
-        <div className="absolute top-3 right-3">
-          <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/20 border border-green-500/50">
-            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-            <span className="text-xs text-green-400 font-medium">LIVE</span>
+        <div className="absolute top-4 right-4">
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-profit/10 border border-profit/30">
+            <span className="relative flex w-1.5 h-1.5">
+              <span className="absolute inline-flex w-full h-full rounded-full bg-profit opacity-60 animate-ping" />
+              <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-profit" />
+            </span>
+            <span className="text-[10px] text-profit font-medium tracking-wider">LIVE</span>
           </div>
         </div>
       )}

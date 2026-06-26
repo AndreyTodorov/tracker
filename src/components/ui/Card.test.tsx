@@ -11,28 +11,28 @@ describe('Card Component', () => {
   it('should apply default variant', () => {
     render(<Card data-testid="card">Content</Card>);
     const card = screen.getByTestId('card');
-    expect(card.className).toMatch(/bg-slate-900/);
-    expect(card.className).toMatch(/border-slate-700/);
+    expect(card.className).toMatch(/bg-surface/);
+    expect(card.className).toMatch(/border-line/);
   });
 
   it('should apply strong variant', () => {
     render(<Card variant="strong" data-testid="card">Content</Card>);
     const card = screen.getByTestId('card');
-    expect(card.className).toMatch(/bg-slate-800/);
-    expect(card.className).toMatch(/border-slate-600/);
+    expect(card.className).toMatch(/bg-surface2/);
+    expect(card.className).toMatch(/border-line/);
   });
 
   it('should apply hover effect when hover prop is true', () => {
     render(<Card hover data-testid="card">Content</Card>);
     const card = screen.getByTestId('card');
-    expect(card.className).toMatch(/hover:bg-slate-800/);
-    expect(card.className).toMatch(/hover:shadow-lg/);
+    expect(card.className).toMatch(/hover:border-accent/);
+    expect(card.className).toMatch(/hover:shadow-panel/);
   });
 
   it('should not apply hover effect by default', () => {
     render(<Card data-testid="card">Content</Card>);
     const card = screen.getByTestId('card');
-    expect(card.className).not.toMatch(/hover:bg-slate-800/);
+    expect(card.className).not.toMatch(/hover:shadow-panel/);
   });
 
   it('should accept custom className', () => {
@@ -78,7 +78,7 @@ describe('Card Component', () => {
   it('should have transition animation', () => {
     render(<Card data-testid="card">Content</Card>);
     const card = screen.getByTestId('card');
-    expect(card.className).toMatch(/transition-all/);
-    expect(card.className).toMatch(/duration-300/);
+    expect(card.className).toMatch(/transition-colors/);
+    expect(card.className).toMatch(/duration-200/);
   });
 });

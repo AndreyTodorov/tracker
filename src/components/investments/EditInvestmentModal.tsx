@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { updateInvestment } from '../../services/investment.service';
+import { formatCryptoPrice } from '../../utils/formatters';
 import type { Investment } from '../../types';
 import { useToast } from '../../context/ToastContext';
 
@@ -27,7 +28,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastEditedField, setLastEditedField] = useState<'amount' | 'quantity' | null>(null);
 
-  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<EditInvestmentFormData>({
+  const { register, handleSubmit, control, setValue, reset, formState: { errors } } = useForm<EditInvestmentFormData>({
     defaultValues: {
       name: investment.name || '',
       buyPrice: investment.buyPrice,
@@ -37,23 +38,10 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
     },
   });
 
-  const buyPrice = watch('buyPrice');
-  const quantity = watch('quantity');
-  const currency = watch('currency');
+  const buyPrice = useWatch({ control, name: 'buyPrice' });
+  const quantity = useWatch({ control, name: 'quantity' });
+  const currency = useWatch({ control, name: 'currency' });
 
-  // Get currency symbol
-  const getCurrencySymbol = (curr: string) => {
-    const symbols: Record<string, string> = {
-      EUR: '€',
-      USD: '$',
-      GBP: '£',
-      JPY: '¥',
-      CHF: 'Fr',
-      CAD: 'C$',
-      AUD: 'A$',
-    };
-    return symbols[curr] || curr;
-  };
 
   // Update investment amount when quantity or buy price changes
   // But only if the user is NOT currently editing the amount field
@@ -117,27 +105,28 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
           {/* Asset Info (Read-only) */}
-          <div className="p-3 rounded-lg bg-slate-900 border border-slate-700">
-            <div className="text-sm text-gray-400 mb-1">Asset</div>
-            <div className="text-lg font-bold">{investment.assetName}</div>
-            <div className="text-sm text-gray-400 uppercase">{investment.assetSymbol}</div>
+          <div className="p-3 rounded-lg bg-surface2 border border-line">
+            <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Asset</div>
+            <div className="text-lg font-bold tracking-tight">{investment.assetName}</div>
+            <div className="text-xs text-muted uppercase tracking-widest font-mono">{investment.assetSymbol}</div>
           </div>
 
           {/* Current Price Display */}
-          <div className="p-3 rounded-lg bg-slate-900 border border-slate-700">
+          <div className="p-3 rounded-lg bg-surface2 border border-line">
             <div className="flex items-center justify-between mb-1">
-              <div className="text-sm text-gray-400">Current Price ({currency || investment.currency})</div>
+              <div className="text-[11px] text-muted uppercase tracking-wider">Current Price ({currency || investment.currency})</div>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
+                className="text-accent hover:bg-accent/10 -mr-1"
                 onClick={() => setValue('buyPrice', currentPrice)}
               >
                 Use as Buy Price
               </Button>
             </div>
-            <div className="text-xl font-bold text-green-400">
-              {getCurrencySymbol(currency || investment.currency)}{currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+            <div className="tnum text-xl font-semibold text-content">
+              {formatCryptoPrice(currentPrice, currency || investment.currency)}
             </div>
           </div>
 
@@ -151,21 +140,21 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
 
           {/* Currency Selection */}
           <div>
-            <label htmlFor="edit-currency" className="block text-sm font-medium text-gray-200 mb-1.5">
+            <label htmlFor="edit-currency" className="block text-sm font-medium text-content mb-1.5">
               Currency
             </label>
             <select
               id="edit-currency"
               {...register('currency', { required: 'Currency is required' })}
-              className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-2.5 bg-surface2 border border-line rounded-lg text-content focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition-colors"
             >
-              <option value="EUR" className="bg-slate-800">EUR (€)</option>
-              <option value="USD" className="bg-slate-800">USD ($)</option>
-              <option value="GBP" className="bg-slate-800">GBP (£)</option>
-              <option value="JPY" className="bg-slate-800">JPY (¥)</option>
-              <option value="CHF" className="bg-slate-800">CHF (Fr)</option>
-              <option value="CAD" className="bg-slate-800">CAD ($)</option>
-              <option value="AUD" className="bg-slate-800">AUD ($)</option>
+              <option value="EUR" className="bg-surface2">EUR (€)</option>
+              <option value="USD" className="bg-surface2">USD ($)</option>
+              <option value="GBP" className="bg-surface2">GBP (£)</option>
+              <option value="JPY" className="bg-surface2">JPY (¥)</option>
+              <option value="CHF" className="bg-surface2">CHF (Fr)</option>
+              <option value="CAD" className="bg-surface2">CAD (C$)</option>
+              <option value="AUD" className="bg-surface2">AUD (A$)</option>
             </select>
           </div>
 
@@ -177,7 +166,10 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
             placeholder="0.00"
             {...register('buyPrice', {
               required: 'Buy price is required',
+              valueAsNumber: true,
               min: { value: 0.000001, message: 'Price must be greater than 0' },
+              // Editing the price re-derives the amount from price × quantity.
+              onChange: () => setLastEditedField(null),
             })}
             error={errors.buyPrice?.message}
           />
@@ -191,6 +183,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
               placeholder="0.00"
               {...register('quantity', {
                 required: 'Quantity is required',
+                valueAsNumber: true,
                 min: { value: 0.00000001, message: 'Quantity must be greater than 0' },
                 onChange: () => {
                   setLastEditedField('quantity');
@@ -207,6 +200,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
               placeholder="0.00"
               {...register('investmentAmount', {
                 required: 'Investment amount is required',
+                valueAsNumber: true,
                 min: { value: 0.01, message: 'Amount must be greater than 0' },
                 onChange: (e) => {
                   setLastEditedField('amount');
