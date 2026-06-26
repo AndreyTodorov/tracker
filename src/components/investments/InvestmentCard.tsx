@@ -115,6 +115,14 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
         </div>
       </div>
 
+      {/* Current Value (what the holding is worth now) */}
+      <div className="flex items-center justify-between mb-4 pt-3 border-t border-line">
+        <span className="text-[11px] text-muted uppercase tracking-wider">Current Value</span>
+        <span className="tnum text-base font-semibold text-content">
+          {formatCurrency(price * investment.quantity, investment.currency)}
+        </span>
+      </div>
+
       {/* Profit/Loss */}
       <div className={`p-4 rounded-lg border border-line ${getBgColorClass(profit.absolute)}`}>
         <div className="flex items-center justify-between">
