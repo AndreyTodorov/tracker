@@ -1,3 +1,5 @@
+import tailwindcssAnimate from 'tailwindcss-animate';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -7,6 +9,20 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Trading Terminal palette
+        ink: '#0A0E17',        // app background
+        surface: '#131A26',    // default card / panel
+        surface2: '#1A2332',   // elevated panel, inputs, hovers
+        line: '#232E40',       // borders / hairlines
+        'line-soft': '#1B2433',
+        content: '#EAEEF5',    // primary text
+        muted: '#7E8A9E',      // secondary text
+        accent: '#E5B567',     // brand / interactive (used with restraint)
+        'accent-hover': '#D4A24A',
+        // Market semantics — reserved strictly for profit/loss
+        profit: '#0ECB81',
+        loss: '#F6465D',
+        // Keep the legacy primary scale so nothing references a missing token
         primary: {
           50: '#f0f9ff',
           100: '#e0f2fe',
@@ -19,21 +35,20 @@ export default {
           800: '#075985',
           900: '#0c4a6e',
         },
-        profit: '#22c55e',
-        loss: '#ef4444',
       },
-      backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-dark': 'linear-gradient(to bottom right, #0f172a, #1e1b4b)',
-        'gradient-vibrant': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        'gradient-accent': 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+      fontFamily: {
+        sans: ['"Space Grotesk"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       boxShadow: {
-        'glow-sm': '0 0 10px rgba(59, 130, 246, 0.3)',
-        'glow': '0 0 20px rgba(59, 130, 246, 0.4)',
-        'glow-lg': '0 0 30px rgba(59, 130, 246, 0.5)',
+        'glow-sm': '0 0 10px rgba(229, 181, 103, 0.18)',
+        'glow': '0 0 24px rgba(229, 181, 103, 0.22)',
+        'panel': '0 1px 0 0 rgba(255,255,255,0.02) inset, 0 8px 24px -12px rgba(0,0,0,0.6)',
+      },
+      backgroundImage: {
+        'gradient-accent': 'linear-gradient(135deg, #E5B567 0%, #D4A24A 100%)',
       },
     },
   },
-  plugins: [],
+  plugins: [tailwindcssAnimate],
 }

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { UserPlus } from 'lucide-react';
 import { signUp } from '../../services/auth.service';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -60,15 +59,9 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
 
   return (
     <div className="w-full max-w-md">
-      <div className="glass-strong rounded-2xl p-8">
-        <div className="flex items-center justify-center mb-6">
-          <div className="p-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-600">
-            <UserPlus size={32} className="text-white" />
-          </div>
-        </div>
-
-        <h2 className="text-3xl font-bold text-center mb-2">Create Account</h2>
-        <p className="text-gray-400 text-center mb-6">Join us and start tracking your investments</p>
+      <div className="panel-strong rounded-2xl p-8">
+        <h2 className="text-2xl font-bold tracking-tight text-center mb-1">Create account</h2>
+        <p className="text-muted text-center mb-6">Join us and start tracking your investments</p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input
@@ -125,25 +118,25 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
           />
 
           {error && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/50">
-              <p className="text-red-400 text-sm">{error}</p>
+            <div className="p-3 rounded-lg bg-loss/10 border border-loss/40">
+              <p className="text-loss text-sm">{error}</p>
             </div>
           )}
 
           <Button type="submit" className="w-full" isLoading={isLoading}>
-            Create Account
+            Create account
           </Button>
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-gray-400">
+          <p className="text-muted">
             Already have an account?{' '}
             <button
               type="button"
               onClick={onToggleMode}
-              className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+              className="text-accent hover:text-accent-hover font-medium transition-colors"
             >
-              Sign In
+              Sign in
             </button>
           </p>
         </div>

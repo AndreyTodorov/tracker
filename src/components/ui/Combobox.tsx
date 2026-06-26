@@ -53,7 +53,7 @@ export function Combobox({
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-gray-200 mb-1.5">
+        <label className="block text-sm font-medium text-content mb-1.5">
           {label}
         </label>
       )}
@@ -66,8 +66,8 @@ export function Combobox({
             disabled={disabled}
             className={cn(
               'w-full justify-between font-normal',
-              !value && 'text-gray-400',
-              error && 'ring-2 ring-red-500'
+              !value && 'text-muted',
+              error && 'ring-2 ring-loss border-loss'
             )}
           >
             <div className="flex items-center gap-2 truncate">
@@ -81,13 +81,13 @@ export function Combobox({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 bg-slate-900 border border-slate-600" align="start">
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 bg-surface2 border border-line" align="start">
           <Command shouldFilter={false} className="bg-transparent">
             <CommandInput
               placeholder={searchPlaceholder}
               value={search}
               onValueChange={handleSearch}
-              className="text-gray-100"
+              className="text-content"
             />
             <CommandList className="bg-transparent">
               {isLoading ? (
@@ -95,7 +95,7 @@ export function Combobox({
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 </div>
               ) : options.length === 0 ? (
-                <CommandEmpty className="text-gray-400">{emptyText}</CommandEmpty>
+                <CommandEmpty className="text-muted">{emptyText}</CommandEmpty>
               ) : (
                 <CommandGroup className="bg-transparent">
                   {options.map((option) => (
@@ -107,11 +107,11 @@ export function Combobox({
                         setOpen(false);
                         setSearch('');
                       }}
-                      className="text-gray-200 data-[selected=true]:bg-slate-700 data-[selected=true]:text-white hover:bg-slate-800 cursor-pointer"
+                      className="text-content data-[selected=true]:bg-surface data-[selected=true]:text-content hover:bg-surface cursor-pointer"
                     >
                       <Check
                         className={cn(
-                          'mr-2 h-4 w-4 flex-shrink-0 text-blue-400',
+                          'mr-2 h-4 w-4 flex-shrink-0 text-accent',
                           value === option.value ? 'opacity-100' : 'opacity-0'
                         )}
                       />
@@ -128,7 +128,7 @@ export function Combobox({
         </PopoverContent>
       </Popover>
       {error && (
-        <p className="mt-1.5 text-sm text-red-400">{error}</p>
+        <p className="mt-1.5 text-sm text-loss">{error}</p>
       )}
     </div>
   );

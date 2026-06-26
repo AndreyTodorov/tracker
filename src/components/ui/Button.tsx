@@ -5,15 +5,15 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-lg font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-lg font-medium tracking-tight transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-ink disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        primary: 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white focus-visible:ring-blue-500',
-        secondary: 'glass hover:bg-slate-600 text-white focus-visible:ring-white/50',
-        danger: 'bg-red-500 hover:bg-red-600 text-white focus-visible:ring-red-500',
-        ghost: 'hover:bg-slate-700 text-white focus-visible:ring-white/50',
-        outline: 'border border-slate-600 hover:bg-slate-700 text-white focus-visible:ring-white/50',
+        primary: 'bg-accent text-ink font-semibold hover:bg-accent-hover focus-visible:ring-accent',
+        secondary: 'bg-surface2 border border-line text-content hover:border-accent/40 hover:bg-line/50 focus-visible:ring-accent',
+        danger: 'bg-loss text-white hover:bg-loss/90 focus-visible:ring-loss',
+        ghost: 'text-content hover:bg-surface2 focus-visible:ring-accent',
+        outline: 'border border-line text-content hover:border-accent/40 hover:bg-surface2 focus-visible:ring-accent',
       },
       size: {
         sm: 'h-8 px-3 text-sm',

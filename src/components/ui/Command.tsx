@@ -22,12 +22,12 @@ export const CommandInput = forwardRef<
   React.ElementRef<typeof CommandPrimitive.Input>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
 >(({ className, ...props }, ref) => (
-  <div className="flex items-center border-b border-slate-700 px-3" cmdk-input-wrapper="">
-    <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+  <div className="flex items-center border-b border-line px-3" cmdk-input-wrapper="">
+    <Search className="mr-2 h-4 w-4 shrink-0 text-muted" />
     <CommandPrimitive.Input
       ref={ref}
       className={cn(
-        'flex h-11 w-full rounded-md bg-transparent py-3 text-sm text-white outline-none placeholder:text-gray-400 disabled:cursor-not-allowed disabled:opacity-50',
+        'flex h-11 w-full rounded-md bg-transparent py-3 text-sm text-content outline-none placeholder:text-muted disabled:cursor-not-allowed disabled:opacity-50',
         className
       )}
       {...props}
@@ -54,7 +54,7 @@ export const CommandEmpty = forwardRef<
 >((props, ref) => (
   <CommandPrimitive.Empty
     ref={ref}
-    className="py-6 text-center text-sm text-gray-400"
+    className="py-6 text-center text-sm text-muted"
     {...props}
   />
 ));
@@ -67,7 +67,7 @@ export const CommandGroup = forwardRef<
   <CommandPrimitive.Group
     ref={ref}
     className={cn(
-      'overflow-hidden p-1 text-white',
+      'overflow-hidden p-1 text-content',
       className
     )}
     {...props}
@@ -81,7 +81,7 @@ export const CommandSeparator = forwardRef<
 >(({ className, ...props }, ref) => (
   <CommandPrimitive.Separator
     ref={ref}
-    className={cn('-mx-1 h-px bg-slate-700', className)}
+    className={cn('-mx-1 h-px bg-line', className)}
     {...props}
   />
 ));
@@ -96,7 +96,7 @@ export const CommandItem = forwardRef<
     className={cn(
       'relative flex cursor-pointer select-none items-center rounded-lg px-2 py-2 text-sm outline-none',
       'data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50',
-      'data-[selected=true]:bg-slate-700 hover:bg-slate-800',
+      'data-[selected=true]:bg-surface2 hover:bg-surface2',
       className
     )}
     {...props}

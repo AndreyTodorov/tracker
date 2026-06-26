@@ -1,6 +1,6 @@
-import { TrendingUp, Wallet, PieChart, AlertTriangle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, PieChart, AlertTriangle } from 'lucide-react';
 import { Card } from '../ui/Card';
-import { formatCurrency, formatPercentage, getColorClass } from '../../utils/formatters';
+import { formatCurrency, formatPercentage, getColorClass, getBgColorClass } from '../../utils/formatters';
 import type { Portfolio } from '../../types';
 
 interface PortfolioSummaryProps {
@@ -30,7 +30,7 @@ export const PortfolioSummary = ({ portfolio }: PortfolioSummaryProps) => {
               <p className="text-sm font-medium text-yellow-400 mb-1">
                 Mixed Currency Warning
               </p>
-              <p className="text-xs text-gray-300">
+              <p className="text-xs text-content/80">
                 Your portfolio contains investments in multiple currencies ({currencyList}).
                 Total values are calculated by adding amounts without currency conversion,
                 which may not reflect accurate totals. Consider using a single currency or
@@ -43,45 +43,47 @@ export const PortfolioSummary = ({ portfolio }: PortfolioSummaryProps) => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       {/* Total Value */}
-      <Card className="p-4">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 rounded-lg bg-blue-500/20">
-            <Wallet size={20} className="text-blue-400" />
+      <Card className="p-5">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="grid place-items-center w-9 h-9 rounded-lg bg-accent/10 border border-accent/25">
+            <Wallet size={18} className="text-accent" />
           </div>
-          <div className="text-sm text-gray-400">Total Value</div>
+          <div className="text-[11px] text-muted uppercase tracking-wider">Total Value</div>
         </div>
-        <div className="text-2xl font-bold">{formatCurrency(portfolio.totalValue, displayCurrency)}</div>
-        <div className="text-xs text-gray-500 mt-1">
-          Invested: {formatCurrency(portfolio.totalInvested, displayCurrency)}
+        <div className="tnum text-3xl font-semibold tracking-tight">{formatCurrency(portfolio.totalValue, displayCurrency)}</div>
+        <div className="text-xs text-muted mt-1.5">
+          Invested: <span className="tnum text-content/80">{formatCurrency(portfolio.totalInvested, displayCurrency)}</span>
         </div>
       </Card>
 
       {/* Total Profit/Loss */}
-      <Card className="p-4">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 rounded-lg bg-purple-500/20">
-            <TrendingUp size={20} className="text-purple-400" />
+      <Card className="p-5">
+        <div className="flex items-center gap-3 mb-3">
+          <div className={`grid place-items-center w-9 h-9 rounded-lg border border-line ${getBgColorClass(portfolio.totalProfit)}`}>
+            {portfolio.totalProfit >= 0
+              ? <TrendingUp size={18} className="text-profit" />
+              : <TrendingDown size={18} className="text-loss" />}
           </div>
-          <div className="text-sm text-gray-400">Total Profit/Loss</div>
+          <div className="text-[11px] text-muted uppercase tracking-wider">Total Profit/Loss</div>
         </div>
-        <div className={`text-2xl font-bold ${getColorClass(portfolio.totalProfit)}`}>
+        <div className={`tnum text-3xl font-semibold tracking-tight ${getColorClass(portfolio.totalProfit)}`}>
           {formatCurrency(portfolio.totalProfit, displayCurrency)}
         </div>
-        <div className={`text-xs mt-1 ${getColorClass(portfolio.totalProfitPercentage)}`}>
+        <div className={`tnum text-xs mt-1.5 ${getColorClass(portfolio.totalProfitPercentage)}`}>
           {formatPercentage(portfolio.totalProfitPercentage)}
         </div>
       </Card>
 
       {/* Number of Assets */}
-      <Card className="p-4">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 rounded-lg bg-green-500/20">
-            <PieChart size={20} className="text-green-400" />
+      <Card className="p-5">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="grid place-items-center w-9 h-9 rounded-lg bg-surface2 border border-line">
+            <PieChart size={18} className="text-muted" />
           </div>
-          <div className="text-sm text-gray-400">Assets</div>
+          <div className="text-[11px] text-muted uppercase tracking-wider">Assets</div>
         </div>
-        <div className="text-2xl font-bold">{uniqueAssets}</div>
-        <div className="text-xs text-gray-500 mt-1">
+        <div className="tnum text-3xl font-semibold tracking-tight">{uniqueAssets}</div>
+        <div className="text-xs text-muted mt-1.5">
           {totalInvestments} {totalInvestments === 1 ? 'investment' : 'investments'}
         </div>
       </Card>

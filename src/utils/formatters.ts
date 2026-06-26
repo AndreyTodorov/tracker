@@ -1,20 +1,22 @@
 import { format } from 'date-fns';
 
 export const formatCurrency = (amount: number, currency = 'USD'): string => {
+  // Let Intl use each currency's natural precision (e.g. JPY has no minor
+  // unit, so it renders ¥1,235 rather than a bogus ¥1,234.50).
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
   }).format(amount);
 };
 
 export const formatCryptoPrice = (price: number, currency = 'USD'): string => {
+  // Crypto prices are often sub-cent, so allow extra precision for small values.
+  const isSmall = price > 0 && price < 1;
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,
-    maximumFractionDigits: 4,
+    maximumFractionDigits: isSmall ? 8 : 4,
   }).format(price);
 };
 

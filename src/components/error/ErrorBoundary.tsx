@@ -69,29 +69,29 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       // Default error UI
       return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 to-slate-800">
+        <div className="min-h-screen flex items-center justify-center p-4 bg-ink">
           <Card variant="strong" className="max-w-2xl w-full p-8">
             <div className="flex flex-col items-center text-center">
-              <div className="p-4 rounded-full bg-red-500/20 mb-6">
-                <AlertTriangle size={48} className="text-red-400" />
+              <div className="grid place-items-center w-16 h-16 rounded-full bg-loss/10 border border-loss/30 mb-6">
+                <AlertTriangle size={32} className="text-loss" />
               </div>
 
-              <h1 className="text-3xl font-bold mb-2">Something went wrong</h1>
-              <p className="text-gray-400 mb-6">
+              <h1 className="text-3xl font-bold tracking-tight mb-2">Something went wrong</h1>
+              <p className="text-muted mb-6">
                 We encountered an unexpected error. Don't worry, your data is safe.
               </p>
 
               {import.meta.env.DEV && this.state.error && (
                 <details className="w-full mb-6 text-left">
-                  <summary className="cursor-pointer text-sm text-gray-400 hover:text-gray-300 mb-2">
+                  <summary className="cursor-pointer text-sm text-muted hover:text-content mb-2">
                     Error Details (Development Only)
                   </summary>
-                  <div className="p-4 rounded-lg bg-slate-900 border border-slate-700">
-                    <p className="text-xs text-red-400 font-mono mb-2">
+                  <div className="p-4 rounded-lg bg-surface border border-line">
+                    <p className="text-xs text-loss font-mono mb-2">
                       {this.state.error.toString()}
                     </p>
                     {this.state.errorInfo && (
-                      <pre className="text-xs text-gray-500 overflow-x-auto">
+                      <pre className="text-xs text-muted overflow-x-auto">
                         {this.state.errorInfo.componentStack}
                       </pre>
                     )}
@@ -110,7 +110,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 </Button>
               </div>
 
-              <p className="text-xs text-gray-500 mt-6">
+              <p className="text-xs text-muted mt-6">
                 If this problem persists, please contact support.
               </p>
             </div>

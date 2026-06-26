@@ -38,14 +38,17 @@ export const Dashboard = () => {
             <InvestmentForm />
 
             {/* Last Update Info */}
-            <div className="glass rounded-lg p-3 text-center">
+            <div className="panel rounded-lg p-3 text-center">
               <div className="flex items-center justify-center gap-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                <span className="text-xs text-gray-400">
-                  Last updated: {formatDateTime(lastUpdate)}
+                <span className="relative flex w-2 h-2">
+                  <span className="absolute inline-flex w-full h-full rounded-full bg-profit opacity-60 animate-ping" />
+                  <span className="relative inline-flex w-2 h-2 rounded-full bg-profit" />
+                </span>
+                <span className="text-xs text-muted">
+                  Last updated: <span className="tnum text-content/80">{formatDateTime(lastUpdate)}</span>
                 </span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted/70 mt-1">
                 Prices update every 60 seconds
               </p>
             </div>
@@ -54,17 +57,17 @@ export const Dashboard = () => {
           {/* Right Side - Investment List (67%) */}
           <div className="lg:col-span-8">
             {/* Tabs */}
-            <div className="flex gap-2 mb-6 overflow-x-auto">
+            <div className="inline-flex gap-1 mb-6 p-1 rounded-lg bg-surface border border-line">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`
-                    px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap
+                    px-4 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap
                     ${
                       activeTab === tab.id
-                        ? 'glass-strong text-white'
-                        : 'glass hover:bg-slate-700 text-gray-400'
+                        ? 'bg-surface2 text-content shadow-sm'
+                        : 'text-muted hover:text-content'
                     }
                   `}
                 >

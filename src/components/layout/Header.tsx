@@ -19,17 +19,17 @@ export const Header = () => {
 
   return (
     <>
-      <header className="glass-strong border-b border-slate-700 sticky top-0 z-40">
+      <header className="glass-strong border-b border-line sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600">
-                <TrendingUp size={24} className="text-white" />
+              <div className="grid place-items-center w-10 h-10 rounded-lg bg-accent/10 border border-accent/30">
+                <TrendingUp size={20} className="text-accent" />
               </div>
               <div>
-                <h1 className="text-xl font-bold">Investment Tracker</h1>
-                <p className="text-xs text-gray-400">Real-time portfolio monitoring</p>
+                <h1 className="text-lg font-bold tracking-tight leading-none">Investment Tracker</h1>
+                <p className="text-xs text-muted mt-1">Real-time portfolio monitoring</p>
               </div>
             </div>
 
@@ -39,14 +39,15 @@ export const Header = () => {
                 variant="secondary"
                 size="sm"
                 onClick={() => setShowShareModal(true)}
-                className="hidden sm:flex items-center gap-2"
+                className="flex items-center gap-2"
+                aria-label="Share portfolio"
               >
                 <Share2 size={16} />
-                Share Portfolio
+                <span className="hidden sm:inline">Share Portfolio</span>
               </Button>
 
-              <div className="glass rounded-lg px-3 py-2 flex items-center gap-2">
-                <User size={16} className="text-gray-400" />
+              <div className="panel-strong rounded-lg px-3 py-2 flex items-center gap-2">
+                <User size={16} className="text-muted" />
                 <span className="text-sm font-medium hidden sm:inline">
                   {userData?.displayName}
                 </span>
@@ -56,7 +57,7 @@ export const Header = () => {
                 variant="ghost"
                 size="sm"
                 onClick={handleSignOut}
-                className="text-red-400 hover:text-red-300"
+                className="text-loss hover:text-loss hover:bg-loss/10"
                 aria-label="Sign out"
               >
                 <LogOut size={18} />

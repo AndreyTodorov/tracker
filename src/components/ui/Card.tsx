@@ -4,15 +4,15 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
 const cardVariants = cva(
-  'rounded-xl transition-all duration-300',
+  'rounded-xl transition-colors duration-200',
   {
     variants: {
       variant: {
-        default: 'bg-slate-900 border border-slate-700',
-        strong: 'bg-slate-800 border border-slate-600',
+        default: 'bg-surface border border-line',
+        strong: 'bg-surface2 border border-line',
       },
       hover: {
-        true: 'hover:bg-slate-800 hover:border-slate-600 hover:shadow-lg',
+        true: 'hover:border-accent/30 hover:shadow-panel',
         false: '',
       },
     },

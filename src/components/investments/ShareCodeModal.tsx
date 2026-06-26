@@ -113,15 +113,15 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
         {/* Your Share Code */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <Share2 size={20} className="text-blue-400" />
-            <h3 className="text-lg font-semibold">Your Share Code</h3>
+            <Share2 size={20} className="text-accent" />
+            <h3 className="text-lg font-semibold">Your share code</h3>
           </div>
-          <p className="text-sm text-gray-400 mb-3">
+          <p className="text-sm text-muted mb-3">
             Share this code with friends so they can view your investments
           </p>
           <div className="flex gap-2">
-            <div className="flex-1 glass rounded-lg p-4">
-              <div className="text-3xl font-bold text-center tracking-wider text-blue-400">
+            <div className="flex-1 panel-strong rounded-lg p-4">
+              <div className="tnum text-3xl font-bold text-center tracking-[0.3em] text-accent">
                 {userData?.shareCode || 'Loading...'}
               </div>
             </div>
@@ -136,17 +136,17 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
           </div>
 
           {/* Public Link */}
-          <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+          <div className="mt-4 p-3 rounded-lg bg-accent/10 border border-accent/25">
             <div className="flex items-center gap-2 mb-2">
-              <Link size={16} className="text-blue-400" />
-              <p className="text-sm font-medium text-blue-400">Public Link</p>
+              <Link size={16} className="text-accent" />
+              <p className="text-sm font-medium text-accent">Shareable link</p>
             </div>
-            <p className="text-xs text-gray-400 mb-2">
-              Share this link to let anyone view your portfolio without logging in
+            <p className="text-xs text-muted mb-2">
+              Send this link to anyone with an account so they can view your portfolio
             </p>
             <div className="flex gap-2">
-              <div className="flex-1 glass rounded-lg px-3 py-2 overflow-hidden">
-                <p className="text-xs text-gray-300 truncate">{publicLink}</p>
+              <div className="flex-1 panel-strong rounded-lg px-3 py-2 overflow-hidden">
+                <p className="text-xs text-content/80 truncate">{publicLink}</p>
               </div>
               <Button
                 variant="secondary"
@@ -162,15 +162,15 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-slate-700" />
+        <div className="border-t border-line" />
 
         {/* Join Portfolio */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <Plus size={20} className="text-purple-400" />
-            <h3 className="text-lg font-semibold">Join a Portfolio</h3>
+            <Plus size={20} className="text-accent" />
+            <h3 className="text-lg font-semibold">Join a portfolio</h3>
           </div>
-          <p className="text-sm text-gray-400 mb-3">
+          <p className="text-sm text-muted mb-3">
             Enter a friend's share code to view their investments
           </p>
           <div className="space-y-3">
@@ -179,15 +179,16 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
               maxLength={8}
+              className="tnum tracking-[0.2em]"
             />
             {joinError && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/50">
-                <p className="text-red-400 text-sm">{joinError}</p>
+              <div className="p-3 rounded-lg bg-loss/10 border border-loss/40">
+                <p className="text-loss text-sm">{joinError}</p>
               </div>
             )}
             {joinSuccess && (
-              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/50">
-                <p className="text-green-400 text-sm">{joinSuccess}</p>
+              <div className="p-3 rounded-lg bg-profit/10 border border-profit/40">
+                <p className="text-profit text-sm">{joinSuccess}</p>
               </div>
             )}
             <Button
@@ -196,7 +197,7 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
               isLoading={isJoining}
               disabled={joinCode.trim().length !== 8}
             >
-              Join Portfolio
+              Join portfolio
             </Button>
           </div>
         </div>
@@ -204,20 +205,20 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
         {/* Joined Portfolios */}
         {userData?.sharedPortfolios && userData.sharedPortfolios.length > 0 && (
           <>
-            <div className="border-t border-slate-700" />
+            <div className="border-t border-line" />
             <div>
-              <h3 className="text-lg font-semibold mb-3">Joined Portfolios</h3>
+              <h3 className="text-lg font-semibold mb-3">Joined portfolios</h3>
               <div className="space-y-2">
                 {userData.sharedPortfolios.map((code) => (
-                  <div key={code} className="glass rounded-lg p-3 flex items-center justify-between">
-                    <span className="font-mono">{code}</span>
-                    <div className="flex items-center gap-2">
-                      <Check size={16} className="text-green-400" />
+                  <div key={code} className="panel-strong rounded-lg p-3 flex items-center justify-between">
+                    <span className="font-mono tracking-wider">{code}</span>
+                    <div className="flex items-center gap-1">
+                      <Check size={16} className="text-profit" />
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleLeavePortfolio(code)}
-                        className="text-red-400 hover:text-red-300"
+                        className="text-muted hover:text-loss hover:bg-loss/10"
                         aria-label={`Leave portfolio ${code}`}
                       >
                         <X size={16} />

@@ -56,26 +56,26 @@ describe('Button Component', () => {
     it('should apply primary variant by default', () => {
       render(<Button>Primary</Button>);
       const button = screen.getByRole('button');
-      expect(button.className).toMatch(/from-blue-500/);
-      expect(button.className).toMatch(/to-purple-600/);
+      expect(button.className).toMatch(/bg-accent/);
+      expect(button.className).toMatch(/text-ink/);
     });
 
     it('should apply secondary variant', () => {
       render(<Button variant="secondary">Secondary</Button>);
       const button = screen.getByRole('button');
-      expect(button.className).toMatch(/glass/);
+      expect(button.className).toMatch(/bg-surface2/);
     });
 
     it('should apply danger variant', () => {
       render(<Button variant="danger">Danger</Button>);
       const button = screen.getByRole('button');
-      expect(button.className).toMatch(/bg-red-500/);
+      expect(button.className).toMatch(/bg-loss/);
     });
 
     it('should apply ghost variant', () => {
       render(<Button variant="ghost">Ghost</Button>);
       const button = screen.getByRole('button');
-      expect(button.className).toMatch(/hover:bg-slate-700/);
+      expect(button.className).toMatch(/hover:bg-surface2/);
     });
 
     it('should apply outline variant', () => {
