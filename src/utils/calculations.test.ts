@@ -144,6 +144,20 @@ describe('calculatePortfolioStats', () => {
     expect(result.totalProfitPercentage).toBe(0);
   });
 
+  it('should treat a live price of 0 as a total loss, not a missing price', () => {
+    const investments = [createMockInvestment()];
+    const prices = new Map([
+      ['bitcoin', new Map([['usd', 0]])], // delisted/worthless coin
+    ]);
+
+    const result = calculatePortfolioStats(investments, prices);
+
+    expect(result.totalInvested).toBe(1000);
+    expect(result.totalValue).toBe(0);
+    expect(result.totalProfit).toBe(-1000);
+    expect(result.totalProfitPercentage).toBe(-100);
+  });
+
   it('should handle mixed currencies correctly', () => {
     const investments = [
       createMockInvestment({

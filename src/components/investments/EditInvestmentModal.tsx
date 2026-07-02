@@ -59,7 +59,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
     setIsSubmitting(true);
 
     try {
-      await updateInvestment(investment.id, {
+      await updateInvestment(investment.userId, investment.id, {
         ...(data.name && { name: data.name }),
         buyPrice: data.buyPrice,
         investmentAmount: data.investmentAmount,
@@ -68,9 +68,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
       });
 
       toast.success('Investment updated successfully!');
-      setTimeout(() => {
-        onClose();
-      }, 500);
+      onClose();
     } catch (error: unknown) {
       console.error('Error updating investment:', error);
       const errorMessage = (error as { message?: string })?.message || 'Failed to update investment. Please try again.';

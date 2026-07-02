@@ -11,19 +11,16 @@ import type { User } from '../types';
 import { generateShareCode } from '../utils/calculations';
 
 // Generate a share code that isn't already in use by another user.
+// Uniqueness is checked against the shareCodeIndex (per-code lookups only,
+// since the users node is not readable by other accounts).
 const generateUniqueShareCode = async (): Promise<string> => {
-  const usersSnapshot = await get(ref(db, 'users'));
-  const existing = new Set<string>();
-  if (usersSnapshot.exists()) {
-    const users = usersSnapshot.val() as Record<string, { shareCode?: string }>;
-    Object.values(users).forEach((u) => {
-      if (u.shareCode) existing.add(u.shareCode);
-    });
-  }
-
   let shareCode = generateShareCode();
   let attempts = 0;
-  while (existing.has(shareCode) && attempts < 10) {
+  while (attempts < 10) {
+    const existing = await get(ref(db, `shareCodeIndex/${shareCode}`));
+    if (!existing.exists()) {
+      return shareCode;
+    }
     shareCode = generateShareCode();
     attempts += 1;
   }
@@ -35,24 +32,30 @@ export const signUp = async (
   password: string,
   displayName: string
 ): Promise<FirebaseUser> => {
+  const name = displayName.trim();
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
 
   // Update profile with display name
-  await updateProfile(user, { displayName });
+  await updateProfile(user, { displayName: name });
 
   // Create user document in Realtime Database
   const shareCode = await generateUniqueShareCode();
   const userDoc: User = {
     id: user.uid,
     email: user.email!,
-    displayName,
+    displayName: name,
     createdAt: Date.now(),
     shareCode,
-    sharedPortfolios: [],
+    sharedPortfolios: {},
   };
 
   await set(ref(db, `users/${user.uid}`), userDoc);
+  // Public, PII-free lookup entry so others can resolve the code to a portfolio.
+  await set(ref(db, `shareCodeIndex/${shareCode}`), {
+    uid: user.uid,
+    displayName: name,
+  });
 
   return user;
 };

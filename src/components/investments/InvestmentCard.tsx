@@ -22,7 +22,7 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const price = currentPrice || investment.buyPrice;
+  const price = currentPrice ?? investment.buyPrice;
   const profit = calculateProfit(investment.buyPrice, price, investment.quantity);
 
   const handleDelete = async () => {
@@ -32,7 +32,7 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
 
     setIsDeleting(true);
     try {
-      await deleteInvestment(investment.id);
+      await deleteInvestment(investment.userId, investment.id);
       toast.success('Investment deleted successfully!');
     } catch (error: unknown) {
       console.error('Error deleting investment:', error);
@@ -151,7 +151,7 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
       </div>
 
       {/* Live Update Indicator */}
-      {currentPrice && currentPrice !== investment.buyPrice && (
+      {currentPrice !== undefined && currentPrice !== investment.buyPrice && (
         <div className="absolute top-4 right-4">
           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-profit/10 border border-profit/30">
             <span className="relative flex w-1.5 h-1.5">

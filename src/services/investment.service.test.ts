@@ -231,40 +231,46 @@ describe('Investment Service', () => {
   });
 
   describe('updateInvestment', () => {
+    it('should throw error for empty user ID', async () => {
+      await expect(
+        updateInvestment('', 'inv123', { buyPrice: 60000 })
+      ).rejects.toThrow('User ID is required');
+    });
+
     it('should throw error for empty investment ID', async () => {
       await expect(
-        updateInvestment('', { buyPrice: 60000 })
+        updateInvestment('user123', '', { buyPrice: 60000 })
       ).rejects.toThrow('Investment ID is required');
     });
 
     it('should throw error for negative buy price in update', async () => {
       await expect(
-        updateInvestment('inv123', { buyPrice: -100 })
+        updateInvestment('user123', 'inv123', { buyPrice: -100 })
       ).rejects.toThrow('Buy price must be greater than 0');
     });
 
     it('should throw error for zero investment amount in update', async () => {
       await expect(
-        updateInvestment('inv123', { investmentAmount: 0 })
+        updateInvestment('user123', 'inv123', { investmentAmount: 0 })
       ).rejects.toThrow('Investment amount must be greater than 0');
     });
 
     it('should throw error for negative quantity in update', async () => {
       await expect(
-        updateInvestment('inv123', { quantity: -0.5 })
+        updateInvestment('user123', 'inv123', { quantity: -0.5 })
       ).rejects.toThrow('Quantity must be greater than 0');
     });
 
     it('should throw error for invalid currency in update', async () => {
       await expect(
-        updateInvestment('inv123', { currency: 'FAKE' })
+        updateInvestment('user123', 'inv123', { currency: 'FAKE' })
       ).rejects.toThrow('Invalid currency');
     });
 
     it('should normalize currency to uppercase in updates', async () => {
       const { update } = await import('firebase/database');
 
-      await updateInvestment('inv123', { currency: 'gbp' });
+      await updateInvestment('user123', 'inv123', { currency: 'gbp' });
 
       expect(update).toHaveBeenCalledWith(
         undefined,
@@ -275,7 +281,7 @@ describe('Investment Service', () => {
     it('should allow valid partial updates', async () => {
       const { update } = await import('firebase/database');
 
-      await updateInvestment('inv123', {
+      await updateInvestment('user123', 'inv123', {
         buyPrice: 55000,
         quantity: 0.025,
       });
@@ -288,21 +294,36 @@ describe('Investment Service', () => {
         })
       );
     });
+
+    it('should write to the per-user investment path', async () => {
+      const { ref } = await import('firebase/database');
+
+      await updateInvestment('user123', 'inv123', { buyPrice: 55000 });
+
+      expect(ref).toHaveBeenCalledWith(expect.anything(), 'investments/user123/inv123');
+    });
   });
 
   describe('deleteInvestment', () => {
+    it('should throw error for empty user ID', async () => {
+      await expect(
+        deleteInvestment('', 'inv123')
+      ).rejects.toThrow('User ID is required');
+    });
+
     it('should throw error for empty investment ID', async () => {
       await expect(
-        deleteInvestment('')
+        deleteInvestment('user123', '')
       ).rejects.toThrow('Investment ID is required');
     });
 
     it('should call remove for valid investment ID', async () => {
-      const { remove } = await import('firebase/database');
+      const { remove, ref } = await import('firebase/database');
 
-      await deleteInvestment('inv123');
+      await deleteInvestment('user123', 'inv123');
 
       expect(remove).toHaveBeenCalled();
+      expect(ref).toHaveBeenCalledWith(expect.anything(), 'investments/user123/inv123');
     });
   });
 });

@@ -70,10 +70,8 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
             placeholder="John Doe"
             {...register('displayName', {
               required: 'Display name is required',
-              minLength: {
-                value: 2,
-                message: 'Name must be at least 2 characters',
-              },
+              validate: (value) =>
+                value.trim().length >= 2 || 'Name must be at least 2 characters',
             })}
             error={errors.displayName?.message}
           />

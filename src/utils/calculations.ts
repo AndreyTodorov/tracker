@@ -30,7 +30,7 @@ export const calculatePortfolioStats = (
 
   investments.forEach((investment) => {
     const symbolPrices = prices.get(getPriceKey(investment));
-    const currentPrice = symbolPrices?.get(investment.currency.toLowerCase()) || investment.buyPrice;
+    const currentPrice = symbolPrices?.get(investment.currency.toLowerCase()) ?? investment.buyPrice;
     const currentValue = currentPrice * investment.quantity;
     const investedAmount = investment.buyPrice * investment.quantity;
 

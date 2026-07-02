@@ -45,7 +45,7 @@ export const PublicPortfolio = () => {
     setError('');
 
     try {
-      const result = await getPublicPortfolio(code.toUpperCase());
+      const result = await getPublicPortfolio(code.toUpperCase(), currentUser.uid);
       if (result) {
         setInvestments(result.investments);
         setPortfolioOwner(result.ownerName);
@@ -140,7 +140,8 @@ export const PublicPortfolio = () => {
                     <p className="font-medium text-accent mb-1">Privacy note</p>
                     <p>
                       You need a signed-in account to view a shared portfolio. Share codes are
-                      8-character identifiers given to you by the portfolio owner.
+                      8-character identifiers given to you by the portfolio owner. Viewing a
+                      portfolio also adds it to the Shared tab on your dashboard.
                     </p>
                     {!authLoading && !currentUser && (
                       <p className="mt-2">

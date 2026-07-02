@@ -3,7 +3,7 @@ import type { Investment, TabType } from '../types';
 import {
   subscribeToUserInvestments,
   subscribeToSharedInvestments,
-  subscribeToAllInvestments,
+  subscribeToPublicInvestments,
 } from '../services/investment.service';
 import { useAuth } from '../context/AuthContext';
 
@@ -30,13 +30,13 @@ export const useInvestments = (tab: TabType) => {
         setLoading(false);
       });
     } else if (tab === 'shared') {
-      const shareCodes = userData?.sharedPortfolios || [];
-      unsubscribe = subscribeToSharedInvestments(shareCodes, (data) => {
+      const ownerUids = Object.keys(userData?.sharedPortfolios || {});
+      unsubscribe = subscribeToSharedInvestments(ownerUids, (data) => {
         setInvestments(data);
         setLoading(false);
       });
     } else {
-      unsubscribe = subscribeToAllInvestments((data) => {
+      unsubscribe = subscribeToPublicInvestments((data) => {
         setInvestments(data);
         setLoading(false);
       });

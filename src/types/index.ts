@@ -4,7 +4,7 @@ export interface User {
   displayName: string;
   createdAt: number;
   shareCode?: string;
-  sharedPortfolios?: string[]; // Array of share codes user has joined
+  sharedPortfolios?: Record<string, string>; // Map of ownerUid -> share code the user has joined
 }
 
 export interface Investment {

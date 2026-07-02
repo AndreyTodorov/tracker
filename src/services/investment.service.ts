@@ -5,20 +5,16 @@ import {
   remove,
   onValue,
   get,
-  query,
-  orderByChild,
-  equalTo,
   update,
 } from 'firebase/database';
+import type { DataSnapshot } from 'firebase/database';
 import { db } from '../config/firebase';
 import type { Investment } from '../types';
 
-// Type for user data from database
-interface UserData {
-  email: string;
+// PII-free entry in the shareCodeIndex node (code -> owner lookup)
+interface ShareCodeEntry {
+  uid: string;
   displayName: string;
-  shareCode?: string;
-  sharedPortfolios?: string[];
 }
 
 // Supported currencies
@@ -43,6 +39,23 @@ const validateInvestmentInput = (
   if (!VALID_CURRENCIES.includes(currency.toUpperCase())) {
     throw new Error(`Invalid currency. Supported currencies: ${VALID_CURRENCIES.join(', ')}`);
   }
+};
+
+// Read all investments stored under a single user's node.
+const snapshotToInvestments = (snapshot: DataSnapshot): Investment[] => {
+  const investments: Investment[] = [];
+  snapshot.forEach((childSnapshot) => {
+    investments.push({
+      id: childSnapshot.key!,
+      ...childSnapshot.val(),
+    } as Investment);
+  });
+  return investments;
+};
+
+const lookupShareCode = async (shareCode: string): Promise<ShareCodeEntry | null> => {
+  const snapshot = await get(ref(db, `shareCodeIndex/${shareCode}`));
+  return snapshot.exists() ? (snapshot.val() as ShareCodeEntry) : null;
 };
 
 export const addInvestment = async (
@@ -78,16 +91,19 @@ export const addInvestment = async (
     ...(name && { name }), // Only include name if provided
   };
 
-  const newInvestmentRef = push(ref(db, 'investments'));
+  const newInvestmentRef = push(ref(db, `investments/${userId}`));
   await set(newInvestmentRef, investmentData);
   return newInvestmentRef.key!;
 };
 
 export const updateInvestment = async (
+  userId: string,
   investmentId: string,
   updates: Partial<Investment>
 ): Promise<void> => {
-  // Validate investmentId
+  if (!userId) {
+    throw new Error('User ID is required');
+  }
   if (!investmentId) {
     throw new Error('Investment ID is required');
   }
@@ -112,16 +128,19 @@ export const updateInvestment = async (
     ...(updates.currency && { currency: updates.currency.toUpperCase() }),
   };
 
-  const investmentRef = ref(db, `investments/${investmentId}`);
+  const investmentRef = ref(db, `investments/${userId}/${investmentId}`);
   await update(investmentRef, normalizedUpdates);
 };
 
-export const deleteInvestment = async (investmentId: string): Promise<void> => {
+export const deleteInvestment = async (userId: string, investmentId: string): Promise<void> => {
+  if (!userId) {
+    throw new Error('User ID is required');
+  }
   if (!investmentId) {
     throw new Error('Investment ID is required');
   }
 
-  const investmentRef = ref(db, `investments/${investmentId}`);
+  const investmentRef = ref(db, `investments/${userId}/${investmentId}`);
   await remove(investmentRef);
 };
 
@@ -129,107 +148,98 @@ export const subscribeToUserInvestments = (
   userId: string,
   callback: (investments: Investment[]) => void
 ): (() => void) => {
-  const investmentsRef = ref(db, 'investments');
-  const userQuery = query(investmentsRef, orderByChild('userId'), equalTo(userId));
+  const investmentsRef = ref(db, `investments/${userId}`);
 
-  return onValue(userQuery, (snapshot) => {
-    const investments: Investment[] = [];
-    snapshot.forEach((childSnapshot) => {
-      investments.push({
-        id: childSnapshot.key!,
-        ...childSnapshot.val(),
-      } as Investment);
-    });
-    callback(investments);
+  return onValue(investmentsRef, (snapshot) => {
+    callback(snapshotToInvestments(snapshot));
   });
 };
 
-export const subscribeToSharedInvestments = (
-  shareCodes: string[],
+// Subscribe to the investments of a set of portfolio owners, merging updates
+// from each owner's node into a single list.
+const subscribeToInvestmentsByOwners = (
+  ownerUids: string[],
   callback: (investments: Investment[]) => void
 ): (() => void) => {
-  if (shareCodes.length === 0) {
+  if (ownerUids.length === 0) {
     callback([]);
     return () => {};
   }
 
-  // Get user IDs from share codes
-  const getUserIdsFromShareCodes = async () => {
-    const usersRef = ref(db, 'users');
-    const snapshot = await get(usersRef);
-    const userIds: string[] = [];
-
-    if (snapshot.exists()) {
-      const users = snapshot.val() as Record<string, { shareCode?: string }>;
-      Object.entries(users).forEach(([userId, userData]) => {
-        if (userData.shareCode && shareCodes.includes(userData.shareCode)) {
-          userIds.push(userId);
-        }
-      });
-    }
-
-    return userIds;
-  };
-
-  let cancelled = false;
-  const unsubscribers: (() => void)[] = [];
-
-  getUserIdsFromShareCodes().then((userIds) => {
-    // Don't set up subscriptions if already cancelled
-    if (cancelled) {
-      return;
-    }
-
-    if (userIds.length === 0) {
-      callback([]);
-      return;
-    }
-
-    const investmentsRef = ref(db, 'investments');
-    // One indexed query per user (uses .indexOn "userId") instead of scanning
-    // the whole table. Keep each user's latest result and merge on any update.
-    const investmentsByUser = new Map<string, Investment[]>();
-
-    userIds.forEach((userId) => {
-      const userQuery = query(investmentsRef, orderByChild('userId'), equalTo(userId));
-      const unsubscribe = onValue(userQuery, (snapshot) => {
-        const userInvestments: Investment[] = [];
-        snapshot.forEach((childSnapshot) => {
-          userInvestments.push({
-            id: childSnapshot.key!,
-            ...childSnapshot.val(),
-          } as Investment);
-        });
-        investmentsByUser.set(userId, userInvestments);
+  const investmentsByUser = new Map<string, Investment[]>();
+  const unsubscribers = ownerUids.map((ownerUid) =>
+    onValue(
+      ref(db, `investments/${ownerUid}`),
+      (snapshot) => {
+        investmentsByUser.set(ownerUid, snapshotToInvestments(snapshot));
         callback(Array.from(investmentsByUser.values()).flat());
-      });
-      unsubscribers.push(unsubscribe);
-    });
-  }).catch((error) => {
-    console.error('Error fetching user IDs from share codes:', error);
-  });
+      },
+      (error) => {
+        // A single owner going private shouldn't break the whole view.
+        console.error(`Error subscribing to investments of ${ownerUid}:`, error);
+        investmentsByUser.set(ownerUid, []);
+        callback(Array.from(investmentsByUser.values()).flat());
+      }
+    )
+  );
 
   return () => {
-    cancelled = true;
     unsubscribers.forEach((unsubscribe) => unsubscribe());
   };
 };
 
-export const subscribeToAllInvestments = (
+export const subscribeToSharedInvestments = (
+  ownerUids: string[],
   callback: (investments: Investment[]) => void
 ): (() => void) => {
-  const investmentsRef = ref(db, 'investments');
+  return subscribeToInvestmentsByOwners(ownerUids, callback);
+};
 
-  return onValue(investmentsRef, (snapshot) => {
-    const investments: Investment[] = [];
-    snapshot.forEach((childSnapshot) => {
-      investments.push({
-        id: childSnapshot.key!,
-        ...childSnapshot.val(),
-      } as Investment);
+// Investments of everyone who opted in to public listing (publicProfiles node).
+export const subscribeToPublicInvestments = (
+  callback: (investments: Investment[]) => void
+): (() => void) => {
+  let cancelled = false;
+  let unsubscribe: (() => void) | undefined;
+
+  get(ref(db, 'publicProfiles'))
+    .then((snapshot) => {
+      if (cancelled) {
+        return;
+      }
+      const ownerUids = snapshot.exists() ? Object.keys(snapshot.val()) : [];
+      unsubscribe = subscribeToInvestmentsByOwners(ownerUids, callback);
+    })
+    .catch((error) => {
+      console.error('Error fetching public profiles:', error);
+      callback([]);
     });
-    callback(investments);
-  });
+
+  return () => {
+    cancelled = true;
+    if (unsubscribe) {
+      unsubscribe();
+    }
+  };
+};
+
+// Whether the user's portfolio is listed on the Everyone tab.
+export const getPortfolioVisibility = async (userId: string): Promise<boolean> => {
+  const snapshot = await get(ref(db, `publicProfiles/${userId}`));
+  return snapshot.exists();
+};
+
+export const setPortfolioVisibility = async (
+  userId: string,
+  displayName: string,
+  isPublic: boolean
+): Promise<void> => {
+  const profileRef = ref(db, `publicProfiles/${userId}`);
+  if (isPublic) {
+    await set(profileRef, { displayName: displayName || 'Anonymous' });
+  } else {
+    await remove(profileRef);
+  }
 };
 
 export const addSharedPortfolio = async (
@@ -244,68 +254,28 @@ export const addSharedPortfolio = async (
     throw new Error('Share code is required');
   }
 
-  // Verify share code exists
-  const usersRef = ref(db, 'users');
-  const snapshot = await get(usersRef);
-
-  if (!snapshot.exists()) {
+  const entry = await lookupShareCode(shareCode);
+  if (!entry) {
     return false;
   }
 
-  const users = snapshot.val() as Record<string, { shareCode?: string }>;
-  const shareCodeExists = Object.values(users).some(
-    (user) => user.shareCode === shareCode
-  );
-
-  if (!shareCodeExists) {
-    return false;
-  }
-
-  // Get current user data
-  const userRef = ref(db, `users/${userId}`);
-  const userSnapshot = await get(userRef);
-
-  if (!userSnapshot.exists()) {
-    return false;
-  }
-
-  const userData = userSnapshot.val();
-  const sharedPortfolios = userData.sharedPortfolios || [];
-
-  // Add share code if not already present
-  if (!sharedPortfolios.includes(shareCode)) {
-    await update(userRef, {
-      sharedPortfolios: [...sharedPortfolios, shareCode],
-    });
-  }
-
+  // Joining is recorded per owner uid so database rules can grant read access.
+  await set(ref(db, `users/${userId}/sharedPortfolios/${entry.uid}`), shareCode);
   return true;
 };
 
 export const removeSharedPortfolio = async (
   userId: string,
-  shareCode: string
+  ownerUid: string
 ): Promise<void> => {
   if (!userId) {
     throw new Error('User ID is required');
   }
-  if (!shareCode) {
-    throw new Error('Share code is required');
+  if (!ownerUid) {
+    throw new Error('Owner ID is required');
   }
 
-  const userRef = ref(db, `users/${userId}`);
-  const userSnapshot = await get(userRef);
-
-  if (!userSnapshot.exists()) {
-    return;
-  }
-
-  const userData = userSnapshot.val();
-  const sharedPortfolios: string[] = userData.sharedPortfolios || [];
-
-  await update(userRef, {
-    sharedPortfolios: sharedPortfolios.filter((code) => code !== shareCode),
-  });
+  await remove(ref(db, `users/${userId}/sharedPortfolios/${ownerUid}`));
 };
 
 export const getUserByShareCode = async (shareCode: string): Promise<string | null> => {
@@ -313,72 +283,39 @@ export const getUserByShareCode = async (shareCode: string): Promise<string | nu
     throw new Error('Share code is required');
   }
 
-  const usersRef = ref(db, 'users');
-  const snapshot = await get(usersRef);
-
-  if (!snapshot.exists()) {
-    return null;
-  }
-
-  const users = snapshot.val() as Record<string, UserData>;
-  for (const user of Object.values(users)) {
-    if (user.shareCode === shareCode) {
-      return user.displayName || user.email;
-    }
-  }
-
-  return null;
+  const entry = await lookupShareCode(shareCode);
+  return entry ? entry.displayName || 'Anonymous' : null;
 };
 
 export const getPublicPortfolio = async (
-  shareCode: string
+  shareCode: string,
+  viewerUid: string
 ): Promise<{ investments: Investment[]; ownerName: string } | null> => {
   try {
     if (!shareCode) {
       throw new Error('Share code is required');
     }
+    if (!viewerUid) {
+      throw new Error('Viewer ID is required');
+    }
 
-    // Find user by share code
-    const usersRef = ref(db, 'users');
-    const usersSnapshot = await get(usersRef);
-
-    if (!usersSnapshot.exists()) {
+    const entry = await lookupShareCode(shareCode);
+    if (!entry) {
       return null;
     }
 
-    const users = usersSnapshot.val() as Record<string, UserData>;
-    let targetUserId: string | null = null;
-    let ownerName = '';
-
-    // Find the user with matching share code
-    for (const [userId, userData] of Object.entries(users)) {
-      if (userData.shareCode === shareCode) {
-        targetUserId = userId;
-        ownerName = userData.displayName || userData.email;
-        break;
-      }
+    // Knowing the code grants access: join the portfolio so database rules
+    // allow reading the owner's investments (idempotent).
+    if (entry.uid !== viewerUid) {
+      await set(ref(db, `users/${viewerUid}/sharedPortfolios/${entry.uid}`), shareCode);
     }
 
-    if (!targetUserId) {
-      return null;
-    }
+    const investmentsSnapshot = await get(ref(db, `investments/${entry.uid}`));
 
-    // Get investments for this user
-    const investmentsRef = ref(db, 'investments');
-    const investmentsQuery = query(investmentsRef, orderByChild('userId'), equalTo(targetUserId));
-    const investmentsSnapshot = await get(investmentsQuery);
-
-    const investments: Investment[] = [];
-    if (investmentsSnapshot.exists()) {
-      investmentsSnapshot.forEach((childSnapshot) => {
-        investments.push({
-          id: childSnapshot.key!,
-          ...childSnapshot.val(),
-        } as Investment);
-      });
-    }
-
-    return { investments, ownerName };
+    return {
+      investments: snapshotToInvestments(investmentsSnapshot),
+      ownerName: entry.displayName || 'Anonymous',
+    };
   } catch (error) {
     console.error('Error fetching public portfolio:', error);
     return null;
