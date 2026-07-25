@@ -255,6 +255,35 @@ describe('Investment Service', () => {
       ).rejects.toThrow('Investment amount must be greater than 0');
     });
 
+    it('should delete the name when it is cleared', async () => {
+      const { update } = await import('firebase/database');
+
+      await updateInvestment('user123', 'inv123', { name: '' });
+
+      // Firebase update() ignores omitted keys, so an empty name has to be
+      // sent as null or the old name survives and cannot be removed.
+      expect(update).toHaveBeenCalledWith(undefined, expect.objectContaining({ name: null }));
+    });
+
+    it('should trim and keep a non-empty name', async () => {
+      const { update } = await import('firebase/database');
+
+      await updateInvestment('user123', 'inv123', { name: '  Main  ' });
+
+      expect(update).toHaveBeenCalledWith(undefined, expect.objectContaining({ name: 'Main' }));
+    });
+
+    it('should leave the name untouched when it is not part of the update', async () => {
+      const { update } = await import('firebase/database');
+
+      await updateInvestment('user123', 'inv123', { buyPrice: 60000 });
+
+      expect(update).toHaveBeenCalledWith(
+        undefined,
+        expect.not.objectContaining({ name: expect.anything() })
+      );
+    });
+
     it('should throw error for negative quantity in update', async () => {
       await expect(
         updateInvestment('user123', 'inv123', { quantity: -0.5 })

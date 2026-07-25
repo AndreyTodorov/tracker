@@ -51,7 +51,7 @@
           "buyPrice": { ".validate": "newData.isNumber() && newData.val() > 0" },
           "investmentAmount": { ".validate": "newData.isNumber() && newData.val() > 0" },
           "quantity": { ".validate": "newData.isNumber() && newData.val() > 0" },
-          "currency": { ".validate": "newData.isString()" },
+          "currency": { ".validate": "newData.isString() && newData.val().matches(/^(USD|EUR|GBP|JPY|CHF|CAD|AUD)$/)" },
           "purchaseDate": { ".validate": "newData.isNumber()" },
           "createdAt": { ".validate": "newData.isNumber()" },
           "name": { ".validate": "newData.isString()" },

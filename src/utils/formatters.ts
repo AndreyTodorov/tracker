@@ -1,23 +1,43 @@
 import { format } from 'date-fns';
 
-export const formatCurrency = (amount: number, currency = 'USD'): string => {
+// Intl throws a RangeError on a currency code that is not three letters, and
+// a stored record can carry one. Formatting is called during render, so a
+// throw here takes down the whole view — including for people merely viewing
+// a shared portfolio that contains the bad record. Fall back to plain number
+// formatting with the raw code appended so the value stays readable.
+const formatWithCurrency = (
+  amount: number,
+  currency: string,
+  options: Intl.NumberFormatOptions
+): string => {
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      ...options,
+    }).format(amount);
+  } catch {
+    const number = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      ...options,
+    }).format(amount);
+    const label = currency.trim();
+    return label ? `${label} ${number}` : number;
+  }
+};
+
+export const formatCurrency = (amount: number, currency = 'USD'): string =>
   // Let Intl use each currency's natural precision (e.g. JPY has no minor
   // unit, so it renders ¥1,235 rather than a bogus ¥1,234.50).
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-  }).format(amount);
-};
+  formatWithCurrency(amount, currency, {});
 
 export const formatCryptoPrice = (price: number, currency = 'USD'): string => {
   // Crypto prices are often sub-cent, so allow extra precision for small values.
   const isSmall = price > 0 && price < 1;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
+  return formatWithCurrency(price, currency, {
     minimumFractionDigits: 2,
     maximumFractionDigits: isSmall ? 8 : 4,
-  }).format(price);
+  });
 };
 
 export const formatPercentage = (percentage: number): string => {

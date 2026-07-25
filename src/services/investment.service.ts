@@ -96,10 +96,14 @@ export const addInvestment = async (
   return newInvestmentRef.key!;
 };
 
+// `name` is optional on an investment, so clearing it means removing the key.
+// Firebase update() ignores keys that are absent, so it has to be sent as null.
+type InvestmentUpdates = Partial<Omit<Investment, 'name'>> & { name?: string | null };
+
 export const updateInvestment = async (
   userId: string,
   investmentId: string,
-  updates: Partial<Investment>
+  updates: InvestmentUpdates
 ): Promise<void> => {
   if (!userId) {
     throw new Error('User ID is required');
@@ -122,10 +126,12 @@ export const updateInvestment = async (
     throw new Error(`Invalid currency. Supported currencies: ${VALID_CURRENCIES.join(', ')}`);
   }
 
-  // Normalize currency to uppercase if provided
+  // Normalize currency to uppercase if provided, and turn a blank name into a
+  // deletion so an existing name can actually be removed.
   const normalizedUpdates = {
     ...updates,
     ...(updates.currency && { currency: updates.currency.toUpperCase() }),
+    ...(updates.name !== undefined && { name: updates.name?.trim() || null }),
   };
 
   const investmentRef = ref(db, `investments/${userId}/${investmentId}`);

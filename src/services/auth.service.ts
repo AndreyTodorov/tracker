@@ -27,6 +27,53 @@ const generateUniqueShareCode = async (): Promise<string> => {
   return shareCode;
 };
 
+/**
+ * Guarantees the database records backing an account exist.
+ *
+ * Account creation is several writes after the Firebase auth account itself,
+ * and a failure in any of them used to leave an account that could sign in but
+ * had no record: no display name, no share code, unable to add investments,
+ * and impossible to re-register because the email was taken. Running this
+ * check on every sign-in repairs those accounts, and makes signup safe to
+ * interrupt.
+ *
+ * Idempotent: a healthy account performs reads only.
+ */
+export const ensureUserRecord = async (
+  user: FirebaseUser,
+  displayNameHint?: string
+): Promise<void> => {
+  const snapshot = await get(ref(db, `users/${user.uid}`));
+  const existing = snapshot.exists() ? (snapshot.val() as User) : null;
+
+  const displayName =
+    (existing?.displayName || displayNameHint || user.displayName || '').trim() || 'Anonymous';
+  const shareCode = existing?.shareCode || (await generateUniqueShareCode());
+
+  if (!existing) {
+    const userDoc: User = {
+      id: user.uid,
+      email: user.email ?? '',
+      displayName,
+      createdAt: Date.now(),
+      shareCode,
+      sharedPortfolios: {},
+    };
+    await set(ref(db, `users/${user.uid}`), userDoc);
+  }
+
+  // Checked separately: the record can exist while the lookup entry that makes
+  // the share code usable does not.
+  const indexSnapshot = await get(ref(db, `shareCodeIndex/${shareCode}`));
+  if (!indexSnapshot.exists()) {
+    // Public, PII-free lookup entry so others can resolve the code to a portfolio.
+    await set(ref(db, `shareCodeIndex/${shareCode}`), {
+      uid: user.uid,
+      displayName,
+    });
+  }
+};
+
 export const signUp = async (
   email: string,
   password: string,
@@ -36,32 +83,22 @@ export const signUp = async (
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
 
-  // Update profile with display name
   await updateProfile(user, { displayName: name });
-
-  // Create user document in Realtime Database
-  const shareCode = await generateUniqueShareCode();
-  const userDoc: User = {
-    id: user.uid,
-    email: user.email!,
-    displayName: name,
-    createdAt: Date.now(),
-    shareCode,
-    sharedPortfolios: {},
-  };
-
-  await set(ref(db, `users/${user.uid}`), userDoc);
-  // Public, PII-free lookup entry so others can resolve the code to a portfolio.
-  await set(ref(db, `shareCodeIndex/${shareCode}`), {
-    uid: user.uid,
-    displayName: name,
-  });
+  await ensureUserRecord(user, name);
 
   return user;
 };
 
 export const signIn = async (email: string, password: string): Promise<FirebaseUser> => {
   const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+  // Repairs accounts left incomplete by an interrupted signup. A failure here
+  // must not keep out a user whose account is already fine, so it is logged
+  // rather than thrown.
+  await ensureUserRecord(userCredential.user).catch((error) => {
+    console.error('Could not verify user record:', error);
+  });
+
   return userCredential.user;
 };
 

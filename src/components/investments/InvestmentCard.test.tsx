@@ -46,6 +46,7 @@ const cardElement = (
       investment={investment}
       display={toDisplayValues(investment, prices, displayCurrency ?? investment.currency)}
       nativeCurrentPrice={currentPrice}
+      prices={prices}
     />
   );
 };
@@ -279,6 +280,7 @@ describe('InvestmentCard Component', () => {
           investment={investment}
           display={toDisplayValues(investment, prices, 'USD')}
           nativeCurrentPrice={50000}
+          prices={prices}
         />
       );
     };

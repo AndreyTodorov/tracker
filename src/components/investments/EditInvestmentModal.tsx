@@ -6,6 +6,8 @@ import { Input } from '../ui/Input';
 import { updateInvestment } from '../../services/investment.service';
 import { formatCryptoPrice } from '../../utils/formatters';
 import type { Investment } from '../../types';
+import { deriveRate } from '../../utils/currency';
+import { SUPPORTED_CURRENCIES } from '../../utils/currencies';
 import { useToast } from '../../context/ToastContext';
 
 interface EditInvestmentFormData {
@@ -18,15 +20,20 @@ interface EditInvestmentFormData {
 
 interface EditInvestmentModalProps {
   investment: Investment;
+  /** Live price in the investment's own currency. Never a converted price:
+   *  "Use as Buy Price" writes it straight into the stored record. */
   currentPrice: number;
+  /** Used to derive an exchange rate when the currency is changed. */
+  prices: Map<string, Map<string, number>>;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose }: EditInvestmentModalProps) => {
+export const EditInvestmentModal = ({ investment, currentPrice, prices, isOpen, onClose }: EditInvestmentModalProps) => {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastEditedField, setLastEditedField] = useState<'amount' | 'quantity' | null>(null);
+
 
   const { register, handleSubmit, control, setValue, reset, formState: { errors } } = useForm<EditInvestmentFormData>({
     defaultValues: {
@@ -55,12 +62,54 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
   }, [quantity, buyPrice, setValue, lastEditedField]);
 
 
+  // The buy price is a stored, historical figure. Relabelling it with a new
+  // currency without converting would silently change what the holding is
+  // worth, so the amounts move with the label.
+  //
+  // Conversion is always relative to the saved record rather than to the
+  // previously selected currency, so switching back and forth returns the
+  // exact original figures instead of accumulating rounding error.
+  const selectedCurrency = (currency || investment.currency).toUpperCase();
+  const isRelabelled = selectedCurrency !== investment.currency.toUpperCase();
+  const conversionRate = isRelabelled
+    ? deriveRate(prices, investment.currency, selectedCurrency)
+    : null;
+
+  // The live price arrives in the investment's own currency, so it has to move
+  // with the label too. Without this the panel would report a EUR figure as
+  // USD, and "Use as Buy Price" would write that unconverted number into the
+  // stored record.
+  const liveRate = isRelabelled ? conversionRate : 1;
+  const liveCurrency = liveRate === null ? investment.currency : selectedCurrency;
+  const livePrice = liveRate === null ? currentPrice : currentPrice * liveRate;
+
+  const handleCurrencyChange = (next: string) => {
+    const round = (value: number, places: number) => {
+      const factor = 10 ** places;
+      return Math.round(value * factor) / factor;
+    };
+
+    const rate =
+      next.toUpperCase() === investment.currency.toUpperCase()
+        ? 1
+        : deriveRate(prices, investment.currency, next);
+
+    // No rate: leave the amounts alone and let the warning below explain.
+    if (rate === null) {
+      return;
+    }
+
+    setValue('buyPrice', round(investment.buyPrice * rate, 8));
+    setValue('investmentAmount', round(investment.investmentAmount * rate, 2));
+  };
+
   const onSubmit = async (data: EditInvestmentFormData) => {
     setIsSubmitting(true);
 
     try {
       await updateInvestment(investment.userId, investment.id, {
-        ...(data.name && { name: data.name }),
+        // Always sent, so clearing it actually removes it.
+        name: data.name ?? '',
         buyPrice: data.buyPrice,
         investmentAmount: data.investmentAmount,
         quantity: data.quantity,
@@ -112,19 +161,19 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
           {/* Current Price Display */}
           <div className="p-3 rounded-lg bg-surface2 border border-line">
             <div className="flex items-center justify-between mb-1">
-              <div className="text-[11px] text-muted uppercase tracking-wider">Current Price ({currency || investment.currency})</div>
+              <div className="text-[11px] text-muted uppercase tracking-wider">Current Price ({liveCurrency})</div>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 className="text-accent hover:bg-accent/10 -mr-1"
-                onClick={() => setValue('buyPrice', currentPrice)}
+                onClick={() => setValue('buyPrice', livePrice)}
               >
                 Use as Buy Price
               </Button>
             </div>
             <div className="tnum text-xl font-semibold text-content">
-              {formatCryptoPrice(currentPrice, currency || investment.currency)}
+              {formatCryptoPrice(livePrice, liveCurrency)}
             </div>
           </div>
 
@@ -143,17 +192,27 @@ export const EditInvestmentModal = ({ investment, currentPrice, isOpen, onClose 
             </label>
             <select
               id="edit-currency"
-              {...register('currency', { required: 'Currency is required' })}
+              {...register('currency', {
+                required: 'Currency is required',
+                onChange: (event) => handleCurrencyChange(event.target.value),
+              })}
               className="w-full px-4 py-2.5 bg-surface2 border border-line rounded-lg text-content focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition-colors"
             >
-              <option value="EUR" className="bg-surface2">EUR (€)</option>
-              <option value="USD" className="bg-surface2">USD ($)</option>
-              <option value="GBP" className="bg-surface2">GBP (£)</option>
-              <option value="JPY" className="bg-surface2">JPY (¥)</option>
-              <option value="CHF" className="bg-surface2">CHF (Fr)</option>
-              <option value="CAD" className="bg-surface2">CAD (C$)</option>
-              <option value="AUD" className="bg-surface2">AUD (A$)</option>
+              {SUPPORTED_CURRENCIES.map(({ code, symbol }) => (
+                <option key={code} value={code} className="bg-surface2">
+                  {code} ({symbol})
+                </option>
+              ))}
             </select>
+            {isRelabelled && (
+              <p
+                className={`text-xs mt-1.5 ${conversionRate === null ? 'text-yellow-400' : 'text-muted'}`}
+              >
+                {conversionRate === null
+                  ? `Live rate unavailable, so the amounts were left as they were and only relabelled from ${investment.currency} to ${selectedCurrency}. Check them before saving.`
+                  : `Converted from ${investment.currency} at ${conversionRate.toFixed(4)}.`}
+              </p>
+            )}
           </div>
 
           {/* Buy Price */}

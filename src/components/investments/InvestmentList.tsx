@@ -46,6 +46,7 @@ export const InvestmentList = ({ investments, prices, loading, displayCurrency }
             investment={investment}
             display={toDisplayValues(investment, prices, displayCurrency)}
             nativeCurrentPrice={symbolPrices?.get(investment.currency.toLowerCase())}
+            prices={prices}
           />
         );
       })}

@@ -17,9 +17,11 @@ interface InvestmentCardProps {
   /** Live price in the holding's own currency. Editing operates on stored,
    *  native values, so the converted price must not be used there. */
   nativeCurrentPrice?: number;
+  /** Passed to the edit modal so changing a currency can convert the amounts. */
+  prices: Map<string, Map<string, number>>;
 }
 
-export const InvestmentCard = ({ investment, display, nativeCurrentPrice }: InvestmentCardProps) => {
+export const InvestmentCard = ({ investment, display, nativeCurrentPrice, prices }: InvestmentCardProps) => {
   const { currentUser } = useAuth();
   const toast = useToast();
   const isOwner = currentUser?.uid === investment.userId;
@@ -180,6 +182,7 @@ export const InvestmentCard = ({ investment, display, nativeCurrentPrice }: Inve
         <EditInvestmentModal
           investment={investment}
           currentPrice={nativePrice}
+          prices={prices}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
         />
