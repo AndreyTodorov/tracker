@@ -5,26 +5,30 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import type { User as FirebaseUser } from 'firebase/auth';
-import { ref, set, get, onValue } from 'firebase/database';
+import { ref, set, get, update, onValue } from 'firebase/database';
 import { auth, db } from '../config/firebase';
 import type { User } from '../types';
 import { generateShareCode } from '../utils/calculations';
+
+// Mirrors the limit enforced by database rules, so an over-long name fails
+// with a readable message instead of a permission error.
+export const MAX_DISPLAY_NAME_LENGTH = 64;
 
 // Generate a share code that isn't already in use by another user.
 // Uniqueness is checked against the shareCodeIndex (per-code lookups only,
 // since the users node is not readable by other accounts).
 const generateUniqueShareCode = async (): Promise<string> => {
-  let shareCode = generateShareCode();
-  let attempts = 0;
-  while (attempts < 10) {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const shareCode = generateShareCode();
     const existing = await get(ref(db, `shareCodeIndex/${shareCode}`));
     if (!existing.exists()) {
       return shareCode;
     }
-    shareCode = generateShareCode();
-    attempts += 1;
   }
-  return shareCode;
+  // Returning a known-colliding code used to hand out a share code whose index
+  // entry belongs to somebody else. Failing is recoverable: the next sign-in
+  // repairs the account with a freshly generated code.
+  throw new Error('Could not generate an unused share code. Please try again.');
 };
 
 /**
@@ -87,6 +91,62 @@ export const signUp = async (
   await ensureUserRecord(user, name);
 
   return user;
+};
+
+/**
+ * Renames a user everywhere the name is stored.
+ *
+ * The display name is denormalised into the share-code index, the public
+ * profile and every investment the user owns, because none of those readers
+ * can see the private users node. Without this they drift permanently: an old
+ * name would keep showing to everyone viewing a shared portfolio.
+ *
+ * All database copies go in one multi-path update, which Firebase applies
+ * atomically, so a failure cannot leave the copies disagreeing. The Firebase
+ * auth profile is a separate system and is updated after.
+ */
+export const updateDisplayName = async (
+  user: FirebaseUser,
+  displayName: string
+): Promise<void> => {
+  const name = displayName.trim();
+  if (!name) {
+    throw new Error('Display name is required');
+  }
+  if (name.length > MAX_DISPLAY_NAME_LENGTH) {
+    throw new Error(`Display name must be ${MAX_DISPLAY_NAME_LENGTH} characters or fewer`);
+  }
+
+  const userSnapshot = await get(ref(db, `users/${user.uid}`));
+  if (!userSnapshot.exists()) {
+    throw new Error('Your account record is missing. Please sign out and back in.');
+  }
+  const existing = userSnapshot.val() as User;
+
+  const updates: Record<string, string> = {
+    [`users/${user.uid}/displayName`]: name,
+  };
+
+  if (existing.shareCode) {
+    updates[`shareCodeIndex/${existing.shareCode}/displayName`] = name;
+  }
+
+  // Only listed users have a public profile, and writing one would silently
+  // opt them in to the Everyone tab.
+  const publicProfile = await get(ref(db, `publicProfiles/${user.uid}`));
+  if (publicProfile.exists()) {
+    updates[`publicProfiles/${user.uid}/displayName`] = name;
+  }
+
+  const investments = await get(ref(db, `investments/${user.uid}`));
+  if (investments.exists()) {
+    Object.keys(investments.val() as Record<string, unknown>).forEach((investmentId) => {
+      updates[`investments/${user.uid}/${investmentId}/userName`] = name;
+    });
+  }
+
+  await update(ref(db), updates);
+  await updateProfile(user, { displayName: name });
 };
 
 export const signIn = async (email: string, password: string): Promise<FirebaseUser> => {

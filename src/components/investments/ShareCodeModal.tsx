@@ -40,7 +40,7 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
     if (!currentUser) return;
     setIsTogglingPublic(true);
     try {
-      await setPortfolioVisibility(currentUser.uid, userData?.displayName || '', !isPublic);
+      await setPortfolioVisibility(currentUser.uid, !isPublic);
       setIsPublic(!isPublic);
     } catch (error) {
       console.error('Error updating portfolio visibility:', error);

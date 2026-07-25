@@ -6,11 +6,13 @@ import { useCurrency } from '../../context/CurrencyContext';
 import { SUPPORTED_CURRENCIES } from '../../utils/currencies';
 import { signOut } from '../../services/auth.service';
 import { ShareCodeModal } from '../investments/ShareCodeModal';
+import { ProfileModal } from './ProfileModal';
 
 export const Header = () => {
   const { userData } = useAuth();
   const { displayCurrency, setDisplayCurrency } = useCurrency();
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const handleSignOut = async () => {
     try {
@@ -63,12 +65,17 @@ export const Header = () => {
                 <span className="hidden sm:inline">Share Portfolio</span>
               </Button>
 
-              <div className="panel-strong rounded-lg px-3 py-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowProfileModal(true)}
+                className="panel-strong rounded-lg px-3 py-2 flex items-center gap-2 transition-colors hover:border-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+                aria-label="Edit your display name"
+              >
                 <User size={16} className="text-muted" />
                 <span className="text-sm font-medium hidden sm:inline">
                   {userData?.displayName}
                 </span>
-              </div>
+              </button>
 
               <Button
                 variant="ghost"
@@ -87,6 +94,11 @@ export const Header = () => {
       <ShareCodeModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
+      />
+
+      <ProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
       />
     </>
   );

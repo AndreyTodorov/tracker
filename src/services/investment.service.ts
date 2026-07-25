@@ -237,15 +237,20 @@ export const getPortfolioVisibility = async (userId: string): Promise<boolean> =
 
 export const setPortfolioVisibility = async (
   userId: string,
-  displayName: string,
   isPublic: boolean
 ): Promise<void> => {
   const profileRef = ref(db, `publicProfiles/${userId}`);
-  if (isPublic) {
-    await set(profileRef, { displayName: displayName || 'Anonymous' });
-  } else {
+  if (!isPublic) {
     await remove(profileRef);
+    return;
   }
+
+  // Read the name from the account rather than accepting one from the caller.
+  // A caller passing a stale or empty value would publish a name that
+  // disagrees with the rest of the app.
+  const snapshot = await get(ref(db, `users/${userId}/displayName`));
+  const displayName = (snapshot.val() as string | null) || 'Anonymous';
+  await set(profileRef, { displayName });
 };
 
 export const addSharedPortfolio = async (

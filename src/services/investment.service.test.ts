@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { addInvestment, updateInvestment, deleteInvestment } from './investment.service';
+import { addInvestment, updateInvestment, deleteInvestment, setPortfolioVisibility } from './investment.service';
 
 // Mock Firebase
 vi.mock('../config/firebase', () => ({
@@ -353,6 +353,39 @@ describe('Investment Service', () => {
 
       expect(remove).toHaveBeenCalled();
       expect(ref).toHaveBeenCalledWith(expect.anything(), 'investments/user123/inv123');
+    });
+  });
+
+  describe('setPortfolioVisibility', () => {
+    it('lists the portfolio under the name stored on the account', async () => {
+      const { set, get, ref } = await import('firebase/database');
+      vi.mocked(ref).mockImplementation((_db: unknown, path?: string) => path as never);
+      vi.mocked(get).mockResolvedValue({ val: () => 'Ada', exists: () => true } as never);
+
+      await setPortfolioVisibility('u1', true);
+
+      // Taking the name from the caller let a stale or empty value overwrite
+      // the real one, so it is read from the account instead.
+      expect(set).toHaveBeenCalledWith('publicProfiles/u1', { displayName: 'Ada' });
+    });
+
+    it('falls back to Anonymous when the account has no name', async () => {
+      const { set, get, ref } = await import('firebase/database');
+      vi.mocked(ref).mockImplementation((_db: unknown, path?: string) => path as never);
+      vi.mocked(get).mockResolvedValue({ val: () => null, exists: () => false } as never);
+
+      await setPortfolioVisibility('u1', true);
+
+      expect(set).toHaveBeenCalledWith('publicProfiles/u1', { displayName: 'Anonymous' });
+    });
+
+    it('removes the listing without reading the name', async () => {
+      const { remove, ref } = await import('firebase/database');
+      vi.mocked(ref).mockImplementation((_db: unknown, path?: string) => path as never);
+
+      await setPortfolioVisibility('u1', false);
+
+      expect(remove).toHaveBeenCalledWith('publicProfiles/u1');
     });
   });
 });
