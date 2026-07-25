@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { expect, afterEach, vi } from 'vitest';
+import { expect, afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
 // Cleanup after each test
@@ -29,16 +29,9 @@ if (!globalThis.localStorage) {
   });
 }
 
-// Mock environment variables
-vi.mock('import.meta.env', () => ({
-  VITE_FIREBASE_API_KEY: 'test-api-key',
-  VITE_FIREBASE_AUTH_DOMAIN: 'test.firebaseapp.com',
-  VITE_FIREBASE_PROJECT_ID: 'test-project',
-  VITE_FIREBASE_STORAGE_BUCKET: 'test.appspot.com',
-  VITE_FIREBASE_MESSAGING_SENDER_ID: '123456789',
-  VITE_FIREBASE_APP_ID: 'test-app-id',
-  VITE_FIREBASE_DATABASE_URL: 'https://test.firebaseio.com',
-}));
+// Firebase environment variables are supplied by `test.env` in
+// vitest.config.ts. They cannot be provided with vi.mock: import.meta.env is
+// not a module, so mocking it silently does nothing.
 
 // Add custom matchers
 expect.extend({});
