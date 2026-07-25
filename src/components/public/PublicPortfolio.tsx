@@ -9,7 +9,8 @@ import { Card } from '../ui/Card';
 import { Share2, Lock, Eye } from 'lucide-react';
 import { getPublicPortfolio } from '../../services/investment.service';
 import { useCryptoPrices } from '../../hooks/useCryptoPrices';
-import { calculatePortfolioStats } from '../../utils/calculations';
+import { calculatePortfolioStats } from '../../utils/currency';
+import { useCurrency } from '../../context/CurrencyContext';
 import type { Investment } from '../../types';
 import { formatDateTime } from '../../utils/formatters';
 
@@ -23,12 +24,13 @@ export const PublicPortfolio = () => {
   const [error, setError] = useState('');
   const [portfolioOwner, setPortfolioOwner] = useState('');
 
-  const { prices, lastUpdate } = useCryptoPrices(investments);
+  const { displayCurrency } = useCurrency();
+  const { prices, lastUpdate } = useCryptoPrices(investments, displayCurrency);
 
   // Calculate portfolio stats
   const portfolio = useMemo(() => {
-    return calculatePortfolioStats(investments, prices);
-  }, [investments, prices]);
+    return calculatePortfolioStats(investments, prices, displayCurrency);
+  }, [investments, prices, displayCurrency]);
 
   const loadPortfolio = useCallback(async (code: string) => {
     if (!code || code.length !== 8) {
@@ -214,6 +216,7 @@ export const PublicPortfolio = () => {
             <InvestmentList
               investments={investments}
               prices={prices}
+              displayCurrency={displayCurrency}
               loading={loading}
             />
           </div>

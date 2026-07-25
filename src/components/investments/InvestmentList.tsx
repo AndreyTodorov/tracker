@@ -2,15 +2,17 @@ import type { Investment } from '../../types';
 import { InvestmentCard } from './InvestmentCard';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { getPriceKey } from '../../utils/calculations';
+import { toDisplayValues } from '../../utils/currency';
 import { TrendingUp } from 'lucide-react';
 
 interface InvestmentListProps {
   investments: Investment[];
   prices: Map<string, Map<string, number>>;
   loading: boolean;
+  displayCurrency: string;
 }
 
-export const InvestmentList = ({ investments, prices, loading }: InvestmentListProps) => {
+export const InvestmentList = ({ investments, prices, loading, displayCurrency }: InvestmentListProps) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -37,13 +39,13 @@ export const InvestmentList = ({ investments, prices, loading }: InvestmentListP
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {investments.map((investment) => {
         const symbolPrices = prices.get(getPriceKey(investment));
-        const currentPrice = symbolPrices?.get(investment.currency.toLowerCase());
 
         return (
           <InvestmentCard
             key={investment.id}
             investment={investment}
-            currentPrice={currentPrice}
+            display={toDisplayValues(investment, prices, displayCurrency)}
+            nativeCurrentPrice={symbolPrices?.get(investment.currency.toLowerCase())}
           />
         );
       })}

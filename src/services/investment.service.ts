@@ -9,6 +9,7 @@ import {
 } from 'firebase/database';
 import type { DataSnapshot } from 'firebase/database';
 import { db } from '../config/firebase';
+import { SUPPORTED_CURRENCY_CODES } from '../utils/currencies';
 import type { Investment } from '../types';
 
 // PII-free entry in the shareCodeIndex node (code -> owner lookup)
@@ -17,8 +18,7 @@ interface ShareCodeEntry {
   displayName: string;
 }
 
-// Supported currencies
-const VALID_CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD'];
+const VALID_CURRENCIES = SUPPORTED_CURRENCY_CODES;
 
 // Input validation helper
 const validateInvestmentInput = (

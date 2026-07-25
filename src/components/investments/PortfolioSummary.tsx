@@ -12,29 +12,25 @@ export const PortfolioSummary = ({ portfolio }: PortfolioSummaryProps) => {
   const uniqueAssets = new Set(portfolio.investments.map(inv => inv.assetSymbol)).size;
   const totalInvestments = portfolio.investments.length;
 
-  // Detect multiple currencies
-  const currencies = new Set(portfolio.investments.map(inv => inv.currency));
-  const hasMixedCurrencies = currencies.size > 1;
-  const currencyList = Array.from(currencies).join(', ');
-  // Format totals in the portfolio's own currency (the first one when mixed —
-  // the warning above explains that mixed totals aren't meaningful).
-  const displayCurrency = Array.from(currencies)[0] || 'USD';
+  // Mixed currencies are normally converted into the selected display
+  // currency, so they need no warning. The only remaining problem case is
+  // conversion being impossible, which leaves the totals summed unconverted.
+  const displayCurrency = portfolio.totalsCurrency;
 
   return (
     <>
-      {hasMixedCurrencies && (
+      {portfolio.conversionFailed && (
         <div className="mb-4 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
           <div className="flex items-start gap-3">
             <AlertTriangle size={20} className="text-yellow-400 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-sm font-medium text-yellow-400 mb-1">
-                Mixed Currency Warning
+                Live rates unavailable
               </p>
               <p className="text-xs text-content/80">
-                Your portfolio contains investments in multiple currencies ({currencyList}).
-                Total values are calculated by adding amounts without currency conversion,
-                which may not reflect accurate totals. Consider using a single currency or
-                implementing currency conversion for accurate portfolio tracking.
+                Totals are shown in {displayCurrency} without currency conversion, so
+                they may be inaccurate. They will convert automatically once prices
+                can be fetched again.
               </p>
             </div>
           </div>

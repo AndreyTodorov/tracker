@@ -2,7 +2,8 @@
 
 **Date:** 2026-07-25
 **Branch:** `feat/sharing-security-model`
-**Status:** Approved, ready for implementation planning
+**Status:** Implemented. See "Implementation notes" for where the built code
+diverged from this design.
 
 ## Problem
 
@@ -289,6 +290,37 @@ New — `useInvestments` stale-tab guard: switching tabs yields `[]` and
   `"$other": { ".validate": false }` and would reject a new field.
 - Caching FX rates across sessions.
 - Any change to how currency is stored on an investment.
+
+## Implementation notes
+
+Four things turned out differently once the code was written.
+
+**`calculatePortfolioStats` moved to `currency.ts`.** The design left it in
+`calculations.ts`, but `currency.ts` imports `calculateProfit` and
+`getPriceKey` from there, so calling `toDisplayValues` from `calculations.ts`
+would have created an import cycle. Portfolio totals are currency-aware math,
+so they belong with the conversion logic. `calculations.ts` keeps the
+primitives and imports nothing local. Its tests moved with it.
+
+**`InvestmentCard` takes `display` and `nativeCurrentPrice`.** Rather than the
+card recomputing conversion, `InvestmentList` calls `toDisplayValues` and
+passes the result. The card is presentational and the math has one home. The
+old `currentPrice` prop became `nativeCurrentPrice`, which drives both the LIVE
+badge and the edit modal.
+
+**The `EditInvestmentModal` risk was worse than described.** The design said a
+converted price would be displayed inside the modal. In fact
+`EditInvestmentModal.tsx:121` has a "Use as Buy Price" button that writes
+`currentPrice` directly into the form's `buyPrice`, which is then saved. A
+converted price there would have corrupted stored data, not just misdisplayed
+it. There is now a test that opens the modal on a converted card and asserts
+the native price is offered.
+
+**`localStorage` needed a test-environment shim.** Node 22+ defines its own
+experimental `globalThis.localStorage`, undefined unless the process gets
+`--localstorage-file`. It shadows the one jsdom installs, so `localStorage` was
+missing in tests while `sessionStorage` worked. `src/test/setup.ts` restores it.
+Browsers are unaffected.
 
 ## Delivery note
 

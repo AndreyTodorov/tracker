@@ -1,9 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '../../test/test-utils';
+import userEvent from '@testing-library/user-event';
 import { InvestmentCard } from './InvestmentCard';
 import { mockInvestment } from '../../test/test-utils';
 import * as AuthContext from '../../context/AuthContext';
+import { toDisplayValues } from '../../utils/currency';
+import { getPriceKey } from '../../utils/calculations';
+import type { Investment } from '../../types';
 
 // Mock the auth context
 vi.mock('../../context/AuthContext', () => ({
@@ -20,6 +24,32 @@ vi.mock('../../services/investment.service', () => ({
   deleteInvestment: vi.fn(),
 }));
 
+// Builds the card with display values derived natively, i.e. exactly what the
+// list passes when the display currency matches the holding's own currency.
+const cardElement = (
+  investment: Investment,
+  currentPrice?: number,
+  displayCurrency?: string
+) => {
+  const prices =
+    currentPrice === undefined
+      ? new Map<string, Map<string, number>>()
+      : new Map([
+          [
+            getPriceKey(investment),
+            new Map([[investment.currency.toLowerCase(), currentPrice]]),
+          ],
+        ]);
+
+  return (
+    <InvestmentCard
+      investment={investment}
+      display={toDisplayValues(investment, prices, displayCurrency ?? investment.currency)}
+      nativeCurrentPrice={currentPrice}
+    />
+  );
+};
+
 describe('InvestmentCard Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -32,7 +62,7 @@ describe('InvestmentCard Component', () => {
       userName: 'John Doe',
     });
 
-    render(<InvestmentCard investment={investment} />);
+    render(cardElement(investment));
 
     expect(screen.getByText('Bitcoin')).toBeInTheDocument();
     expect(screen.getByText('BTC')).toBeInTheDocument();
@@ -45,7 +75,7 @@ describe('InvestmentCard Component', () => {
       currency: 'USD',
     });
 
-    render(<InvestmentCard investment={investment} currentPrice={60000} />);
+    render(cardElement(investment, 60000));
 
     expect(screen.getByText('Buy Price')).toBeInTheDocument();
     expect(screen.getByText('Current Price')).toBeInTheDocument();
@@ -56,7 +86,7 @@ describe('InvestmentCard Component', () => {
       buyPrice: 50000,
     });
 
-    render(<InvestmentCard investment={investment} />);
+    render(cardElement(investment));
 
     // Should not show LIVE indicator when using buy price
     expect(screen.queryByText('LIVE')).not.toBeInTheDocument();
@@ -67,7 +97,7 @@ describe('InvestmentCard Component', () => {
       buyPrice: 50000,
     });
 
-    render(<InvestmentCard investment={investment} currentPrice={60000} />);
+    render(cardElement(investment, 60000));
 
     expect(screen.getByText('LIVE')).toBeInTheDocument();
   });
@@ -77,7 +107,7 @@ describe('InvestmentCard Component', () => {
       buyPrice: 50000,
     });
 
-    render(<InvestmentCard investment={investment} currentPrice={50000} />);
+    render(cardElement(investment, 50000));
 
     expect(screen.queryByText('LIVE')).not.toBeInTheDocument();
   });
@@ -87,7 +117,7 @@ describe('InvestmentCard Component', () => {
       quantity: 0.5,
     });
 
-    render(<InvestmentCard investment={investment} />);
+    render(cardElement(investment));
 
     expect(screen.getByText('Quantity')).toBeInTheDocument();
     expect(screen.getByText('0.5')).toBeInTheDocument();
@@ -98,7 +128,7 @@ describe('InvestmentCard Component', () => {
       investmentAmount: 1000,
     });
 
-    render(<InvestmentCard investment={investment} />);
+    render(cardElement(investment));
 
     expect(screen.getByText('Invested')).toBeInTheDocument();
   });
@@ -110,7 +140,7 @@ describe('InvestmentCard Component', () => {
       currency: 'USD',
     });
 
-    render(<InvestmentCard investment={investment} currentPrice={60000} />);
+    render(cardElement(investment, 60000));
 
     expect(screen.getByText('Current Value')).toBeInTheDocument();
     // 60000 * 0.02 = 1200
@@ -123,7 +153,7 @@ describe('InvestmentCard Component', () => {
       quantity: 0.02,
     });
 
-    render(<InvestmentCard investment={investment} currentPrice={60000} />);
+    render(cardElement(investment, 60000));
 
     expect(screen.getByText('Profit/Loss')).toBeInTheDocument();
     // Profit should be positive
@@ -137,7 +167,7 @@ describe('InvestmentCard Component', () => {
       quantity: 0.02,
     });
 
-    render(<InvestmentCard investment={investment} currentPrice={40000} />);
+    render(cardElement(investment, 40000));
 
     expect(screen.getByText('Profit/Loss')).toBeInTheDocument();
     // Loss should be negative - check for text containing minus sign and amount
@@ -149,7 +179,7 @@ describe('InvestmentCard Component', () => {
       name: 'Main Portfolio',
     });
 
-    render(<InvestmentCard investment={investment} />);
+    render(cardElement(investment));
 
     expect(screen.getByText(/Main Portfolio/)).toBeInTheDocument();
   });
@@ -159,7 +189,7 @@ describe('InvestmentCard Component', () => {
       name: undefined,
     });
 
-    render(<InvestmentCard investment={investment} />);
+    render(cardElement(investment));
 
     expect(screen.queryByText(/📝/)).not.toBeInTheDocument();
   });
@@ -175,7 +205,7 @@ describe('InvestmentCard Component', () => {
       userId: 'test-user',
     });
 
-    render(<InvestmentCard investment={investment} />);
+    render(cardElement(investment));
 
     // Look for buttons (they have icons, so check by role)
     const buttons = screen.getAllByRole('button');
@@ -193,7 +223,7 @@ describe('InvestmentCard Component', () => {
       userId: 'test-user',
     });
 
-    render(<InvestmentCard investment={investment} />);
+    render(cardElement(investment));
 
     // Should not have edit/delete buttons
     const buttons = screen.queryAllByRole('button');
@@ -206,7 +236,7 @@ describe('InvestmentCard Component', () => {
       purchaseDate,
     });
 
-    render(<InvestmentCard investment={investment} />);
+    render(cardElement(investment));
 
     expect(screen.getByText(/Purchased/)).toBeInTheDocument();
     expect(screen.getByText(/Jan 15, 2024/)).toBeInTheDocument();
@@ -218,7 +248,7 @@ describe('InvestmentCard Component', () => {
       buyPrice: 45000,
     });
 
-    const { rerender, container } = render(<InvestmentCard investment={eurInvestment} />);
+    const { rerender, container } = render(cardElement(eurInvestment));
     expect(container.textContent).toContain('€');
 
     const gbpInvestment = mockInvestment({
@@ -226,7 +256,70 @@ describe('InvestmentCard Component', () => {
       buyPrice: 40000,
     });
 
-    rerender(<InvestmentCard investment={gbpInvestment} />);
+    rerender(cardElement(gbpInvestment));
     expect(container.textContent).toContain('£');
+  });
+
+  describe('display currency conversion', () => {
+    // A EUR holding shown in USD. bitcoin is quoted in both, implying a rate
+    // of 60000 / 50000 = 1.2.
+    const convertedCard = () => {
+      const investment = mockInvestment({
+        currency: 'EUR',
+        buyPrice: 50000,
+        quantity: 1,
+      }) as Investment;
+
+      const prices = new Map([
+        ['bitcoin', new Map([['usd', 60000], ['eur', 50000]])],
+      ]);
+
+      return (
+        <InvestmentCard
+          investment={investment}
+          display={toDisplayValues(investment, prices, 'USD')}
+          nativeCurrentPrice={50000}
+        />
+      );
+    };
+
+    it('renders the holding in the display currency', () => {
+      const { container } = render(convertedCard());
+
+      // 50000 EUR buy price at 1.2 becomes $60,000
+      expect(container.textContent).toContain('$60,000.00');
+      expect(container.textContent).not.toContain('€');
+    });
+
+    it('shows the native currency so the original is not hidden', () => {
+      render(convertedCard());
+
+      expect(screen.getByTitle(/held in EUR/i)).toBeInTheDocument();
+    });
+
+    it('does not show a native currency badge when nothing was converted', () => {
+      const investment = mockInvestment({ currency: 'USD' }) as Investment;
+
+      render(cardElement(investment, 60000));
+
+      expect(screen.queryByTitle(/held in/i)).not.toBeInTheDocument();
+    });
+
+    it('offers the native price, not the converted one, as a new buy price', async () => {
+      const user = userEvent.setup();
+      vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
+        currentUser: { uid: 'test-user' } as any,
+        userData: null,
+        loading: false,
+      });
+
+      render(convertedCard());
+      await user.click(screen.getByLabelText('Edit investment'));
+
+      // "Use as Buy Price" writes this value straight into the stored,
+      // native-currency buyPrice field, so it must never be a converted price.
+      expect(screen.getByText(/Current Price \(EUR\)/)).toBeInTheDocument();
+      expect(screen.getByText('€50,000.00')).toBeInTheDocument();
+    });
   });
 });

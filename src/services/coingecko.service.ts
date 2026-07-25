@@ -1,9 +1,9 @@
+import { SUPPORTED_CURRENCY_CODES } from '../utils/currencies';
 import type { CoinGeckoResponse, CoinGeckoSearchResult } from '../types';
 
 const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 
-// Supported currencies
-const VALID_CURRENCIES = ['usd', 'eur', 'gbp', 'jpy', 'chf', 'cad', 'aud'];
+const VALID_CURRENCIES = SUPPORTED_CURRENCY_CODES.map((code) => code.toLowerCase());
 
 // Cache to prevent excessive API calls
 const priceCache = new Map<string, { price: number; timestamp: number }>();

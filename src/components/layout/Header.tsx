@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { LogOut, TrendingUp, Share2, User } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../context/AuthContext';
+import { useCurrency } from '../../context/CurrencyContext';
+import { SUPPORTED_CURRENCIES } from '../../utils/currencies';
 import { signOut } from '../../services/auth.service';
 import { ShareCodeModal } from '../investments/ShareCodeModal';
 
 export const Header = () => {
   const { userData } = useAuth();
+  const { displayCurrency, setDisplayCurrency } = useCurrency();
   const [showShareModal, setShowShareModal] = useState(false);
 
   const handleSignOut = async () => {
@@ -35,6 +38,20 @@ export const Header = () => {
 
             {/* User Menu */}
             <div className="flex items-center gap-3">
+              <select
+                value={displayCurrency}
+                onChange={(event) => setDisplayCurrency(event.target.value)}
+                aria-label="Display currency"
+                title="Show the whole portfolio in this currency"
+                className="px-3 py-2 bg-surface2 border border-line rounded-lg text-sm text-content focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition-colors"
+              >
+                {SUPPORTED_CURRENCIES.map(({ code, symbol }) => (
+                  <option key={code} value={code} className="bg-surface2">
+                    {code} ({symbol})
+                  </option>
+                ))}
+              </select>
+
               <Button
                 variant="secondary"
                 size="sm"
