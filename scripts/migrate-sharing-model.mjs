@@ -15,11 +15,17 @@
  *   GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json \
  *     node scripts/migrate-sharing-model.mjs https://<project>-default-rtdb.<region>.firebasedatabase.app
  *
+ * The credentials path must be absolute, and the key comes from
+ * Firebase Console -> Project Settings -> Service accounts.
+ *
  * Then deploy rules + app:  firebase deploy --only database
  *
  * The script is idempotent: already-migrated records are left untouched.
  */
-import admin from 'firebase-admin';
+// Modular imports: firebase-admin v13+ no longer exposes the legacy `admin.*`
+// namespace through an ESM default import, so `admin.credential` is undefined.
+import { initializeApp, applicationDefault } from 'firebase-admin/app';
+import { getDatabase } from 'firebase-admin/database';
 
 const databaseURL = process.argv[2];
 if (!databaseURL) {
@@ -27,17 +33,53 @@ if (!databaseURL) {
   process.exit(1);
 }
 
-admin.initializeApp({
-  credential: admin.credential.applicationDefault(),
+if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+  console.warn(
+    'GOOGLE_APPLICATION_CREDENTIALS is not set. Falling back to gcloud application\n' +
+    'default credentials, which will fail unless you have run `gcloud auth\n' +
+    'application-default login`. To use a service account key instead:\n\n' +
+    '  GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json \\\n' +
+    '    node scripts/migrate-sharing-model.mjs <databaseURL>\n'
+  );
+}
+
+const app = initializeApp({
+  credential: applicationDefault(),
   databaseURL,
 });
 
-const db = admin.database();
+const db = getDatabase(app);
 
-const [usersSnap, investmentsSnap] = await Promise.all([
-  db.ref('users').get(),
-  db.ref('investments').get(),
-]);
+// The database client retries connection failures indefinitely, so a bad URL
+// or bad credentials would otherwise scroll warnings forever instead of
+// telling the user what is wrong.
+const READ_TIMEOUT_MS = 20000;
+
+const readOrFail = async () => {
+  let timer;
+  try {
+    return await Promise.race([
+      Promise.all([db.ref('users').get(), db.ref('investments').get()]),
+      new Promise((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error('timed out after 20s')),
+          READ_TIMEOUT_MS
+        );
+      }),
+    ]);
+  } catch (error) {
+    console.error(`\nCould not read the database: ${error.message}\n`);
+    console.error('Check that:');
+    console.error('  - the database URL is correct (copy it from the Realtime Database page)');
+    console.error('  - GOOGLE_APPLICATION_CREDENTIALS points at a valid service account key');
+    console.error('  - that service account belongs to this Firebase project\n');
+    process.exit(1);
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+const [usersSnap, investmentsSnap] = await readOrFail();
 
 const users = usersSnap.val() ?? {};
 const investments = investmentsSnap.val() ?? {};
