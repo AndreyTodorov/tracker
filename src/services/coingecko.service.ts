@@ -5,9 +5,95 @@ const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 
 const VALID_CURRENCIES = SUPPORTED_CURRENCY_CODES.map((code) => code.toLowerCase());
 
-// Cache to prevent excessive API calls
+// Cached per symbol *and* currency. Keying by symbol alone meant a request for
+// two currencies could never be served from cache, so every poll, tab switch
+// and currency change hit the network.
 const priceCache = new Map<string, { price: number; timestamp: number }>();
-const CACHE_DURATION = 60000; // 60 seconds (increased to reduce API requests)
+const CACHE_DURATION = 60000; // 60 seconds
+
+// Identical requests issued while one is already in flight share its promise.
+// React StrictMode runs effects twice in development, which would otherwise
+// double every request.
+const inFlightRequests = new Map<string, Promise<void>>();
+
+// Hammering a tripped rate limit only extends it, so requests pause and the
+// pause doubles while the limit keeps being hit.
+export const RATE_LIMIT_BASE_BACKOFF = 120000; // 2 minutes
+const RATE_LIMIT_MAX_BACKOFF = 480000; // 8 minutes
+let rateLimitedUntil = 0;
+let consecutiveRateLimits = 0;
+
+const cacheKey = (symbol: string, currency: string) => `${symbol}:${currency}`;
+
+const readCached = (symbol: string, currency: string): number | undefined => {
+  const entry = priceCache.get(cacheKey(symbol, currency));
+  if (!entry || Date.now() - entry.timestamp >= CACHE_DURATION) {
+    return undefined;
+  }
+  return entry.price;
+};
+
+const fetchIntoCache = async (symbols: string[], currencies: string[]): Promise<void> => {
+  if (Date.now() < rateLimitedUntil) {
+    return;
+  }
+
+  const url =
+    `${COINGECKO_API_BASE}/simple/price` +
+    `?ids=${symbols.join(',')}&vs_currencies=${currencies.join(',')}`;
+
+  const existing = inFlightRequests.get(url);
+  if (existing) {
+    return existing;
+  }
+
+  const request = (async () => {
+    try {
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          consecutiveRateLimits += 1;
+          const backoff = Math.min(
+            RATE_LIMIT_BASE_BACKOFF * 2 ** (consecutiveRateLimits - 1),
+            RATE_LIMIT_MAX_BACKOFF
+          );
+          rateLimitedUntil = Date.now() + backoff;
+          console.warn(
+            `CoinGecko rate limit hit; pausing price requests for ${Math.round(backoff / 1000)}s`
+          );
+          return;
+        }
+        throw new Error('Failed to fetch crypto prices');
+      }
+
+      consecutiveRateLimits = 0;
+      rateLimitedUntil = 0;
+
+      const data = await response.json();
+      const now = Date.now();
+      Object.entries(data ?? {}).forEach(([symbol, quotes]) => {
+        currencies.forEach((currency) => {
+          const price = (quotes as Record<string, number> | null)?.[currency];
+          // A price of 0 is a real price (a worthless coin), so check the type
+          // rather than truthiness.
+          if (typeof price === 'number') {
+            priceCache.set(cacheKey(symbol, currency), { price, timestamp: now });
+          }
+        });
+      });
+    } catch (error) {
+      console.error('Error fetching multiple crypto prices:', error);
+    }
+  })();
+
+  inFlightRequests.set(url, request);
+  try {
+    await request;
+  } finally {
+    inFlightRequests.delete(url);
+  }
+};
 
 export const searchCrypto = async (query: string): Promise<CoinGeckoSearchResult[]> => {
   if (!query || typeof query !== 'string') {
@@ -60,72 +146,41 @@ export const getMultipleCryptoPrices = async (
     );
   }
 
-  const prices = new Map<string, Map<string, number>>();
-  const symbolsToFetch: string[] = [];
+  const normalizedCurrencies = currencies.map((c) => c.toLowerCase());
+  const normalizedSymbols = symbols.map((s) => s.toLowerCase());
 
-  // Normalize currencies to lowercase
-  const normalizedCurrencies = currencies.map(c => c.toLowerCase());
-  const currenciesString = normalizedCurrencies.join(',');
-
-  // Check cache for each symbol (for now, simplified - cache only USD)
-  symbols.forEach((symbol) => {
-    const normalizedSymbol = symbol.toLowerCase();
-    const cached = priceCache.get(normalizedSymbol);
-
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION && currencies.length === 1 && currencies[0].toLowerCase() === 'usd') {
-      const currencyPrices = new Map<string, number>();
-      currencyPrices.set('usd', cached.price);
-      prices.set(normalizedSymbol, currencyPrices);
-    } else {
-      symbolsToFetch.push(normalizedSymbol);
-    }
-  });
-
-  // Fetch uncached prices
-  if (symbolsToFetch.length === 0) {
-    return prices;
-  }
-
-  try {
-    const idsString = symbolsToFetch.join(',');
-    const response = await fetch(
-      `${COINGECKO_API_BASE}/simple/price?ids=${idsString}&vs_currencies=${currenciesString}&include_24hr_change=true`
-    );
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        console.warn('CoinGecko API rate limit exceeded for multiple prices');
-        return prices; // Return cached prices only
-      }
-      throw new Error('Failed to fetch crypto prices');
-    }
-
-    const data = await response.json();
-
-    symbolsToFetch.forEach((symbol) => {
-      const symbolData = data[symbol];
-      if (symbolData) {
-        const currencyPrices = new Map<string, number>();
-        normalizedCurrencies.forEach((currency) => {
-          const price = symbolData[currency];
-          if (price !== undefined) {
-            currencyPrices.set(currency, price);
-          }
-        });
-
-        if (currencyPrices.size > 0) {
-          prices.set(symbol, currencyPrices);
-          // Cache USD price if available
-          const usdPrice = symbolData.usd;
-          if (usdPrice) {
-            priceCache.set(symbol, { price: usdPrice, timestamp: Date.now() });
-          }
-        }
+  // Request only what is actually missing. The endpoint takes one list of ids
+  // and one list of currencies, so a symbol missing any currency pulls in the
+  // whole missing set — still one request, and far less than refetching
+  // everything on every poll.
+  const missingSymbols = new Set<string>();
+  const missingCurrencies = new Set<string>();
+  normalizedSymbols.forEach((symbol) => {
+    normalizedCurrencies.forEach((currency) => {
+      if (readCached(symbol, currency) === undefined) {
+        missingSymbols.add(symbol);
+        missingCurrencies.add(currency);
       }
     });
-  } catch (error) {
-    console.error('Error fetching multiple crypto prices:', error);
+  });
+
+  if (missingSymbols.size > 0) {
+    await fetchIntoCache([...missingSymbols], [...missingCurrencies]);
   }
+
+  const prices = new Map<string, Map<string, number>>();
+  normalizedSymbols.forEach((symbol) => {
+    const currencyPrices = new Map<string, number>();
+    normalizedCurrencies.forEach((currency) => {
+      const price = readCached(symbol, currency);
+      if (price !== undefined) {
+        currencyPrices.set(currency, price);
+      }
+    });
+    if (currencyPrices.size > 0) {
+      prices.set(symbol, currencyPrices);
+    }
+  });
 
   return prices;
 };
@@ -167,4 +222,7 @@ export const getCryptoDetails = async (id: string, currency: string = 'usd'): Pr
 // Clear cache manually if needed
 export const clearPriceCache = () => {
   priceCache.clear();
+  inFlightRequests.clear();
+  rateLimitedUntil = 0;
+  consecutiveRateLimits = 0;
 };
