@@ -69,14 +69,6 @@ export const InvestmentCard = ({ investment, display, nativeCurrentPrice, prices
                 {investment.name}
               </span>
             )}
-            {display.converted && (
-              <span
-                className="text-[11px] text-muted px-2 py-0.5 rounded-md bg-surface2 border border-line"
-                title={`Bought and held in ${investment.currency}, shown in ${display.currency}`}
-              >
-                {investment.currency}
-              </span>
-            )}
           </div>
           <p className="text-xs text-muted uppercase tracking-widest font-mono mt-0.5">{investment.assetSymbol}</p>
         </div>

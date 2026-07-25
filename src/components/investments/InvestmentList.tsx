@@ -9,10 +9,9 @@ interface InvestmentListProps {
   investments: Investment[];
   prices: Map<string, Map<string, number>>;
   loading: boolean;
-  displayCurrency: string;
 }
 
-export const InvestmentList = ({ investments, prices, loading, displayCurrency }: InvestmentListProps) => {
+export const InvestmentList = ({ investments, prices, loading }: InvestmentListProps) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -44,7 +43,9 @@ export const InvestmentList = ({ investments, prices, loading, displayCurrency }
           <InvestmentCard
             key={investment.id}
             investment={investment}
-            display={toDisplayValues(investment, prices, displayCurrency)}
+            // Holdings stay in their purchase currency; the display currency
+            // selected in the header applies to the portfolio totals only.
+            display={toDisplayValues(investment, prices, investment.currency)}
             nativeCurrentPrice={symbolPrices?.get(investment.currency.toLowerCase())}
             prices={prices}
           />

@@ -88,7 +88,6 @@ export const Dashboard = () => {
               investments={investments}
               prices={prices}
               loading={loading}
-              displayCurrency={displayCurrency}
             />
           </div>
         </div>

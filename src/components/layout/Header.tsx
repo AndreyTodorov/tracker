@@ -43,8 +43,8 @@ export const Header = () => {
               <select
                 value={displayCurrency}
                 onChange={(event) => setDisplayCurrency(event.target.value)}
-                aria-label="Display currency"
-                title="Show the whole portfolio in this currency"
+                aria-label="Currency for portfolio totals"
+                title="Portfolio totals are shown in this currency. Investments keep the currency they were bought in."
                 className="px-3 py-2 bg-surface2 border border-line rounded-lg text-sm text-content focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition-colors"
               >
                 {SUPPORTED_CURRENCIES.map(({ code, symbol }) => (

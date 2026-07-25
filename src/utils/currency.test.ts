@@ -78,7 +78,6 @@ describe('toDisplayValues', () => {
       currentPrice: 60000,
       invested: 50000,
       currentValue: 60000,
-      converted: false,
     });
   });
 
@@ -97,7 +96,6 @@ describe('toDisplayValues', () => {
     expect(result.buyPrice).toBe(100000);
     expect(result.invested).toBe(100000);
     expect(result.currentValue).toBe(60000);
-    expect(result.converted).toBe(true);
   });
 
   it('converts the native price when there is no direct quote', () => {
@@ -110,7 +108,6 @@ describe('toDisplayValues', () => {
 
     expect(result.currentPrice).toBe(100000);
     expect(result.buyPrice).toBe(80000);
-    expect(result.converted).toBe(true);
   });
 
   it('falls back to the converted buy price when there is no live price', () => {
@@ -143,7 +140,22 @@ describe('toDisplayValues', () => {
     expect(toDisplayValues(investment, prices, 'USD')).toMatchObject({
       currency: 'USD',
       currentPrice: 60000,
-      converted: false,
+    });
+  });
+
+  it('returns the holding untouched when asked for its own currency', () => {
+    // How the list renders every card: no conversion, whatever the portfolio
+    // display currency happens to be.
+    const prices = priceMap({ bitcoin: { eur: 55000, usd: 66000 } });
+    const investment = eurHolding();
+
+    const result = toDisplayValues(investment, prices, investment.currency);
+
+    expect(result).toMatchObject({
+      currency: 'EUR',
+      buyPrice: 50000,
+      currentPrice: 55000,
+      currentValue: 55000,
     });
   });
 
@@ -156,7 +168,6 @@ describe('toDisplayValues', () => {
       currency: 'EUR',
       buyPrice: 50000,
       currentPrice: 55000,
-      converted: false,
     });
   });
 });

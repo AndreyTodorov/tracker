@@ -216,7 +216,6 @@ export const PublicPortfolio = () => {
             <InvestmentList
               investments={investments}
               prices={prices}
-              displayCurrency={displayCurrency}
               loading={loading}
             />
           </div>

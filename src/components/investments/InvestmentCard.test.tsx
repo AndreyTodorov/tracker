@@ -261,7 +261,7 @@ describe('InvestmentCard Component', () => {
     expect(container.textContent).toContain('£');
   });
 
-  describe('display currency conversion', () => {
+  describe('rendering the values it is given', () => {
     // A EUR holding shown in USD. bitcoin is quoted in both, implying a rate
     // of 60000 / 50000 = 1.2.
     const convertedCard = () => {
@@ -285,26 +285,12 @@ describe('InvestmentCard Component', () => {
       );
     };
 
-    it('renders the holding in the display currency', () => {
+    it('renders whatever currency the supplied values are in', () => {
       const { container } = render(convertedCard());
 
       // 50000 EUR buy price at 1.2 becomes $60,000
       expect(container.textContent).toContain('$60,000.00');
       expect(container.textContent).not.toContain('€');
-    });
-
-    it('shows the native currency so the original is not hidden', () => {
-      render(convertedCard());
-
-      expect(screen.getByTitle(/held in EUR/i)).toBeInTheDocument();
-    });
-
-    it('does not show a native currency badge when nothing was converted', () => {
-      const investment = mockInvestment({ currency: 'USD' }) as Investment;
-
-      render(cardElement(investment, 60000));
-
-      expect(screen.queryByTitle(/held in/i)).not.toBeInTheDocument();
     });
 
     it('offers the native price, not the converted one, as a new buy price', async () => {

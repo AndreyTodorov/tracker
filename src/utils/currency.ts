@@ -9,8 +9,6 @@ export interface DisplayValues {
   invested: number;
   currentValue: number;
   profit: { absolute: number; percentage: number };
-  /** True when the values were converted away from the holding's own currency. */
-  converted: boolean;
 }
 
 /**
@@ -59,8 +57,7 @@ const build = (
   currency: string,
   buyPrice: number,
   currentPrice: number,
-  quantity: number,
-  converted: boolean
+  quantity: number
 ): DisplayValues => ({
   currency,
   buyPrice,
@@ -68,7 +65,6 @@ const build = (
   invested: buyPrice * quantity,
   currentValue: currentPrice * quantity,
   profit: calculateProfit(buyPrice, currentPrice, quantity),
-  converted,
 });
 
 /**
@@ -86,10 +82,11 @@ export const toDisplayValues = (
   prices: Map<string, Map<string, number>>,
   displayCurrency: string
 ): DisplayValues => {
-  // Older records are not guaranteed to carry a currency, and reading one off
-  // undefined would throw during render.
-  const native = investment.currency || displayCurrency;
-  const display = displayCurrency.toUpperCase();
+  // Older records are not guaranteed to carry a currency, and callers pass the
+  // holding's own currency through when rendering it untouched, so neither
+  // value can be assumed present.
+  const native = investment.currency || displayCurrency || 'USD';
+  const display = (displayCurrency || native).toUpperCase();
   const coinPrices = prices.get(getPriceKey(investment));
   const nativeQuote = coinPrices?.get(native.toLowerCase());
 
@@ -99,8 +96,7 @@ export const toDisplayValues = (
       native,
       investment.buyPrice,
       nativeQuote ?? investment.buyPrice,
-      investment.quantity,
-      false
+      investment.quantity
     );
   }
 
@@ -113,13 +109,7 @@ export const toDisplayValues = (
   const currentPrice =
     directQuote ?? (nativeQuote !== undefined ? nativeQuote * rate : buyPrice);
 
-  return build(
-    display,
-    buyPrice,
-    currentPrice,
-    investment.quantity,
-    native.toUpperCase() !== display
-  );
+  return build(display, buyPrice, currentPrice, investment.quantity);
 };
 
 // The currency of the holding with the largest invested amount. Used to label

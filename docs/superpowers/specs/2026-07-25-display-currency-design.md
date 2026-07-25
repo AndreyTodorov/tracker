@@ -36,7 +36,7 @@ below.
 | Question | Decision |
 | --- | --- |
 | FX rate for cost basis | Today's rate, derived from CoinGecko coin prices |
-| Scope of conversion | Everything — summary tiles *and* investment cards |
+| Scope of conversion | Portfolio totals only — see the revision note below |
 | Picker placement | Header, global across tabs and shared views |
 | Persistence | `localStorage`, per browser. Default USD |
 | When no rate is derivable | Fall back to unconverted totals plus an inline notice |
@@ -290,6 +290,24 @@ New — `useInvestments` stale-tab guard: switching tabs yields `[]` and
   `"$other": { ".validate": false }` and would reject a new field.
 - Caching FX rates across sessions.
 - Any change to how currency is stored on an investment.
+
+## Revision: conversion applies to totals only
+
+The design originally converted investment cards as well as the summary tiles,
+on the reasoning that the totals should visibly equal the sum of the cards.
+Once it was running, that turned out to be the wrong trade: seeing a purchase
+restated in a currency it was never made in obscures what was actually paid.
+
+Cards now always render in the currency the holding was bought in, and the
+header picker affects the three summary tiles only. `InvestmentList` passes
+each investment's own currency to `toDisplayValues`, so no rate is involved
+per card. The `converted` flag and the native-currency badge were removed with
+it, since nothing converts at card level any more.
+
+The known cost, accepted deliberately: the totals no longer visibly add up from
+the figures on screen. A portfolio holding EUR and USD shows a single converted
+total above cards denominated in two different currencies. The currency symbol
+on each figure is what distinguishes them.
 
 ## Implementation notes
 
