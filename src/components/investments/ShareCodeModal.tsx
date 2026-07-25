@@ -1,10 +1,16 @@
-import { useState } from 'react';
-import { Copy, Check, Share2, Plus, Link, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Copy, Check, Share2, Plus, Link, X, Globe } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useAuth } from '../../context/AuthContext';
-import { addSharedPortfolio, getUserByShareCode, removeSharedPortfolio } from '../../services/investment.service';
+import {
+  addSharedPortfolio,
+  getUserByShareCode,
+  removeSharedPortfolio,
+  getPortfolioVisibility,
+  setPortfolioVisibility,
+} from '../../services/investment.service';
 
 interface ShareCodeModalProps {
   isOpen: boolean;
@@ -19,6 +25,29 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
   const [isJoining, setIsJoining] = useState(false);
   const [joinError, setJoinError] = useState('');
   const [joinSuccess, setJoinSuccess] = useState('');
+  const [isPublic, setIsPublic] = useState(false);
+  const [isTogglingPublic, setIsTogglingPublic] = useState(false);
+
+  // Load the current Everyone-tab visibility when the modal opens.
+  useEffect(() => {
+    if (!isOpen || !currentUser) return;
+    getPortfolioVisibility(currentUser.uid)
+      .then(setIsPublic)
+      .catch((error) => console.error('Error loading portfolio visibility:', error));
+  }, [isOpen, currentUser]);
+
+  const handleTogglePublic = async () => {
+    if (!currentUser) return;
+    setIsTogglingPublic(true);
+    try {
+      await setPortfolioVisibility(currentUser.uid, !isPublic);
+      setIsPublic(!isPublic);
+    } catch (error) {
+      console.error('Error updating portfolio visibility:', error);
+    } finally {
+      setIsTogglingPublic(false);
+    }
+  };
 
   const publicLink = userData?.shareCode
     ? `${window.location.origin}/tracker/public?code=${userData.shareCode}`
@@ -66,7 +95,7 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
       }
 
       // Check if already joined
-      if (userData?.sharedPortfolios?.includes(joinCode.trim().toUpperCase())) {
+      if (Object.values(userData?.sharedPortfolios || {}).includes(joinCode.trim().toUpperCase())) {
         setJoinError("You've already joined this portfolio!");
         setIsJoining(false);
         return;
@@ -98,10 +127,10 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
     }
   };
 
-  const handleLeavePortfolio = async (code: string) => {
+  const handleLeavePortfolio = async (ownerUid: string) => {
     if (!currentUser) return;
     try {
-      await removeSharedPortfolio(currentUser.uid, code);
+      await removeSharedPortfolio(currentUser.uid, ownerUid);
     } catch {
       setJoinError('Failed to leave portfolio. Please try again.');
     }
@@ -164,6 +193,33 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
         {/* Divider */}
         <div className="border-t border-line" />
 
+        {/* Everyone Tab Visibility */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Globe size={20} className="text-accent" />
+            <h3 className="text-lg font-semibold">Public listing</h3>
+          </div>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isPublic}
+              onChange={handleTogglePublic}
+              disabled={isTogglingPublic}
+              className="mt-0.5 w-4 h-4 accent-accent"
+            />
+            <span className="text-sm text-content">
+              Show my portfolio on the Everyone tab
+              <span className="block text-xs text-muted mt-0.5">
+                When enabled, all signed-in users can see your investments there. When
+                disabled, only people you gave your share code to can see them.
+              </span>
+            </span>
+          </label>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-line" />
+
         {/* Join Portfolio */}
         <div>
           <div className="flex items-center gap-2 mb-3">
@@ -203,21 +259,21 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
         </div>
 
         {/* Joined Portfolios */}
-        {userData?.sharedPortfolios && userData.sharedPortfolios.length > 0 && (
+        {userData?.sharedPortfolios && Object.keys(userData.sharedPortfolios).length > 0 && (
           <>
             <div className="border-t border-line" />
             <div>
               <h3 className="text-lg font-semibold mb-3">Joined portfolios</h3>
               <div className="space-y-2">
-                {userData.sharedPortfolios.map((code) => (
-                  <div key={code} className="panel-strong rounded-lg p-3 flex items-center justify-between">
+                {Object.entries(userData.sharedPortfolios).map(([ownerUid, code]) => (
+                  <div key={ownerUid} className="panel-strong rounded-lg p-3 flex items-center justify-between">
                     <span className="font-mono tracking-wider">{code}</span>
                     <div className="flex items-center gap-1">
                       <Check size={16} className="text-profit" />
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleLeavePortfolio(code)}
+                        onClick={() => handleLeavePortfolio(ownerUid)}
                         className="text-muted hover:text-loss hover:bg-loss/10"
                         aria-label={`Leave portfolio ${code}`}
                       >

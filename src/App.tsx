@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { CurrencyProvider } from './context/CurrencyContext';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
 import { ErrorBoundary } from './components/error/ErrorBoundary';
 import { ToastContainer } from './components/ui/ToastContainer';
@@ -57,49 +58,51 @@ function App() {
       <BrowserRouter basename="/tracker">
         <ToastProvider>
           <AuthProvider>
-            <ToastContainer />
-            <ErrorBoundary>
-              <Suspense fallback={<RouteFallback />}>
-              <Routes>
-              {/* Public Routes */}
-              <Route
-                path="/public"
-                element={
-                  <ErrorBoundary>
-                    <PublicPortfolio />
-                  </ErrorBoundary>
-                }
-              />
-
-              {/* Auth Routes */}
-              <Route
-                path="/login"
-                element={
-                  <AuthRoute>
+            <CurrencyProvider>
+              <ToastContainer />
+              <ErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                <Routes>
+                {/* Public Routes */}
+                <Route
+                  path="/public"
+                  element={
                     <ErrorBoundary>
-                      <AuthLayout />
+                      <PublicPortfolio />
                     </ErrorBoundary>
-                  </AuthRoute>
-                }
-              />
+                  }
+                />
 
-              {/* Protected Routes */}
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <ErrorBoundary>
-                      <Dashboard />
-                    </ErrorBoundary>
-                  </ProtectedRoute>
-                }
-              />
+                {/* Auth Routes */}
+                <Route
+                  path="/login"
+                  element={
+                    <AuthRoute>
+                      <ErrorBoundary>
+                        <AuthLayout />
+                      </ErrorBoundary>
+                    </AuthRoute>
+                  }
+                />
 
-              {/* Unknown paths fall back to the dashboard (or login if signed out) */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-              </Suspense>
-            </ErrorBoundary>
+                {/* Protected Routes */}
+                <Route
+                  path="/"
+                  element={
+                    <ProtectedRoute>
+                      <ErrorBoundary>
+                        <Dashboard />
+                      </ErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Unknown paths fall back to the dashboard (or login if signed out) */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+                </Suspense>
+              </ErrorBoundary>
+            </CurrencyProvider>
           </AuthProvider>
         </ToastProvider>
       </BrowserRouter>

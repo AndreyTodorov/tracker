@@ -5,20 +5,22 @@ import { InvestmentList } from '../investments/InvestmentList';
 import { PortfolioSummary } from '../investments/PortfolioSummary';
 import { useInvestments } from '../../hooks/useInvestments';
 import { useCryptoPrices } from '../../hooks/useCryptoPrices';
-import { calculatePortfolioStats } from '../../utils/calculations';
+import { calculatePortfolioStats } from '../../utils/currency';
+import { useCurrency } from '../../context/CurrencyContext';
 import type { TabType } from '../../types';
 import { formatDateTime } from '../../utils/formatters';
 
 export const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<TabType>('my');
   const { investments, loading } = useInvestments(activeTab);
+  const { displayCurrency } = useCurrency();
 
-  const { prices, lastUpdate } = useCryptoPrices(investments);
+  const { prices, lastUpdate } = useCryptoPrices(investments, displayCurrency);
 
   // Calculate portfolio stats
   const portfolio = useMemo(() => {
-    return calculatePortfolioStats(investments, prices);
-  }, [investments, prices]);
+    return calculatePortfolioStats(investments, prices, displayCurrency);
+  }, [investments, prices, displayCurrency]);
 
   const tabs: { id: TabType; label: string }[] = [
     { id: 'my', label: 'My Portfolio' },

@@ -5,6 +5,7 @@ import {
   getMultipleCryptoPrices,
   getCryptoDetails,
   clearPriceCache,
+  RATE_LIMIT_BASE_BACKOFF,
 } from './coingecko.service';
 
 // Mock fetch globally
@@ -252,6 +253,126 @@ describe('CoinGecko Service', () => {
 
       const result = await getMultipleCryptoPrices(['bitcoin']);
       expect(result.size).toBe(0);
+    });
+
+    describe('request reduction', () => {
+      const respondWith = (body: unknown) =>
+        (fetch as any).mockResolvedValueOnce({ ok: true, json: async () => body });
+
+      it('serves a repeated multi-currency request entirely from cache', async () => {
+        respondWith({ bitcoin: { usd: 50000, eur: 46000 } });
+
+        await getMultipleCryptoPrices(['bitcoin'], ['usd', 'eur']);
+        expect(fetch).toHaveBeenCalledTimes(1);
+
+        const result = await getMultipleCryptoPrices(['bitcoin'], ['usd', 'eur']);
+
+        expect(fetch).toHaveBeenCalledTimes(1);
+        expect(result.get('bitcoin')?.get('usd')).toBe(50000);
+        expect(result.get('bitcoin')?.get('eur')).toBe(46000);
+      });
+
+      it('requests only the currency it is missing', async () => {
+        respondWith({ bitcoin: { usd: 50000 } });
+        await getMultipleCryptoPrices(['bitcoin'], ['usd']);
+
+        respondWith({ bitcoin: { gbp: 40000 } });
+        const result = await getMultipleCryptoPrices(['bitcoin'], ['usd', 'gbp']);
+
+        // The cached USD price must not be refetched.
+        const url = (fetch as any).mock.calls[1][0] as string;
+        expect(url).toContain('vs_currencies=gbp');
+        expect(url).not.toContain('usd');
+        expect(result.get('bitcoin')?.get('usd')).toBe(50000);
+        expect(result.get('bitcoin')?.get('gbp')).toBe(40000);
+      });
+
+      it('requests only the symbol it is missing', async () => {
+        respondWith({ bitcoin: { usd: 50000 } });
+        await getMultipleCryptoPrices(['bitcoin'], ['usd']);
+
+        respondWith({ ethereum: { usd: 3000 } });
+        await getMultipleCryptoPrices(['bitcoin', 'ethereum'], ['usd']);
+
+        const url = (fetch as any).mock.calls[1][0] as string;
+        expect(url).toContain('ids=ethereum');
+        expect(url).not.toContain('bitcoin');
+      });
+
+      it('coalesces concurrent identical requests into one call', async () => {
+        // StrictMode runs effects twice, so the same request fires in parallel.
+        respondWith({ bitcoin: { usd: 50000 } });
+
+        const [first, second] = await Promise.all([
+          getMultipleCryptoPrices(['bitcoin'], ['usd']),
+          getMultipleCryptoPrices(['bitcoin'], ['usd']),
+        ]);
+
+        expect(fetch).toHaveBeenCalledTimes(1);
+        expect(first.get('bitcoin')?.get('usd')).toBe(50000);
+        expect(second.get('bitcoin')?.get('usd')).toBe(50000);
+      });
+
+      it('stops calling the API while rate limited', async () => {
+        (fetch as any).mockResolvedValueOnce({ ok: false, status: 429 });
+        await getMultipleCryptoPrices(['bitcoin'], ['usd']);
+        expect(fetch).toHaveBeenCalledTimes(1);
+
+        // Hammering a tripped limit only extends it.
+        await getMultipleCryptoPrices(['bitcoin'], ['usd']);
+        await getMultipleCryptoPrices(['bitcoin'], ['usd']);
+
+        expect(fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it('resumes once the backoff has elapsed', async () => {
+        vi.useFakeTimers();
+        try {
+          (fetch as any).mockResolvedValueOnce({ ok: false, status: 429 });
+          await getMultipleCryptoPrices(['bitcoin'], ['usd']);
+
+          vi.advanceTimersByTime(RATE_LIMIT_BASE_BACKOFF + 1000);
+          respondWith({ bitcoin: { usd: 50000 } });
+
+          const result = await getMultipleCryptoPrices(['bitcoin'], ['usd']);
+
+          expect(fetch).toHaveBeenCalledTimes(2);
+          expect(result.get('bitcoin')?.get('usd')).toBe(50000);
+        } finally {
+          vi.useRealTimers();
+        }
+      });
+
+      it('keeps serving expired prices while rate limited', async () => {
+        vi.useFakeTimers();
+        try {
+          respondWith({ bitcoin: { usd: 50000 } });
+          await getMultipleCryptoPrices(['bitcoin'], ['usd']);
+
+          // Cache entry expires, the refresh is refused, and the backoff can
+          // last minutes. Showing nothing for that long is worse than showing
+          // the last known price.
+          vi.advanceTimersByTime(61000);
+          (fetch as any).mockResolvedValueOnce({ ok: false, status: 429 });
+
+          const duringFailure = await getMultipleCryptoPrices(['bitcoin'], ['usd']);
+          expect(duringFailure.get('bitcoin')?.get('usd')).toBe(50000);
+
+          const whileBackedOff = await getMultipleCryptoPrices(['bitcoin'], ['usd']);
+          expect(whileBackedOff.get('bitcoin')?.get('usd')).toBe(50000);
+          expect(fetch).toHaveBeenCalledTimes(2);
+        } finally {
+          vi.useRealTimers();
+        }
+      });
+
+      it('does not ask for 24h change data it never reads', async () => {
+        respondWith({ bitcoin: { usd: 50000 } });
+
+        await getMultipleCryptoPrices(['bitcoin'], ['usd']);
+
+        expect((fetch as any).mock.calls[0][0]).not.toContain('include_24hr_change');
+      });
     });
   });
 

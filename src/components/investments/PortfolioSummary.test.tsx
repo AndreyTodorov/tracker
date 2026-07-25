@@ -170,4 +170,44 @@ describe('PortfolioSummary Component', () => {
     expect(screen.getByText('1')).toBeInTheDocument();
     expect(screen.getByText('3 investments')).toBeInTheDocument();
   });
+
+  describe('currency conversion', () => {
+    it('shows no warning when every holding converted', () => {
+      const portfolio = mockPortfolio({
+        conversionFailed: false,
+        investments: [
+          mockInvestment({ id: '1', currency: 'USD' }),
+          mockInvestment({ id: '2', currency: 'EUR' }),
+        ],
+      });
+
+      render(<PortfolioSummary portfolio={portfolio} />);
+
+      // Mixed currencies are no longer a problem worth warning about.
+      expect(screen.queryByText(/unavailable/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Mixed Currency/i)).not.toBeInTheDocument();
+    });
+
+    it('warns that totals are unconverted when rates were unavailable', () => {
+      const portfolio = mockPortfolio({
+        conversionFailed: true,
+        totalsCurrency: 'EUR',
+      });
+
+      render(<PortfolioSummary portfolio={portfolio} />);
+
+      expect(screen.getByText(/rates unavailable/i)).toBeInTheDocument();
+    });
+
+    it('labels totals with the portfolio totals currency', () => {
+      const portfolio = mockPortfolio({
+        totalValue: 1500,
+        totalsCurrency: 'GBP',
+      });
+
+      render(<PortfolioSummary portfolio={portfolio} />);
+
+      expect(screen.getByText('£1,500.00')).toBeInTheDocument();
+    });
+  });
 });

@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getMultipleCryptoPrices } from '../services/coingecko.service';
 import { getPriceKey } from '../utils/calculations';
+import { isSupportedCurrency } from '../utils/currencies';
 import type { Investment } from '../types';
 
 export const UPDATE_INTERVAL = 60000; // 60 seconds (reduced from 30s to avoid rate limiting)
 
-export const useCryptoPrices = (investments: Investment[]) => {
+export const useCryptoPrices = (investments: Investment[], displayCurrency: string) => {
   const [prices, setPrices] = useState<Map<string, Map<string, number>>>(new Map());
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -13,15 +14,27 @@ export const useCryptoPrices = (investments: Investment[]) => {
   // Derive the unique symbols/currencies to fetch, plus a stable key that only
   // changes when that set changes (so the polling interval isn't reset on every
   // re-render that hands us a new-but-equivalent investments array).
+  //
+  // The display currency is requested alongside the holdings' own currencies.
+  // That makes every coin quoted in both, which is what lets exchange rates be
+  // derived from the price data instead of a separate FX service.
   const { symbols, currencies, investmentsKey } = useMemo(() => {
     const symbols = [...new Set(investments.map(getPriceKey))];
-    const currencies = [...new Set(investments.map((inv) => inv.currency))];
-    const investmentsKey = investments
-      .map((inv) => `${getPriceKey(inv)}-${inv.currency}`)
-      .sort()
-      .join(',');
+    // Unsupported currencies are filtered out rather than passed through:
+    // getMultipleCryptoPrices rejects the whole request if any one of them is
+    // invalid, so a single old record would leave every holding without a
+    // live price.
+    const currencies = [
+      ...new Set(
+        [...investments.map((inv) => inv.currency), displayCurrency].filter(isSupportedCurrency)
+      ),
+    ];
+    const investmentsKey = [
+      displayCurrency,
+      ...investments.map((inv) => `${getPriceKey(inv)}-${inv.currency}`).sort(),
+    ].join(',');
     return { symbols, currencies, investmentsKey };
-  }, [investments]);
+  }, [investments, displayCurrency]);
 
   useEffect(() => {
     if (symbols.length === 0) {

@@ -2,12 +2,17 @@ import { useState } from 'react';
 import { LogOut, TrendingUp, Share2, User } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../context/AuthContext';
+import { useCurrency } from '../../context/CurrencyContext';
+import { SUPPORTED_CURRENCIES } from '../../utils/currencies';
 import { signOut } from '../../services/auth.service';
 import { ShareCodeModal } from '../investments/ShareCodeModal';
+import { ProfileModal } from './ProfileModal';
 
 export const Header = () => {
   const { userData } = useAuth();
+  const { displayCurrency, setDisplayCurrency } = useCurrency();
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const handleSignOut = async () => {
     try {
@@ -35,6 +40,20 @@ export const Header = () => {
 
             {/* User Menu */}
             <div className="flex items-center gap-3">
+              <select
+                value={displayCurrency}
+                onChange={(event) => setDisplayCurrency(event.target.value)}
+                aria-label="Currency for portfolio totals"
+                title="Portfolio totals are shown in this currency. Investments keep the currency they were bought in."
+                className="px-3 py-2 bg-surface2 border border-line rounded-lg text-sm text-content focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition-colors"
+              >
+                {SUPPORTED_CURRENCIES.map(({ code, symbol }) => (
+                  <option key={code} value={code} className="bg-surface2">
+                    {code} ({symbol})
+                  </option>
+                ))}
+              </select>
+
               <Button
                 variant="secondary"
                 size="sm"
@@ -46,12 +65,17 @@ export const Header = () => {
                 <span className="hidden sm:inline">Share Portfolio</span>
               </Button>
 
-              <div className="panel-strong rounded-lg px-3 py-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowProfileModal(true)}
+                className="panel-strong rounded-lg px-3 py-2 flex items-center gap-2 transition-colors hover:border-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+                aria-label="Edit your display name"
+              >
                 <User size={16} className="text-muted" />
                 <span className="text-sm font-medium hidden sm:inline">
                   {userData?.displayName}
                 </span>
-              </div>
+              </button>
 
               <Button
                 variant="ghost"
@@ -70,6 +94,11 @@ export const Header = () => {
       <ShareCodeModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
+      />
+
+      <ProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
       />
     </>
   );

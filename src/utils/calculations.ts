@@ -1,4 +1,4 @@
-import type { Investment, Portfolio } from '../types';
+import type { Investment } from '../types';
 
 // The key used to look up live prices for an investment. New records store the
 // CoinGecko id in `coinId`; legacy records kept it in `assetSymbol`.
@@ -21,36 +21,8 @@ export const calculateProfit = (
   };
 };
 
-export const calculatePortfolioStats = (
-  investments: Investment[],
-  prices: Map<string, Map<string, number>>
-): Portfolio => {
-  let totalValue = 0;
-  let totalInvested = 0;
-
-  investments.forEach((investment) => {
-    const symbolPrices = prices.get(getPriceKey(investment));
-    const currentPrice = symbolPrices?.get(investment.currency.toLowerCase()) || investment.buyPrice;
-    const currentValue = currentPrice * investment.quantity;
-    const investedAmount = investment.buyPrice * investment.quantity;
-
-    totalValue += currentValue;
-    totalInvested += investedAmount;
-  });
-
-  const totalProfit = totalValue - totalInvested;
-  const totalProfitPercentage = totalInvested > 0
-    ? (totalProfit / totalInvested) * 100
-    : 0;
-
-  return {
-    totalValue: Number(totalValue.toFixed(2)),
-    totalInvested: Number(totalInvested.toFixed(2)),
-    totalProfit: Number(totalProfit.toFixed(2)),
-    totalProfitPercentage: Number(totalProfitPercentage.toFixed(2)),
-    investments,
-  };
-};
+// calculatePortfolioStats lives in ./currency: portfolio totals are currency
+// aware, and keeping it there avoids an import cycle with this module.
 
 export const generateShareCode = (): string => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

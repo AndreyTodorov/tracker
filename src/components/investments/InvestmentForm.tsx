@@ -201,7 +201,7 @@ export const InvestmentForm = () => {
         />
 
         {/* Current Price Display */}
-        {currentPrice && selectedAsset && (
+        {currentPrice !== null && selectedAsset && (
           <div className="p-3 rounded-lg bg-surface2 border border-line">
             <div className="flex items-center justify-between mb-1">
               <div className="text-[11px] text-muted uppercase tracking-wider">Current Price ({currency || 'EUR'})</div>

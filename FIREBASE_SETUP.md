@@ -30,7 +30,7 @@ This guide will walk you through setting up Firebase Realtime Database for the I
 
 ## Step 4: Configure Realtime Database Security Rules
 
-### Method 1: Copy from the database.rules.json file (Recommended)
+### Copy from the database.rules.json file
 
 1. Open the `database.rules.json` file in your project root
 2. Copy ALL the contents
@@ -39,35 +39,12 @@ This guide will walk you through setting up Firebase Realtime Database for the I
 5. Paste the contents from `database.rules.json`
 6. Click "Publish"
 
-### Method 2: Copy from here
-
-In Realtime Database, click on the "Rules" tab and paste this **JSON format**:
-
-```json
-{
-  "rules": {
-    "users": {
-      "$uid": {
-        ".read": "auth != null",
-        ".write": "auth != null && auth.uid === $uid"
-      }
-    },
-    "investments": {
-      ".read": "auth != null",
-      "$investmentId": {
-        ".write": "auth != null && (!data.exists() || data.child('userId').val() === auth.uid)"
-      }
-    }
-  }
-}
-```
-
 ### What These Rules Do:
 
-- **Users**: Any authenticated user can read user profiles, but users can only write their own data
-- **Investments**:
-  - Any authenticated user can read all investments
-  - Users can only create new investments or edit/delete their own investments
+- **Users**: Each user can read and write only their own profile (email, share code, joined portfolios)
+- **Share code index** (`shareCodeIndex/{code}` → `{ uid, displayName }`): lets a signed-in user resolve a share code they were given, without being able to list all codes or see any email addresses
+- **Public profiles** (`publicProfiles/{uid}`): a user appears here only after opting in to the Everyone tab via the Share Portfolio modal
+- **Investments** (`investments/{ownerUid}/{investmentId}`): readable by the owner, by users who joined the owner's portfolio with a share code, and by everyone (signed-in) if the owner opted into public listing; writable only by the owner
 
 ### Important Notes:
 
@@ -176,24 +153,52 @@ Your Realtime Database will have this structure:
       "displayName": "John Doe",
       "createdAt": 1234567890,
       "shareCode": "ABC12345",
-      "sharedPortfolios": ["XYZ67890"]
+      "sharedPortfolios": { "user-id-2": "XYZ67890" }
+    }
+  },
+  "shareCodeIndex": {
+    "ABC12345": {
+      "uid": "user-id-1",
+      "displayName": "John Doe"
+    }
+  },
+  "publicProfiles": {
+    "user-id-1": {
+      "displayName": "John Doe"
     }
   },
   "investments": {
-    "investment-id-1": {
-      "userId": "user-id-1",
-      "userName": "John Doe",
-      "assetName": "Bitcoin",
-      "assetSymbol": "bitcoin",
-      "buyPrice": 50000,
-      "investmentAmount": 1000,
-      "quantity": 0.02,
-      "purchaseDate": 1234567890,
-      "createdAt": 1234567890
+    "user-id-1": {
+      "investment-id-1": {
+        "userId": "user-id-1",
+        "userName": "John Doe",
+        "assetName": "Bitcoin",
+        "assetSymbol": "bitcoin",
+        "buyPrice": 50000,
+        "investmentAmount": 1000,
+        "quantity": 0.02,
+        "purchaseDate": 1234567890,
+        "createdAt": 1234567890
+      }
     }
   }
 }
 ```
+
+## Migrating Existing Data
+
+If your database still uses the old flat structure (`investments/{id}`, share-code
+arrays, no `shareCodeIndex`), run the one-off migration before deploying the new rules:
+
+```bash
+pnpm add -D firebase-admin
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json \
+  node scripts/migrate-sharing-model.mjs https://<project>-default-rtdb.<region>.firebasedatabase.app
+firebase deploy --only database
+```
+
+The script is idempotent and leaves `publicProfiles` empty — nobody is listed on
+the Everyone tab until they opt in via the Share Portfolio modal.
 
 ## Troubleshooting
 

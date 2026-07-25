@@ -4,26 +4,32 @@ import type { Investment } from '../../types';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { formatCurrency, formatCryptoPrice, formatPercentage, formatDate, getColorClass, getBgColorClass } from '../../utils/formatters';
-import { calculateProfit } from '../../utils/calculations';
 import { useAuth } from '../../context/AuthContext';
 import { deleteInvestment } from '../../services/investment.service';
 import { EditInvestmentModal } from './EditInvestmentModal';
 import { useToast } from '../../context/ToastContext';
+import type { DisplayValues } from '../../utils/currency';
 
 interface InvestmentCardProps {
   investment: Investment;
-  currentPrice?: number;
+  /** Figures already expressed in the portfolio's display currency. */
+  display: DisplayValues;
+  /** Live price in the holding's own currency. Editing operates on stored,
+   *  native values, so the converted price must not be used there. */
+  nativeCurrentPrice?: number;
+  /** Passed to the edit modal so changing a currency can convert the amounts. */
+  prices: Map<string, Map<string, number>>;
 }
 
-export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps) => {
+export const InvestmentCard = ({ investment, display, nativeCurrentPrice, prices }: InvestmentCardProps) => {
   const { currentUser } = useAuth();
   const toast = useToast();
   const isOwner = currentUser?.uid === investment.userId;
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const price = currentPrice || investment.buyPrice;
-  const profit = calculateProfit(investment.buyPrice, price, investment.quantity);
+  const nativePrice = nativeCurrentPrice ?? investment.buyPrice;
+  const profit = display.profit;
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this investment?')) {
@@ -32,7 +38,7 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
 
     setIsDeleting(true);
     try {
-      await deleteInvestment(investment.id);
+      await deleteInvestment(investment.userId, investment.id);
       toast.success('Investment deleted successfully!');
     } catch (error: unknown) {
       console.error('Error deleting investment:', error);
@@ -97,11 +103,11 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
       <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-4">
         <div>
           <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Buy Price</div>
-          <div className="tnum text-sm text-content">{formatCryptoPrice(investment.buyPrice, investment.currency)}</div>
+          <div className="tnum text-sm text-content">{formatCryptoPrice(display.buyPrice, display.currency)}</div>
         </div>
         <div>
           <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Current Price</div>
-          <div className="tnum text-sm text-content">{formatCryptoPrice(price, investment.currency)}</div>
+          <div className="tnum text-sm text-content">{formatCryptoPrice(display.currentPrice, display.currency)}</div>
         </div>
         <div>
           <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Quantity</div>
@@ -111,7 +117,7 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
         </div>
         <div>
           <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Invested</div>
-          <div className="tnum text-sm text-content">{formatCurrency(investment.buyPrice * investment.quantity, investment.currency)}</div>
+          <div className="tnum text-sm text-content">{formatCurrency(display.invested, display.currency)}</div>
         </div>
       </div>
 
@@ -119,7 +125,7 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
       <div className="flex items-center justify-between mb-4 pt-3 border-t border-line">
         <span className="text-[11px] text-muted uppercase tracking-wider">Current Value</span>
         <span className="tnum text-base font-semibold text-content">
-          {formatCurrency(price * investment.quantity, investment.currency)}
+          {formatCurrency(display.currentValue, display.currency)}
         </span>
       </div>
 
@@ -135,7 +141,7 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
             <div>
               <div className="text-[11px] text-muted uppercase tracking-wider">Profit/Loss</div>
               <div className={`tnum text-2xl font-semibold ${getColorClass(profit.absolute)}`}>
-                {formatCurrency(profit.absolute, investment.currency)}
+                {formatCurrency(profit.absolute, display.currency)}
               </div>
             </div>
           </div>
@@ -151,7 +157,7 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
       </div>
 
       {/* Live Update Indicator */}
-      {currentPrice && currentPrice !== investment.buyPrice && (
+      {nativeCurrentPrice !== undefined && nativeCurrentPrice !== investment.buyPrice && (
         <div className="absolute top-4 right-4">
           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-profit/10 border border-profit/30">
             <span className="relative flex w-1.5 h-1.5">
@@ -167,7 +173,8 @@ export const InvestmentCard = ({ investment, currentPrice }: InvestmentCardProps
       {isOwner && (
         <EditInvestmentModal
           investment={investment}
-          currentPrice={price}
+          currentPrice={nativePrice}
+          prices={prices}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
         />

@@ -168,3 +168,26 @@ describe('getBgColorClass', () => {
     expect(getBgColorClass(0)).toBe('bg-gray-400/10');
   });
 });
+
+describe('malformed currency codes', () => {
+  // Database rules only required `currency` to be a string until now, so a
+  // record can carry a code Intl rejects. Rendering must degrade, not throw:
+  // one bad record in a public portfolio would otherwise crash the dashboard
+  // for every viewer.
+  it.each(['', 'XX', 'US D', 'not-a-currency'])(
+    'formats an amount without throwing for %o',
+    (code) => {
+      expect(() => formatCurrency(1234.5, code)).not.toThrow();
+      expect(formatCurrency(1234.5, code)).toContain('1,234.50');
+    }
+  );
+
+  it.each(['', 'XX', 'US D'])('formats a crypto price without throwing for %o', (code) => {
+    expect(() => formatCryptoPrice(0.12345678, code)).not.toThrow();
+  });
+
+  it('still uses the currency symbol for valid codes', () => {
+    expect(formatCurrency(1234.5, 'GBP')).toBe('£1,234.50');
+    expect(formatCurrency(1234.5, 'usd')).toBe('$1,234.50');
+  });
+});

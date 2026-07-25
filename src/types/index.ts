@@ -4,7 +4,7 @@ export interface User {
   displayName: string;
   createdAt: number;
   shareCode?: string;
-  sharedPortfolios?: string[]; // Array of share codes user has joined
+  sharedPortfolios?: Record<string, string>; // Map of ownerUid -> share code the user has joined
 }
 
 export interface Investment {
@@ -28,6 +28,12 @@ export interface Portfolio {
   totalInvested: number;
   totalProfit: number;
   totalProfitPercentage: number;
+  /** The currency the totals are expressed in. Differs from the user's
+   *  selected display currency when conversion was unavailable. */
+  totalsCurrency: string;
+  /** True when at least one holding could not be converted into the selected
+   *  display currency, so the totals mix currencies and are approximate. */
+  conversionFailed: boolean;
   investments: Investment[];
 }
 

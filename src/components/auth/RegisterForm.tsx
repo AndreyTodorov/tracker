@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { signUp } from '../../services/auth.service';
+import { signUp, MAX_DISPLAY_NAME_LENGTH } from '../../services/auth.service';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useToast } from '../../context/ToastContext';
@@ -68,11 +68,18 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
             label="Display Name"
             type="text"
             placeholder="John Doe"
+            maxLength={MAX_DISPLAY_NAME_LENGTH}
             {...register('displayName', {
               required: 'Display name is required',
-              minLength: {
-                value: 2,
-                message: 'Name must be at least 2 characters',
+              validate: (value) => {
+                const trimmed = value.trim();
+                if (trimmed.length < 2) return 'Name must be at least 2 characters';
+                // Matches the database rule, so an over-long name fails here
+                // rather than as a permission error mid-signup.
+                return (
+                  trimmed.length <= MAX_DISPLAY_NAME_LENGTH ||
+                  `Name must be ${MAX_DISPLAY_NAME_LENGTH} characters or fewer`
+                );
               },
             })}
             error={errors.displayName?.message}

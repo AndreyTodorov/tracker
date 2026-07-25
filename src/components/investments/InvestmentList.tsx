@@ -2,6 +2,7 @@ import type { Investment } from '../../types';
 import { InvestmentCard } from './InvestmentCard';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { getPriceKey } from '../../utils/calculations';
+import { toDisplayValues } from '../../utils/currency';
 import { TrendingUp } from 'lucide-react';
 
 interface InvestmentListProps {
@@ -37,13 +38,16 @@ export const InvestmentList = ({ investments, prices, loading }: InvestmentListP
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {investments.map((investment) => {
         const symbolPrices = prices.get(getPriceKey(investment));
-        const currentPrice = symbolPrices?.get(investment.currency.toLowerCase());
 
         return (
           <InvestmentCard
             key={investment.id}
             investment={investment}
-            currentPrice={currentPrice}
+            // Holdings stay in their purchase currency; the display currency
+            // selected in the header applies to the portfolio totals only.
+            display={toDisplayValues(investment, prices, investment.currency)}
+            nativeCurrentPrice={symbolPrices?.get(investment.currency.toLowerCase())}
+            prices={prices}
           />
         );
       })}
