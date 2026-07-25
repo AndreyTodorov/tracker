@@ -326,9 +326,10 @@ src/
 ### Testing
 
 ```bash
-pnpm test           # watch mode
-pnpm test -- --run  # single run
-pnpm test:coverage  # with coverage
+pnpm test           # single run
+pnpm test:watch     # re-run on change
+pnpm test:ui        # Vitest UI
+pnpm test:coverage  # single run with coverage
 pnpm lint
 ```
 

@@ -8,9 +8,10 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
+    "test:coverage": "vitest run --coverage",
     "emulators:docker": "docker compose up",
     "dev:docker": "concurrently -n docker,vite -c blue,green \"docker compose up\" \"vite --mode emulator\""
   },
