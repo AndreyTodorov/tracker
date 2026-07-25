@@ -100,7 +100,10 @@ export const EditInvestmentModal = ({ investment, currentPrice, prices, isOpen, 
     }
 
     setValue('buyPrice', round(investment.buyPrice * rate, 8));
-    setValue('investmentAmount', round(investment.investmentAmount * rate, 2));
+    // investmentAmount is optional on a record, so fall back to the figure the
+    // rest of the app computes rather than multiplying undefined into NaN.
+    const baseAmount = investment.investmentAmount ?? investment.buyPrice * investment.quantity;
+    setValue('investmentAmount', round(baseAmount * rate, 2));
   };
 
   const onSubmit = async (data: EditInvestmentFormData) => {

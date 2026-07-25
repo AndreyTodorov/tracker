@@ -136,8 +136,8 @@ describe('updateDisplayName', () => {
     expect(update).toHaveBeenCalledTimes(1);
     expect(vi.mocked(update).mock.calls[0][1]).toEqual({
       'users/u1/displayName': 'Grace',
-      'shareCodeIndex/ABC12345/displayName': 'Grace',
-      'publicProfiles/u1/displayName': 'Grace',
+      'shareCodeIndex/ABC12345': { uid: 'u1', displayName: 'Grace' },
+      'publicProfiles/u1': { displayName: 'Grace' },
       'investments/u1/i1/userName': 'Grace',
       'investments/u1/i2/userName': 'Grace',
     });
@@ -148,7 +148,7 @@ describe('updateDisplayName', () => {
 
     await updateDisplayName(user as never, 'Grace');
 
-    expect(vi.mocked(update).mock.calls[0][1]).not.toHaveProperty('publicProfiles/u1/displayName');
+    expect(vi.mocked(update).mock.calls[0][1]).not.toHaveProperty('publicProfiles/u1');
   });
 
   it('updates the auth profile as well as the database', async () => {

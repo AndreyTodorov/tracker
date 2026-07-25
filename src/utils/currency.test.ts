@@ -135,6 +135,18 @@ describe('toDisplayValues', () => {
     expect(result.profit.percentage).toBe(-100);
   });
 
+  it('treats a record with no currency as being in the display currency', () => {
+    const prices = priceMap({ bitcoin: { usd: 60000 } });
+    const investment = eurHolding({ currency: undefined as unknown as string });
+
+    expect(() => toDisplayValues(investment, prices, 'USD')).not.toThrow();
+    expect(toDisplayValues(investment, prices, 'USD')).toMatchObject({
+      currency: 'USD',
+      currentPrice: 60000,
+      converted: false,
+    });
+  });
+
   it('stays in the native currency when no rate can be derived', () => {
     const prices = priceMap({ bitcoin: { eur: 55000 } });
 

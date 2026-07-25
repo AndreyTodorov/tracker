@@ -123,19 +123,25 @@ export const updateDisplayName = async (
   }
   const existing = userSnapshot.val() as User;
 
-  const updates: Record<string, string> = {
+  const updates: Record<string, unknown> = {
     [`users/${user.uid}/displayName`]: name,
   };
 
   if (existing.shareCode) {
-    updates[`shareCodeIndex/${existing.shareCode}/displayName`] = name;
+    // Written as a whole entry rather than just the displayName child: the
+    // rule guarding this node inspects the uid being written, so supplying it
+    // explicitly avoids depending on how a partial write is merged.
+    updates[`shareCodeIndex/${existing.shareCode}`] = {
+      uid: user.uid,
+      displayName: name,
+    };
   }
 
   // Only listed users have a public profile, and writing one would silently
   // opt them in to the Everyone tab.
   const publicProfile = await get(ref(db, `publicProfiles/${user.uid}`));
   if (publicProfile.exists()) {
-    updates[`publicProfiles/${user.uid}/displayName`] = name;
+    updates[`publicProfiles/${user.uid}`] = { displayName: name };
   }
 
   const investments = await get(ref(db, `investments/${user.uid}`));

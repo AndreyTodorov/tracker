@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getMultipleCryptoPrices } from '../services/coingecko.service';
 import { getPriceKey } from '../utils/calculations';
+import { isSupportedCurrency } from '../utils/currencies';
 import type { Investment } from '../types';
 
 export const UPDATE_INTERVAL = 60000; // 60 seconds (reduced from 30s to avoid rate limiting)
@@ -19,8 +20,14 @@ export const useCryptoPrices = (investments: Investment[], displayCurrency: stri
   // derived from the price data instead of a separate FX service.
   const { symbols, currencies, investmentsKey } = useMemo(() => {
     const symbols = [...new Set(investments.map(getPriceKey))];
+    // Unsupported currencies are filtered out rather than passed through:
+    // getMultipleCryptoPrices rejects the whole request if any one of them is
+    // invalid, so a single old record would leave every holding without a
+    // live price.
     const currencies = [
-      ...new Set([...investments.map((inv) => inv.currency), displayCurrency]),
+      ...new Set(
+        [...investments.map((inv) => inv.currency), displayCurrency].filter(isSupportedCurrency)
+      ),
     ];
     const investmentsKey = [
       displayCurrency,

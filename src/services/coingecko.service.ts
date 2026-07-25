@@ -25,16 +25,25 @@ let consecutiveRateLimits = 0;
 
 const cacheKey = (symbol: string, currency: string) => `${symbol}:${currency}`;
 
-const readCached = (symbol: string, currency: string): number | undefined => {
+const isRateLimited = () => Date.now() < rateLimitedUntil;
+
+const readCached = (
+  symbol: string,
+  currency: string,
+  allowStale = false
+): number | undefined => {
   const entry = priceCache.get(cacheKey(symbol, currency));
-  if (!entry || Date.now() - entry.timestamp >= CACHE_DURATION) {
+  if (!entry) {
+    return undefined;
+  }
+  if (!allowStale && Date.now() - entry.timestamp >= CACHE_DURATION) {
     return undefined;
   }
   return entry.price;
 };
 
 const fetchIntoCache = async (symbols: string[], currencies: string[]): Promise<void> => {
-  if (Date.now() < rateLimitedUntil) {
+  if (isRateLimited()) {
     return;
   }
 
@@ -168,11 +177,16 @@ export const getMultipleCryptoPrices = async (
     await fetchIntoCache([...missingSymbols], [...missingCurrencies]);
   }
 
+  // The backoff can last minutes, and expired prices beat none at all, so
+  // while it is in force the freshness check is relaxed for reads. Whether a
+  // refresh is attempted above is unaffected.
+  const allowStale = isRateLimited();
+
   const prices = new Map<string, Map<string, number>>();
   normalizedSymbols.forEach((symbol) => {
     const currencyPrices = new Map<string, number>();
     normalizedCurrencies.forEach((currency) => {
-      const price = readCached(symbol, currency);
+      const price = readCached(symbol, currency, allowStale);
       if (price !== undefined) {
         currencyPrices.set(currency, price);
       }

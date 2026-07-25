@@ -72,4 +72,20 @@ describe('useCryptoPrices', () => {
       );
     });
   });
+
+  it('ignores a holding whose stored currency is not supported', async () => {
+    // Older records predate the currency whitelist. getMultipleCryptoPrices
+    // rejects an unsupported currency outright, so without filtering here one
+    // bad record would leave every holding with no live price at all.
+    const investments = [
+      mockInvestment({ id: '1', currency: 'USD' }) as Investment,
+      mockInvestment({ id: '2', currency: 'BTC' }) as Investment,
+    ];
+
+    render(<Probe investments={investments} displayCurrency="USD" />);
+
+    await waitFor(() => {
+      expect(getMultipleCryptoPrices).toHaveBeenCalledWith(['bitcoin'], ['USD']);
+    });
+  });
 });

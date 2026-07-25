@@ -86,7 +86,9 @@ export const toDisplayValues = (
   prices: Map<string, Map<string, number>>,
   displayCurrency: string
 ): DisplayValues => {
-  const native = investment.currency;
+  // Older records are not guaranteed to carry a currency, and reading one off
+  // undefined would throw during render.
+  const native = investment.currency || displayCurrency;
   const display = displayCurrency.toUpperCase();
   const coinPrices = prices.get(getPriceKey(investment));
   const nativeQuote = coinPrices?.get(native.toLowerCase());

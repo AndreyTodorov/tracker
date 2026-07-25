@@ -125,6 +125,18 @@ describe('EditInvestmentModal', () => {
       expect(screen.getByText(/Current Price \(EUR\)/)).toBeInTheDocument();
     });
 
+    it('converts a record that has no stored amount without producing NaN', async () => {
+      const user = userEvent.setup();
+      // investmentAmount is not a required field, so older records can lack it.
+      renderModal(eurHolding({ investmentAmount: undefined }));
+
+      await user.selectOptions(screen.getByLabelText('Currency'), 'USD');
+
+      expect(screen.getByLabelText(/Buy Price/i)).toHaveValue(60000);
+      // buyPrice x quantity, converted: 50000 x 2 x 1.2
+      expect(screen.getByLabelText(/Amount/i)).toHaveValue(120000);
+    });
+
     it('warns rather than converting when no rate is available', async () => {
       const user = userEvent.setup();
       renderModal(eurHolding());

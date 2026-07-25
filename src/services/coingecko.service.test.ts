@@ -343,6 +343,29 @@ describe('CoinGecko Service', () => {
         }
       });
 
+      it('keeps serving expired prices while rate limited', async () => {
+        vi.useFakeTimers();
+        try {
+          respondWith({ bitcoin: { usd: 50000 } });
+          await getMultipleCryptoPrices(['bitcoin'], ['usd']);
+
+          // Cache entry expires, the refresh is refused, and the backoff can
+          // last minutes. Showing nothing for that long is worse than showing
+          // the last known price.
+          vi.advanceTimersByTime(61000);
+          (fetch as any).mockResolvedValueOnce({ ok: false, status: 429 });
+
+          const duringFailure = await getMultipleCryptoPrices(['bitcoin'], ['usd']);
+          expect(duringFailure.get('bitcoin')?.get('usd')).toBe(50000);
+
+          const whileBackedOff = await getMultipleCryptoPrices(['bitcoin'], ['usd']);
+          expect(whileBackedOff.get('bitcoin')?.get('usd')).toBe(50000);
+          expect(fetch).toHaveBeenCalledTimes(2);
+        } finally {
+          vi.useRealTimers();
+        }
+      });
+
       it('does not ask for 24h change data it never reads', async () => {
         respondWith({ bitcoin: { usd: 50000 } });
 
