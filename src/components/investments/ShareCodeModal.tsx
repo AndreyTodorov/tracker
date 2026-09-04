@@ -50,7 +50,7 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
   };
 
   const publicLink = userData?.shareCode
-    ? `${window.location.origin}/tracker/public?code=${userData.shareCode}`
+    ? `${window.location.origin}/public?code=${userData.shareCode}`
     : '';
 
   const copyToClipboard = async (text: string): Promise<boolean> => {

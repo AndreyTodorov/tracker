@@ -55,7 +55,7 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter basename="/tracker">
+      <BrowserRouter>
         <ToastProvider>
           <AuthProvider>
             <CurrencyProvider>
