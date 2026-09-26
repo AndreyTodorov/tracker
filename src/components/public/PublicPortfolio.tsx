@@ -113,7 +113,7 @@ export const PublicPortfolio = () => {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <Input
-                  label="Share Code"
+                  label="Share code"
                   placeholder="Enter 8-character code"
                   value={inputCode}
                   onChange={(e) => setInputCode(e.target.value.toUpperCase())}
@@ -126,7 +126,7 @@ export const PublicPortfolio = () => {
                   isLoading={loading}
                   disabled={inputCode.trim().length !== 8}
                 >
-                  View Portfolio
+                  View portfolio
                 </Button>
               </form>
 

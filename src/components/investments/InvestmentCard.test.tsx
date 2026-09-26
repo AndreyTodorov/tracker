@@ -97,6 +97,24 @@ describe('InvestmentCard Component', () => {
       expect(screen.getByText('-20.00%')).toBeInTheDocument();
     });
 
+    it('shows the return in a band tinted by its sign', () => {
+      const { unmount } = render(cardElement(mockInvestment({ buyPrice: 50000, quantity: 0.02 }), 60000));
+      let band = screen.getByText('+20.00%').parentElement!;
+      expect(band).toHaveTextContent('+$200.00');
+      expect(band).toHaveClass('bg-profit/10', 'border-profit/20', 'text-profit');
+      unmount();
+
+      render(cardElement(mockInvestment({ buyPrice: 50000, quantity: 0.02 }), 40000));
+      band = screen.getByText('-20.00%').parentElement!;
+      expect(band).toHaveTextContent('-$200.00');
+      expect(band).toHaveClass('bg-loss/10', 'border-loss/20', 'text-loss');
+    });
+
+    it('keeps the band neutral at break-even', () => {
+      render(cardElement(mockInvestment({ buyPrice: 50000, quantity: 0.02 }), 50000));
+      expect(screen.getByText('+0.00%').parentElement!).toHaveClass('bg-muted/10', 'border-line', 'text-muted');
+    });
+
     it('summarises quantity, buy price and current price', () => {
       render(cardElement(mockInvestment({ buyPrice: 50000, quantity: 0.5, currency: 'USD' }), 60000));
 
@@ -144,7 +162,7 @@ describe('InvestmentCard Component', () => {
     it('marks a holding whose live price could not be loaded instead of showing a 0% return', () => {
       render(cardElement(mockInvestment({ buyPrice: 50000 })));
 
-      expect(screen.getByText('No live price')).toBeInTheDocument();
+      expect(screen.getByText('No live price')).toHaveClass('bg-warning/10', 'text-warning');
       expect(screen.queryByText('+0.00%')).not.toBeInTheDocument();
     });
 
