@@ -7,6 +7,8 @@ import {
   formatDateTime,
   getColorClass,
   getBgColorClass,
+  toDateInputValue,
+  fromDateInputValue,
 } from './formatters';
 
 describe('formatCurrency', () => {
@@ -189,5 +191,13 @@ describe('malformed currency codes', () => {
   it('still uses the currency symbol for valid codes', () => {
     expect(formatCurrency(1234.5, 'GBP')).toBe('£1,234.50');
     expect(formatCurrency(1234.5, 'usd')).toBe('$1,234.50');
+  });
+});
+
+describe('date input values', () => {
+  it('round-trips a calendar date through the date input format', () => {
+    const timestamp = fromDateInputValue('2024-01-15');
+    expect(toDateInputValue(timestamp)).toBe('2024-01-15');
+    expect(formatDate(timestamp)).toBe('Jan 15, 2024');
   });
 });

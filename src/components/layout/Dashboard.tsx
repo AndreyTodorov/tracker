@@ -3,19 +3,23 @@ import { Header } from './Header';
 import { InvestmentForm } from '../investments/InvestmentForm';
 import { InvestmentList } from '../investments/InvestmentList';
 import { PortfolioSummary } from '../investments/PortfolioSummary';
+import { Modal } from '../ui/Modal';
 import { useInvestments } from '../../hooks/useInvestments';
 import { useCryptoPrices } from '../../hooks/useCryptoPrices';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { calculatePortfolioStats } from '../../utils/currency';
 import { useCurrency } from '../../context/CurrencyContext';
 import type { TabType } from '../../types';
-import { formatDateTime } from '../../utils/formatters';
 
 export const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<TabType>('my');
   const { investments, loading } = useInvestments(activeTab);
   const { displayCurrency } = useCurrency();
+  // Matches Tailwind's `lg` breakpoint, where the form gets its own column.
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const [showForm, setShowForm] = useState(false);
 
-  const { prices, lastUpdate } = useCryptoPrices(investments, displayCurrency);
+  const { prices, loading: pricesLoading, lastUpdate } = useCryptoPrices(investments, displayCurrency);
 
   // Calculate portfolio stats
   const portfolio = useMemo(() => {
@@ -23,75 +27,74 @@ export const Dashboard = () => {
   }, [investments, prices, displayCurrency]);
 
   const tabs: { id: TabType; label: string }[] = [
-    { id: 'my', label: 'My Portfolio' },
+    { id: 'my', label: 'My portfolio' },
     { id: 'shared', label: 'Shared' },
     { id: 'all', label: 'Everyone' },
   ];
 
+  const tabBar = (
+    <div className="flex gap-2">
+      {tabs.map((tab) => (
+        <button
+          key={tab.id}
+          onClick={() => setActiveTab(tab.id)}
+          aria-pressed={activeTab === tab.id}
+          className={`
+            h-9 px-4 rounded-full text-[13px] transition-colors whitespace-nowrap
+            ${
+              activeTab === tab.id
+                ? 'bg-content text-ink font-semibold'
+                : 'border border-line text-content/70 font-medium hover:text-content hover:border-faint'
+            }
+          `}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <div className="min-h-screen">
-      <Header />
+      {/* Desktop: the tabs sit in the header beside the logo */}
+      <Header nav={isDesktop ? tabBar : undefined} />
 
-      <main className="container mx-auto px-4 py-6">
-        {/* Split View Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Side - Investment Form (33%) */}
-          <div className="lg:col-span-4 space-y-6">
-            <InvestmentForm />
-
-            {/* Last Update Info */}
-            <div className="panel rounded-lg p-3 text-center">
-              <div className="flex items-center justify-center gap-2">
-                <span className="relative flex w-2 h-2">
-                  <span className="absolute inline-flex w-full h-full rounded-full bg-profit opacity-60 animate-ping" />
-                  <span className="relative inline-flex w-2 h-2 rounded-full bg-profit" />
-                </span>
-                <span className="text-xs text-muted">
-                  Last updated: <span className="tnum text-content/80">{formatDateTime(lastUpdate)}</span>
-                </span>
-              </div>
-              <p className="text-xs text-muted/70 mt-1">
-                Prices update every 60 seconds
-              </p>
-            </div>
-          </div>
-
-          {/* Right Side - Investment List (67%) */}
-          <div className="lg:col-span-8">
-            {/* Tabs */}
-            <div className="inline-flex gap-1 mb-6 p-1 rounded-lg bg-surface border border-line">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`
-                    px-4 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap
-                    ${
-                      activeTab === tab.id
-                        ? 'bg-surface2 text-content shadow-sm'
-                        : 'text-muted hover:text-content'
-                    }
-                  `}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
+      <main className="container mx-auto px-4 lg:px-10 py-5 lg:py-8">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-8 lg:items-start">
+          <div>
             {/* Portfolio Summary */}
             {!loading && investments.length > 0 && (
-              <PortfolioSummary portfolio={portfolio} />
+              <PortfolioSummary portfolio={portfolio} lastUpdate={lastUpdate} />
             )}
+
+            {/* Mobile: the tabs sit between the totals and the holdings */}
+            {!isDesktop && <div className="mb-4">{tabBar}</div>}
 
             {/* Investment List */}
             <InvestmentList
               investments={investments}
               prices={prices}
               loading={loading}
+              pricesLoading={pricesLoading}
+              onAdd={isDesktop ? undefined : () => setShowForm(true)}
             />
           </div>
+
+          {/* Desktop: the form keeps its own column */}
+          {isDesktop && (
+            <aside className="sticky top-24">
+              <InvestmentForm />
+            </aside>
+          )}
         </div>
       </main>
+
+      {/* Mobile: the form opens from the add tile */}
+      {!isDesktop && (
+        <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Add investment">
+          <InvestmentForm embedded onAdded={() => setShowForm(false)} />
+        </Modal>
+      )}
     </div>
   );
 };

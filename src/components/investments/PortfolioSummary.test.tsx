@@ -5,56 +5,32 @@ import { mockPortfolio, mockInvestment } from '../../test/test-utils';
 
 describe('PortfolioSummary Component', () => {
   it('should render total value', () => {
-    const portfolio = mockPortfolio({
-      totalValue: 10000,
-    });
+    render(<PortfolioSummary portfolio={mockPortfolio({ totalValue: 10000 })} />);
 
-    render(<PortfolioSummary portfolio={portfolio} />);
-
-    expect(screen.getByText('Total Value')).toBeInTheDocument();
-    expect(screen.getByText(/10,000/)).toBeInTheDocument();
+    expect(screen.getByText('Portfolio value')).toBeInTheDocument();
+    expect(screen.getByTestId('portfolio-value')).toHaveTextContent('$10,000.00');
   });
 
   it('should render total invested amount', () => {
-    const portfolio = mockPortfolio({
-      totalInvested: 8000,
-    });
+    render(<PortfolioSummary portfolio={mockPortfolio({ totalInvested: 8000 })} />);
 
-    render(<PortfolioSummary portfolio={portfolio} />);
-
-    expect(screen.getByText(/Invested:/)).toBeInTheDocument();
-    expect(screen.getByText(/8,000/)).toBeInTheDocument();
+    expect(screen.getByText(/on \$8,000\.00/)).toBeInTheDocument();
   });
 
-  it('should render total profit/loss', () => {
-    const portfolio = mockPortfolio({
-      totalProfit: 2000,
-    });
+  it('should render a positive profit with its sign and percentage', () => {
+    render(
+      <PortfolioSummary portfolio={mockPortfolio({ totalProfit: 2000, totalProfitPercentage: 25.5 })} />
+    );
 
-    render(<PortfolioSummary portfolio={portfolio} />);
-
-    expect(screen.getByText('Total Profit/Loss')).toBeInTheDocument();
+    expect(screen.getByText('+$2,000.00 (+25.50%)')).toBeInTheDocument();
   });
 
-  it('should display profit percentage', () => {
-    const portfolio = mockPortfolio({
-      totalProfitPercentage: 25.5,
-    });
+  it('should render a loss with its percentage', () => {
+    render(
+      <PortfolioSummary portfolio={mockPortfolio({ totalProfit: -500, totalProfitPercentage: -10.5 })} />
+    );
 
-    render(<PortfolioSummary portfolio={portfolio} />);
-
-    expect(screen.getByText(/\+25\.50%/)).toBeInTheDocument();
-  });
-
-  it('should display negative profit percentage', () => {
-    const portfolio = mockPortfolio({
-      totalProfit: -500,
-      totalProfitPercentage: -10.5,
-    });
-
-    render(<PortfolioSummary portfolio={portfolio} />);
-
-    expect(screen.getByText(/-10\.50%/)).toBeInTheDocument();
+    expect(screen.getByText('-$500.00 (-10.50%)')).toBeInTheDocument();
   });
 
   it('should count unique assets correctly', () => {
@@ -68,32 +44,13 @@ describe('PortfolioSummary Component', () => {
 
     render(<PortfolioSummary portfolio={portfolio} />);
 
-    expect(screen.getByText('Assets')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument(); // Only 2 unique assets
+    expect(screen.getByText(/2 assets/)).toBeInTheDocument();
   });
 
-  it('should display total investment count', () => {
-    const portfolio = mockPortfolio({
-      investments: [
-        mockInvestment({ id: '1' }),
-        mockInvestment({ id: '2' }),
-        mockInvestment({ id: '3' }),
-      ],
-    });
+  it('should use singular form for a single asset', () => {
+    render(<PortfolioSummary portfolio={mockPortfolio({ investments: [mockInvestment()] })} />);
 
-    render(<PortfolioSummary portfolio={portfolio} />);
-
-    expect(screen.getByText('3 investments')).toBeInTheDocument();
-  });
-
-  it('should use singular form for single investment', () => {
-    const portfolio = mockPortfolio({
-      investments: [mockInvestment()],
-    });
-
-    render(<PortfolioSummary portfolio={portfolio} />);
-
-    expect(screen.getByText('1 investment')).toBeInTheDocument();
+    expect(screen.getByText(/1 asset$/)).toBeInTheDocument();
   });
 
   it('should handle empty portfolio', () => {
@@ -107,68 +64,58 @@ describe('PortfolioSummary Component', () => {
 
     render(<PortfolioSummary portfolio={portfolio} />);
 
-    expect(screen.getByText('Total Value')).toBeInTheDocument();
-    expect(screen.getByText('0')).toBeInTheDocument();
-  });
-
-  it('should render all three summary cards', () => {
-    const portfolio = mockPortfolio();
-
-    render(<PortfolioSummary portfolio={portfolio} />);
-
-    expect(screen.getByText('Total Value')).toBeInTheDocument();
-    expect(screen.getByText('Total Profit/Loss')).toBeInTheDocument();
-    expect(screen.getByText('Assets')).toBeInTheDocument();
-  });
-
-  it('should display icons for each card', () => {
-    const portfolio = mockPortfolio();
-    const { container } = render(<PortfolioSummary portfolio={portfolio} />);
-
-    // Check for SVG icons (Wallet, TrendingUp, PieChart)
-    const svgs = container.querySelectorAll('svg');
-    expect(svgs.length).toBeGreaterThanOrEqual(3);
-  });
-
-  it('should handle portfolio with only losses', () => {
-    const portfolio = mockPortfolio({
-      totalValue: 7000,
-      totalInvested: 10000,
-      totalProfit: -3000,
-      totalProfitPercentage: -30,
-    });
-
-    render(<PortfolioSummary portfolio={portfolio} />);
-
-    expect(screen.getByText(/7,000/)).toBeInTheDocument();
-    expect(screen.getByText(/10,000/)).toBeInTheDocument();
-    expect(screen.getByText(/-30\.00%/)).toBeInTheDocument();
+    expect(screen.getByTestId('portfolio-value')).toHaveTextContent('$0.00');
+    expect(screen.queryByRole('img', { name: /Allocation/ })).not.toBeInTheDocument();
   });
 
   it('should format large numbers with thousand separators', () => {
-    const portfolio = mockPortfolio({
-      totalValue: 1234567.89,
-    });
+    render(<PortfolioSummary portfolio={mockPortfolio({ totalValue: 1234567.89 })} />);
 
-    render(<PortfolioSummary portfolio={portfolio} />);
-
-    expect(screen.getByText(/1,234,567/)).toBeInTheDocument();
+    expect(screen.getByTestId('portfolio-value')).toHaveTextContent('$1,234,567.89');
   });
 
-  it('should count same asset with different purchases as one unique asset', () => {
+  describe('allocation', () => {
+    it('shows each asset\'s share', () => {
+      const portfolio = mockPortfolio({
+        allocation: [
+          { symbol: 'BTC', name: 'Bitcoin', share: 60 },
+          { symbol: 'ETH', name: 'Ethereum', share: 40 },
+        ],
+      });
+
+      render(<PortfolioSummary portfolio={portfolio} />);
+
+      expect(screen.getByRole('img', { name: 'Allocation: BTC 60.0% · ETH 40.0%' })).toBeInTheDocument();
+    });
+
+    it('groups the smallest assets into "Other" when there are many', () => {
+      const portfolio = mockPortfolio({
+        allocation: [
+          { symbol: 'BTC', name: 'Bitcoin', share: 50 },
+          { symbol: 'ETH', name: 'Ethereum', share: 20 },
+          { symbol: 'SOL', name: 'Solana', share: 15 },
+          { symbol: 'ADA', name: 'Cardano', share: 10 },
+          { symbol: 'DOT', name: 'Polkadot', share: 5 },
+        ],
+      });
+
+      render(<PortfolioSummary portfolio={portfolio} />);
+
+      expect(
+        screen.getByRole('img', { name: 'Allocation: BTC 50.0% · ETH 20.0% · SOL 15.0% · Other 15.0%' })
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('hides the allocation when totals could not be converted', () => {
     const portfolio = mockPortfolio({
-      investments: [
-        mockInvestment({ id: '1', assetSymbol: 'bitcoin', buyPrice: 50000 }),
-        mockInvestment({ id: '2', assetSymbol: 'bitcoin', buyPrice: 60000 }),
-        mockInvestment({ id: '3', assetSymbol: 'bitcoin', buyPrice: 55000 }),
-      ],
+      conversionFailed: true,
+      allocation: [{ symbol: 'BTC', name: 'Bitcoin', share: 100 }],
     });
 
     render(<PortfolioSummary portfolio={portfolio} />);
 
-    // Should show 1 unique asset despite 3 investments
-    expect(screen.getByText('1')).toBeInTheDocument();
-    expect(screen.getByText('3 investments')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /Allocation/ })).not.toBeInTheDocument();
   });
 
   describe('currency conversion', () => {
@@ -207,7 +154,13 @@ describe('PortfolioSummary Component', () => {
 
       render(<PortfolioSummary portfolio={portfolio} />);
 
-      expect(screen.getByText('£1,500.00')).toBeInTheDocument();
+      expect(screen.getByTestId('portfolio-value')).toHaveTextContent('£1,500.00');
     });
+  });
+
+  it('shows when prices were last updated', () => {
+    render(<PortfolioSummary portfolio={mockPortfolio()} lastUpdate={new Date(2026, 8, 26, 10, 59)} />);
+
+    expect(screen.getByText(/Live/)).toHaveTextContent('Live · 10:59');
   });
 });

@@ -64,6 +64,7 @@ export const mockPortfolio = (overrides = {}) => ({
   totalProfitPercentage: 25,
   totalsCurrency: 'USD',
   conversionFailed: false,
+  allocation: [],
   investments: [mockInvestment()],
   ...overrides,
 });

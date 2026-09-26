@@ -55,6 +55,72 @@ describe('EditInvestmentModal', () => {
     });
   });
 
+  describe('purchase date', () => {
+    it('shows the stored purchase date and submits a changed one', async () => {
+      const user = userEvent.setup();
+      renderModal(eurHolding({ purchaseDate: new Date(2024, 0, 15).getTime() }));
+
+      const dateInput = screen.getByLabelText(/Purchase Date/i);
+      expect(dateInput).toHaveValue('2024-01-15');
+
+      await user.clear(dateInput);
+      await user.type(dateInput, '2023-06-01');
+      await user.click(screen.getByRole('button', { name: /save/i }));
+
+      await waitFor(() => expect(updateInvestment).toHaveBeenCalled());
+      expect(vi.mocked(updateInvestment).mock.calls[0][2]).toMatchObject({
+        purchaseDate: new Date(2023, 5, 1).getTime(),
+      });
+    });
+  });
+
+  describe('number fields', () => {
+    it('ask mobile browsers for a decimal keypad', () => {
+      renderModal(eurHolding());
+
+      for (const label of [/Buy Price/i, /Quantity/i, /Amount/i]) {
+        expect(screen.getByLabelText(label)).toHaveAttribute('inputmode', 'decimal');
+      }
+    });
+  });
+
+  describe('keeping amount and quantity in step', () => {
+    // eurHolding: buy price 50,000, quantity 2, amount 100,000
+
+    it('recalculates the amount when the quantity changes', async () => {
+      const user = userEvent.setup();
+      renderModal(eurHolding());
+
+      await user.clear(screen.getByLabelText('Quantity'));
+      await user.type(screen.getByLabelText('Quantity'), '3');
+
+      expect(screen.getByLabelText(/Amount/)).toHaveValue(150000);
+    });
+
+    it('recalculates the quantity when the amount changes', async () => {
+      const user = userEvent.setup();
+      renderModal(eurHolding());
+
+      await user.clear(screen.getByLabelText(/Amount/));
+      await user.type(screen.getByLabelText(/Amount/), '25000');
+
+      expect(screen.getByLabelText('Quantity')).toHaveValue(0.5);
+    });
+
+    it('recalculates the amount from price x quantity when the price changes', async () => {
+      const user = userEvent.setup();
+      renderModal(eurHolding());
+
+      await user.clear(screen.getByLabelText(/Amount/));
+      await user.type(screen.getByLabelText(/Amount/), '25000');
+      await user.clear(screen.getByLabelText(/Buy Price/));
+      await user.type(screen.getByLabelText(/Buy Price/), '40000');
+
+      // quantity is now 0.5, so 40,000 x 0.5
+      expect(screen.getByLabelText(/Amount/)).toHaveValue(20000);
+    });
+  });
+
   describe('changing the currency', () => {
     it('converts the buy price instead of silently relabelling it', async () => {
       const user = userEvent.setup();

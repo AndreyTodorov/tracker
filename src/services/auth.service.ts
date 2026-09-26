@@ -172,16 +172,6 @@ export const signOut = async (): Promise<void> => {
   await firebaseSignOut(auth);
 };
 
-export const getUserData = async (userId: string): Promise<User | null> => {
-  const userSnapshot = await get(ref(db, `users/${userId}`));
-
-  if (userSnapshot.exists()) {
-    return userSnapshot.val() as User;
-  }
-
-  return null;
-};
-
 // Subscribe to live updates of a user's document (e.g. so joining/leaving a
 // shared portfolio is reflected without a page reload).
 export const subscribeToUserData = (

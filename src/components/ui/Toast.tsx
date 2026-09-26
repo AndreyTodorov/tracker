@@ -15,7 +15,7 @@ export const Toast = ({ toast, onClose }: ToastProps) => {
       case 'error':
         return <XCircle size={20} className="text-loss" />;
       case 'warning':
-        return <AlertTriangle size={20} className="text-yellow-400" />;
+        return <AlertTriangle size={20} className="text-warning" />;
       case 'info':
         return <Info size={20} className="text-accent" />;
     }
@@ -28,7 +28,7 @@ export const Toast = ({ toast, onClose }: ToastProps) => {
       case 'error':
         return 'border-loss/30';
       case 'warning':
-        return 'border-yellow-500/30';
+        return 'border-warning/30';
       case 'info':
         return 'border-accent/30';
     }

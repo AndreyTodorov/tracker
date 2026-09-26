@@ -230,6 +230,45 @@ describe('Investment Service', () => {
     });
   });
 
+  describe('purchase date', () => {
+    const add = (purchaseDate?: number) =>
+      addInvestment('user123', 'Test User', 'Bitcoin', 'BTC', 'bitcoin', 50000, 1000, 0.02, 'USD', undefined, purchaseDate);
+
+    it('stores the purchase date it is given', async () => {
+      const { set } = await import('firebase/database');
+      const purchaseDate = new Date('2024-01-15').getTime();
+
+      await add(purchaseDate);
+
+      expect(set).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ purchaseDate })
+      );
+    });
+
+    it('defaults the purchase date to now when none is given', async () => {
+      const { set } = await import('firebase/database');
+      const before = Date.now();
+
+      await add();
+
+      const stored = vi.mocked(set).mock.calls[0][1] as { purchaseDate: number };
+      expect(stored.purchaseDate).toBeGreaterThanOrEqual(before);
+    });
+
+    it('rejects a purchase date in the future', async () => {
+      await expect(add(Date.now() + 2 * 24 * 60 * 60 * 1000)).rejects.toThrow(
+        'Purchase date cannot be in the future'
+      );
+    });
+
+    it('rejects a future purchase date in an update', async () => {
+      await expect(
+        updateInvestment('user123', 'inv123', { purchaseDate: Date.now() + 2 * 24 * 60 * 60 * 1000 })
+      ).rejects.toThrow('Purchase date cannot be in the future');
+    });
+  });
+
   describe('updateInvestment', () => {
     it('should throw error for empty user ID', async () => {
       await expect(

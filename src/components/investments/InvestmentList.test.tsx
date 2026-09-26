@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../test/test-utils';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '../../test/test-utils';
 import { InvestmentList } from './InvestmentList';
 import { mockInvestment } from '../../test/test-utils';
 import type { Investment } from '../../types';
@@ -37,5 +37,21 @@ describe('InvestmentList', () => {
     );
 
     expect(container.textContent).not.toContain('$');
+  });
+
+  it('ends with an add tile when adding is offered', async () => {
+    const onAdd = vi.fn();
+    const investments = [mockInvestment({ id: '1' })] as Investment[];
+
+    render(<InvestmentList investments={investments} prices={prices} loading={false} onAdd={onAdd} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Add investment' }));
+
+    expect(onAdd).toHaveBeenCalled();
+  });
+
+  it('has no add tile unless adding is offered', () => {
+    render(<InvestmentList investments={[mockInvestment()] as Investment[]} prices={prices} loading={false} />);
+
+    expect(screen.queryByRole('button', { name: 'Add investment' })).not.toBeInTheDocument();
   });
 });

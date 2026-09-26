@@ -6,13 +6,12 @@ import { PortfolioSummary } from '../investments/PortfolioSummary';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
-import { Share2, Lock, Eye } from 'lucide-react';
+import { Share2, Lock, TrendingUp } from 'lucide-react';
 import { getPublicPortfolio } from '../../services/investment.service';
 import { useCryptoPrices } from '../../hooks/useCryptoPrices';
 import { calculatePortfolioStats } from '../../utils/currency';
 import { useCurrency } from '../../context/CurrencyContext';
 import type { Investment } from '../../types';
-import { formatDateTime } from '../../utils/formatters';
 
 export const PublicPortfolio = () => {
   const { currentUser, loading: authLoading } = useAuth();
@@ -25,7 +24,7 @@ export const PublicPortfolio = () => {
   const [portfolioOwner, setPortfolioOwner] = useState('');
 
   const { displayCurrency } = useCurrency();
-  const { prices, lastUpdate } = useCryptoPrices(investments, displayCurrency);
+  const { prices, loading: pricesLoading, lastUpdate } = useCryptoPrices(investments, displayCurrency);
 
   // Calculate portfolio stats
   const portfolio = useMemo(() => {
@@ -85,29 +84,25 @@ export const PublicPortfolio = () => {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="glass-strong border-b border-line sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="grid place-items-center w-10 h-10 rounded-lg bg-accent/10 border border-accent/30">
-                <Eye size={20} className="text-accent" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold tracking-tight leading-none">Public Portfolio Viewer</h1>
-                <p className="text-xs text-muted mt-1">View shared crypto portfolios</p>
-              </div>
-            </div>
+      <header className="bg-ink/85 backdrop-blur-lg border-b border-line-soft sticky top-0 z-40">
+        <div className="container mx-auto px-4 lg:px-10">
+          <div className="flex items-center gap-2.5 h-16 lg:h-[76px]">
+            <span className="grid place-items-center w-7 h-7 rounded-lg bg-accent text-ink">
+              <TrendingUp size={15} strokeWidth={2.6} />
+            </span>
+            <h1 className="text-[17px] font-bold tracking-[-0.03em]">tracker</h1>
+            <span className="text-[13px] text-muted">· Shared portfolio</span>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 lg:px-10 py-5 lg:py-8">
         {/* Share Code Input */}
         {!shareCode && (
           <div className="max-w-2xl mx-auto mt-20">
-            <Card variant="strong" className="p-8">
+            <Card className="p-6 sm:p-8 rounded-[22px]">
               <div className="flex items-center gap-3 mb-6">
-                <div className="grid place-items-center w-12 h-12 rounded-lg bg-accent/10 border border-accent/30 flex-shrink-0">
+                <div className="grid place-items-center w-12 h-12 rounded-full bg-accent/10 flex-shrink-0">
                   <Share2 size={24} className="text-accent" />
                 </div>
                 <div>
@@ -127,7 +122,7 @@ export const PublicPortfolio = () => {
                 />
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full rounded-full"
                   isLoading={loading}
                   disabled={inputCode.trim().length !== 8}
                 >
@@ -135,7 +130,7 @@ export const PublicPortfolio = () => {
                 </Button>
               </form>
 
-              <div className="mt-6 p-4 rounded-lg bg-accent/10 border border-accent/30">
+              <div className="mt-6 p-4 rounded-2xl bg-surface2 border border-line">
                 <div className="flex items-start gap-3">
                   <Lock size={20} className="text-accent mt-0.5 flex-shrink-0" />
                   <div className="text-sm text-content/80">
@@ -165,11 +160,12 @@ export const PublicPortfolio = () => {
             {/* Portfolio Header */}
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h2 className="text-3xl font-bold tracking-tight">{portfolioOwner ? `${portfolioOwner}'s Portfolio` : 'Portfolio'}</h2>
+                <h2 className="text-2xl lg:text-3xl font-semibold tracking-tight">{portfolioOwner ? `${portfolioOwner}'s Portfolio` : 'Portfolio'}</h2>
                 <p className="text-muted">Share code: <span className="font-mono text-accent">{shareCode}</span></p>
               </div>
               <Button
                 variant="secondary"
+                className="rounded-full"
                 onClick={() => {
                   setShareCode('');
                   setInputCode('');
@@ -182,42 +178,27 @@ export const PublicPortfolio = () => {
               </Button>
             </div>
 
-            {/* Last Update Info */}
-            {investments.length > 0 && (
-              <div className="panel rounded-lg p-3 text-center">
-                <div className="flex items-center justify-center gap-2">
-                  <span className="relative flex w-2 h-2">
-                    <span className="absolute inline-flex w-full h-full rounded-full bg-profit opacity-60 animate-ping" />
-                    <span className="relative inline-flex w-2 h-2 rounded-full bg-profit" />
-                  </span>
-                  <span className="text-xs text-muted">
-                    Last updated: <span className="tnum text-content/80">{formatDateTime(lastUpdate)}</span>
-                  </span>
-                </div>
-                <p className="text-xs text-muted/70 mt-1">
-                  Prices update every 60 seconds
-                </p>
-              </div>
-            )}
-
             {/* Error Display */}
             {error && (
-              <div className="p-4 rounded-lg bg-loss/10 border border-loss/40">
+              <div className="p-4 rounded-2xl bg-loss/10 border border-loss/40">
                 <p className="text-loss">{error}</p>
               </div>
             )}
 
             {/* Portfolio Summary */}
             {!loading && investments.length > 0 && (
-              <PortfolioSummary portfolio={portfolio} />
+              <PortfolioSummary portfolio={portfolio} lastUpdate={lastUpdate} />
             )}
 
-            {/* Investment List */}
-            <InvestmentList
-              investments={investments}
-              prices={prices}
-              loading={loading}
-            />
+            {/* Investment List (an error already says why there is nothing to show) */}
+            {!error && (
+              <InvestmentList
+                investments={investments}
+                prices={prices}
+                loading={loading}
+                pricesLoading={pricesLoading}
+              />
+            )}
           </div>
         )}
       </main>

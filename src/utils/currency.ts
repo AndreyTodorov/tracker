@@ -1,4 +1,4 @@
-import type { Investment, Portfolio } from '../types';
+import type { AllocationSlice, Investment, Portfolio } from '../types';
 import { calculateProfit, getPriceKey } from './calculations';
 
 export interface DisplayValues {
@@ -144,6 +144,20 @@ export const calculatePortfolioStats = (
   // totals must not claim to be USD.
   const conversionFailed = rows.some((row) => row.currency !== display);
 
+  // Several purchases of one asset count as a single slice.
+  const valueBySymbol = new Map<string, AllocationSlice & { value: number }>();
+  investments.forEach((investment, index) => {
+    const symbol = investment.assetSymbol.toUpperCase();
+    const slice = valueBySymbol.get(symbol) ?? { symbol, name: investment.assetName, share: 0, value: 0 };
+    slice.value += rows[index].currentValue;
+    valueBySymbol.set(symbol, slice);
+  });
+  const allocation: AllocationSlice[] = totalValue > 0
+    ? Array.from(valueBySymbol.values())
+        .sort((a, b) => b.value - a.value)
+        .map(({ symbol, name, value }) => ({ symbol, name, share: (value / totalValue) * 100 }))
+    : [];
+
   const totalProfit = totalValue - totalInvested;
   const totalProfitPercentage = totalInvested > 0
     ? (totalProfit / totalInvested) * 100
@@ -156,6 +170,7 @@ export const calculatePortfolioStats = (
     totalProfitPercentage: Number(totalProfitPercentage.toFixed(2)),
     totalsCurrency: conversionFailed ? largestHoldingCurrency(rows, display) : display,
     conversionFailed,
+    allocation,
     investments,
   };
 };
