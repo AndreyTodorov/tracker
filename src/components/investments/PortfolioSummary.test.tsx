@@ -22,7 +22,8 @@ describe('PortfolioSummary Component', () => {
       <PortfolioSummary portfolio={mockPortfolio({ totalProfit: 2000, totalProfitPercentage: 25.5 })} />
     );
 
-    expect(screen.getByText('+$2,000.00 (+25.50%)')).toBeInTheDocument();
+    expect(screen.getByText('+$2,000.00')).toBeInTheDocument();
+    expect(screen.getByText('+25.50%')).toBeInTheDocument();
   });
 
   it('should render a loss with its percentage', () => {
@@ -30,7 +31,8 @@ describe('PortfolioSummary Component', () => {
       <PortfolioSummary portfolio={mockPortfolio({ totalProfit: -500, totalProfitPercentage: -10.5 })} />
     );
 
-    expect(screen.getByText('-$500.00 (-10.50%)')).toBeInTheDocument();
+    expect(screen.getByText('-$500.00')).toBeInTheDocument();
+    expect(screen.getByText('-10.50%')).toBeInTheDocument();
   });
 
   it('should count unique assets correctly', () => {
