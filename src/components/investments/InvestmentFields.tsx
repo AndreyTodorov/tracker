@@ -21,7 +21,7 @@ interface CurrentPriceBoxProps {
 export const CurrentPriceBox = ({ price, currency, onUse }: CurrentPriceBoxProps) => (
   <div className="p-3 rounded-xl bg-ink border border-line">
     <div className="flex items-center justify-between mb-1">
-      <div className="text-[11px] text-muted uppercase tracking-wider">Current Price ({currency})</div>
+      <div className="text-[13px] text-muted">Current Price ({currency})</div>
       <Button
         type="button"
         variant="ghost"

@@ -127,26 +127,26 @@ export const InvestmentCard = ({ investment, display, nativeCurrentPrice, prices
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-4">
           <div>
-            <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Buy Price</div>
+            <div className="text-[13px] text-muted mb-1">Buy Price</div>
             <div className="tnum text-sm text-content">{formatCryptoPrice(display.buyPrice, display.currency)}</div>
           </div>
           <div>
-            <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Current Price</div>
+            <div className="text-[13px] text-muted mb-1">Current Price</div>
             <div className="tnum text-sm text-content">{formatCryptoPrice(display.currentPrice, display.currency)}</div>
           </div>
           <div>
-            <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Quantity</div>
+            <div className="text-[13px] text-muted mb-1">Quantity</div>
             <div className="tnum text-sm text-content">{quantity}</div>
           </div>
           <div>
-            <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Invested</div>
+            <div className="text-[13px] text-muted mb-1">Invested</div>
             <div className="tnum text-sm text-content">{formatCurrency(display.invested, display.currency)}</div>
           </div>
         </div>
 
         <div className="flex items-center justify-between mb-4 pt-3 border-t border-line">
-          <span className="text-[11px] text-muted uppercase tracking-wider">Current Value</span>
-          <span className="tnum text-base font-semibold text-content">
+          <span className="text-[13px] text-muted">Current Value</span>
+          <span className="text-base font-semibold tracking-[-0.02em] tabular-nums text-content">
             {formatCurrency(display.currentValue, display.currency)}
           </span>
         </div>
@@ -160,8 +160,8 @@ export const InvestmentCard = ({ investment, display, nativeCurrentPrice, prices
                 <TrendingDown size={20} className="text-loss" />
               )}
               <div>
-                <div className="text-[11px] text-muted uppercase tracking-wider">Profit/Loss</div>
-                <div className={`tnum text-2xl font-semibold ${getColorClass(profit.absolute)}`}>
+                <div className="text-[13px] text-muted">Profit/Loss</div>
+                <div className={`text-2xl font-semibold tracking-[-0.03em] tabular-nums ${getColorClass(profit.absolute)}`}>
                   {formatCurrency(profit.absolute, display.currency)}
                 </div>
               </div>

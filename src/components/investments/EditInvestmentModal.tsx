@@ -140,7 +140,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, prices, isOpen, 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Asset Info (Read-only) */}
           <div className="p-3 rounded-xl bg-ink border border-line">
-            <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Asset</div>
+            <div className="text-[13px] text-muted mb-1">Asset</div>
             <div className="text-lg font-semibold tracking-tight">{investment.assetName}</div>
             <div className="text-xs text-muted uppercase tracking-widest font-mono">{investment.assetSymbol}</div>
           </div>
