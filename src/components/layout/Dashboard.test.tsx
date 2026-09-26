@@ -3,7 +3,9 @@ import { render, screen, fireEvent } from '../../test/test-utils';
 import { Dashboard } from './Dashboard';
 import { mockInvestment } from '../../test/test-utils';
 
-vi.mock('./Header', () => ({ Header: () => <header /> }));
+vi.mock('./Header', () => ({
+  Header: ({ nav }: { nav?: React.ReactNode }) => <header>{nav}</header>,
+}));
 vi.mock('../investments/InvestmentForm', () => ({
   InvestmentForm: () => <form aria-label="Add investment form" />,
 }));
@@ -18,7 +20,7 @@ vi.mock('../../hooks/useInvestments', () => ({
   useInvestments: () => ({ investments: [mockInvestment()], loading: false }),
 }));
 vi.mock('../../hooks/useCryptoPrices', () => ({
-  useCryptoPrices: () => ({ prices: new Map(), lastUpdate: new Date() }),
+  useCryptoPrices: () => ({ prices: new Map(), loading: false, lastUpdate: new Date() }),
 }));
 vi.mock('../../context/CurrencyContext', () => ({
   useCurrency: () => ({ displayCurrency: 'EUR' }),
@@ -64,5 +66,18 @@ describe('Dashboard layout', () => {
 
     expect(screen.getByRole('form', { name: 'Add investment form' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Add investment' })).not.toBeInTheDocument();
+  });
+
+  it('on mobile keeps the tabs in the page', () => {
+    render(<Dashboard />);
+
+    expect(screen.getByRole('banner')).not.toContainElement(screen.getByRole('button', { name: 'Shared' }));
+  });
+
+  it('on desktop moves the tabs into the header', () => {
+    setViewport(true);
+    render(<Dashboard />);
+
+    expect(screen.getByRole('banner')).toContainElement(screen.getByRole('button', { name: 'Shared' }));
   });
 });

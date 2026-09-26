@@ -10,7 +10,8 @@ export const ToastContainer = () => {
 
   return (
     <div
-      className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-md w-full pointer-events-none"
+      // Phones: along the bottom, clear of the header. Larger screens: top right.
+      className="fixed inset-x-4 bottom-4 sm:inset-x-auto sm:bottom-auto sm:top-4 sm:right-4 sm:w-full sm:max-w-md z-50 flex flex-col gap-2 pointer-events-none"
       aria-live="polite"
       aria-atomic="true"
     >

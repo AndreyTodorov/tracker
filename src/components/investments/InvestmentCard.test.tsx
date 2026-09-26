@@ -140,6 +140,44 @@ describe('InvestmentCard Component', () => {
     });
   });
 
+  describe('missing live price', () => {
+    it('marks a holding whose live price could not be loaded instead of showing a 0% return', () => {
+      render(cardElement(mockInvestment({ buyPrice: 50000 })));
+
+      expect(screen.getByText('No live price')).toBeInTheDocument();
+      expect(screen.queryByText('+0.00%')).not.toBeInTheDocument();
+    });
+
+    it('does not mark it while prices are still loading', () => {
+      const investment = mockInvestment({ buyPrice: 50000 }) as Investment;
+      render(
+        <InvestmentCard
+          investment={investment}
+          display={toDisplayValues(investment, new Map(), investment.currency)}
+          prices={new Map()}
+          pricesLoading
+        />
+      );
+
+      expect(screen.queryByText('No live price')).not.toBeInTheDocument();
+    });
+
+    it('explains the fallback in the details', async () => {
+      const user = userEvent.setup();
+      render(cardElement(mockInvestment({ buyPrice: 50000 })));
+
+      const dialog = await openDetails(user);
+
+      expect(within(dialog).getByText(/Live price unavailable/)).toBeInTheDocument();
+    });
+
+    it('is not shown when the live price is known', () => {
+      render(cardElement(mockInvestment({ buyPrice: 50000 }), 60000));
+
+      expect(screen.queryByText('No live price')).not.toBeInTheDocument();
+    });
+  });
+
   describe('details', () => {
     it('opens the full details when the tile is tapped', async () => {
       const user = userEvent.setup();

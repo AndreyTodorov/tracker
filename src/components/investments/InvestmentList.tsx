@@ -9,11 +9,13 @@ interface InvestmentListProps {
   investments: Investment[];
   prices: Map<string, Map<string, number>>;
   loading: boolean;
+  /** True while live prices are being fetched. */
+  pricesLoading?: boolean;
   /** When given, the grid ends with a tile that starts adding an investment. */
   onAdd?: () => void;
 }
 
-export const InvestmentList = ({ investments, prices, loading, onAdd }: InvestmentListProps) => {
+export const InvestmentList = ({ investments, prices, loading, pricesLoading = false, onAdd }: InvestmentListProps) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -66,6 +68,7 @@ export const InvestmentList = ({ investments, prices, loading, onAdd }: Investme
             display={toDisplayValues(investment, prices, investment.currency)}
             nativeCurrentPrice={symbolPrices?.get(investment.currency.toLowerCase())}
             prices={prices}
+            pricesLoading={pricesLoading}
           />
         );
       })}

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { useCryptoPrices } from './useCryptoPrices';
 import { getMultipleCryptoPrices } from '../services/coingecko.service';
 import { mockInvestment } from '../test/test-utils';
@@ -87,5 +87,21 @@ describe('useCryptoPrices', () => {
     await waitFor(() => {
       expect(getMultipleCryptoPrices).toHaveBeenCalledWith(['bitcoin'], ['USD']);
     });
+  });
+
+  it('is loading again while prices for a new set of holdings are fetched', async () => {
+    const LoadingProbe = ({ investments }: { investments: Investment[] }) => (
+      <span data-testid="loading">{String(useCryptoPrices(investments, 'USD').loading)}</span>
+    );
+    const bitcoin = [mockInvestment({ id: '1', coinId: 'bitcoin', currency: 'USD' }) as Investment];
+    const ethereum = [mockInvestment({ id: '2', coinId: 'ethereum', assetSymbol: 'ETH', currency: 'USD' }) as Investment];
+
+    const { rerender } = render(<LoadingProbe investments={bitcoin} />);
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
+
+    vi.mocked(getMultipleCryptoPrices).mockReturnValue(new Promise(() => {}));
+    rerender(<LoadingProbe investments={ethereum} />);
+
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('true'));
   });
 });

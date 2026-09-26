@@ -19,11 +19,13 @@ interface InvestmentCardProps {
   nativeCurrentPrice?: number;
   /** Passed to the edit modal so changing a currency can convert the amounts. */
   prices: Map<string, Map<string, number>>;
+  /** True while live prices are being fetched, so a missing one isn't flagged yet. */
+  pricesLoading?: boolean;
 }
 
 // A holding as a tile. Tapping it opens the full details, where the owner can
 // edit or delete it.
-export const InvestmentCard = ({ investment, display, nativeCurrentPrice, prices }: InvestmentCardProps) => {
+export const InvestmentCard = ({ investment, display, nativeCurrentPrice, prices, pricesLoading = false }: InvestmentCardProps) => {
   const { currentUser } = useAuth();
   const toast = useToast();
   const isOwner = currentUser?.uid === investment.userId;
@@ -33,6 +35,9 @@ export const InvestmentCard = ({ investment, display, nativeCurrentPrice, prices
   const [isDeleting, setIsDeleting] = useState(false);
 
   const nativePrice = nativeCurrentPrice ?? investment.buyPrice;
+  // Without a live price the figures fall back to the buy price, which would
+  // otherwise read as a genuine 0% return.
+  const priceMissing = nativeCurrentPrice === undefined && !pricesLoading;
   const profit = display.profit;
   const quantity = investment.quantity.toLocaleString('en-US', { maximumFractionDigits: 8 });
 
@@ -79,11 +84,17 @@ export const InvestmentCard = ({ investment, display, nativeCurrentPrice, prices
             <span className="text-[15px] lg:text-base font-semibold break-words">{investment.assetName}</span>
             <span className="font-mono text-xs text-muted truncate">{subtitle}</span>
           </span>
-          <span
-            className={`flex-shrink-0 px-2 py-0.5 rounded-full font-mono text-[11px] lg:text-xs font-semibold ${getBgColorClass(profit.percentage)} ${getColorClass(profit.percentage)}`}
-          >
-            {formatPercentage(profit.percentage)}
-          </span>
+          {priceMissing ? (
+            <span className="flex-shrink-0 px-2 py-0.5 rounded-full font-mono text-[11px] lg:text-xs font-semibold bg-warning/10 text-warning">
+              No live price
+            </span>
+          ) : (
+            <span
+              className={`flex-shrink-0 px-2 py-0.5 rounded-full font-mono text-[11px] lg:text-xs font-semibold ${getBgColorClass(profit.percentage)} ${getColorClass(profit.percentage)}`}
+            >
+              {formatPercentage(profit.percentage)}
+            </span>
+          )}
         </span>
         <span className="flex flex-col gap-1 min-w-0">
           <span className="text-xl lg:text-[28px] font-semibold tracking-[-0.03em] tabular-nums truncate">
@@ -106,6 +117,13 @@ export const InvestmentCard = ({ investment, display, nativeCurrentPrice, prices
         size="sm"
       >
         <p className="-mt-2 mb-5 font-mono text-xs text-muted">{subtitle}</p>
+
+        {priceMissing && (
+          <p className="mb-4 p-3 rounded-xl bg-warning/10 text-xs text-warning">
+            Live price unavailable, so the buy price is shown as the current price. It will
+            update once prices can be fetched again.
+          </p>
+        )}
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-4">
           <div>

@@ -19,7 +19,7 @@ export const Dashboard = () => {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const [showForm, setShowForm] = useState(false);
 
-  const { prices, lastUpdate } = useCryptoPrices(investments, displayCurrency);
+  const { prices, loading: pricesLoading, lastUpdate } = useCryptoPrices(investments, displayCurrency);
 
   // Calculate portfolio stats
   const portfolio = useMemo(() => {
@@ -32,9 +32,32 @@ export const Dashboard = () => {
     { id: 'all', label: 'Everyone' },
   ];
 
+  const tabBar = (
+    <div className="flex gap-2">
+      {tabs.map((tab) => (
+        <button
+          key={tab.id}
+          onClick={() => setActiveTab(tab.id)}
+          aria-pressed={activeTab === tab.id}
+          className={`
+            h-9 px-4 rounded-full text-[13px] transition-colors whitespace-nowrap
+            ${
+              activeTab === tab.id
+                ? 'bg-content text-ink font-semibold'
+                : 'border border-line text-content/70 font-medium hover:text-content hover:border-faint'
+            }
+          `}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <div className="min-h-screen">
-      <Header />
+      {/* Desktop: the tabs sit in the header beside the logo */}
+      <Header nav={isDesktop ? tabBar : undefined} />
 
       <main className="container mx-auto px-4 lg:px-10 py-5 lg:py-8">
         <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-8 lg:items-start">
@@ -44,32 +67,15 @@ export const Dashboard = () => {
               <PortfolioSummary portfolio={portfolio} lastUpdate={lastUpdate} />
             )}
 
-            {/* Tabs */}
-            <div className="flex gap-2 mb-4 lg:mb-5">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  aria-pressed={activeTab === tab.id}
-                  className={`
-                    h-9 px-4 rounded-full text-[13px] transition-colors whitespace-nowrap
-                    ${
-                      activeTab === tab.id
-                        ? 'bg-content text-ink font-semibold'
-                        : 'border border-line text-content/70 font-medium hover:text-content hover:border-faint'
-                    }
-                  `}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
+            {/* Mobile: the tabs sit between the totals and the holdings */}
+            {!isDesktop && <div className="mb-4">{tabBar}</div>}
 
             {/* Investment List */}
             <InvestmentList
               investments={investments}
               prices={prices}
               loading={loading}
+              pricesLoading={pricesLoading}
               onAdd={isDesktop ? undefined : () => setShowForm(true)}
             />
           </div>

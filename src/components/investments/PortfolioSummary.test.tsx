@@ -107,6 +107,17 @@ describe('PortfolioSummary Component', () => {
     });
   });
 
+  it('hides the allocation when totals could not be converted', () => {
+    const portfolio = mockPortfolio({
+      conversionFailed: true,
+      allocation: [{ symbol: 'BTC', name: 'Bitcoin', share: 100 }],
+    });
+
+    render(<PortfolioSummary portfolio={portfolio} />);
+
+    expect(screen.queryByRole('img', { name: /Allocation/ })).not.toBeInTheDocument();
+  });
+
   describe('currency conversion', () => {
     it('shows no warning when every holding converted', () => {
       const portfolio = mockPortfolio({

@@ -96,7 +96,8 @@ export const PortfolioSummary = ({ portfolio, lastUpdate }: PortfolioSummaryProp
           </div>
         </div>
 
-        {slices.length > 0 && (
+        {/* Unconverted rows mix currencies, so their shares would be meaningless. */}
+        {slices.length > 0 && !portfolio.conversionFailed && (
           <div className="lg:pb-1.5">
             <div className="flex gap-1 h-3.5 lg:h-4" role="img" aria-label={`Allocation: ${legend}`}>
               {slices.map((slice, index) => (

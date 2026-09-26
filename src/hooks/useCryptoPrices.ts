@@ -45,6 +45,9 @@ export const useCryptoPrices = (investments: Investment[], displayCurrency: stri
       return;
     }
 
+    // A new set of holdings has no prices yet; say so until the first fetch lands.
+    setLoading(true);
+
     const fetchPrices = async () => {
       try {
         const newPrices = await getMultipleCryptoPrices(symbols, currencies);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { LogOut, TrendingUp, Share2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -7,7 +7,12 @@ import { signOut } from '../../services/auth.service';
 import { ShareCodeModal } from '../investments/ShareCodeModal';
 import { ProfileModal } from './ProfileModal';
 
-export const Header = () => {
+interface HeaderProps {
+  /** Navigation shown beside the logo on desktop, such as the portfolio tabs. */
+  nav?: ReactNode;
+}
+
+export const Header = ({ nav }: HeaderProps) => {
   const { userData } = useAuth();
   const { displayCurrency, setDisplayCurrency } = useCurrency();
   const [showShareModal, setShowShareModal] = useState(false);
@@ -56,6 +61,7 @@ export const Header = () => {
                 <TrendingUp size={15} strokeWidth={2.6} />
               </span>
               <h1 className="sr-only lg:not-sr-only text-[17px] font-bold tracking-[-0.03em]">tracker</h1>
+              {nav && <nav className="hidden lg:block ml-7" aria-label="Portfolios">{nav}</nav>}
             </div>
 
             <div className="flex items-center gap-2">
