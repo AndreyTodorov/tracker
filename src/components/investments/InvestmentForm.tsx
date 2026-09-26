@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { PlusCircle } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card } from '../ui/Card';
@@ -26,13 +25,15 @@ interface InvestmentFormData {
 interface InvestmentFormProps {
   /** Called after an investment has been saved. */
   onAdded?: () => void;
+  /** Render just the form, for use inside a dialog that supplies its own title. */
+  embedded?: boolean;
 }
 
-export const InvestmentForm = ({ onAdded }: InvestmentFormProps) => {
+export const InvestmentForm = ({ onAdded, embedded = false }: InvestmentFormProps) => {
   const { currentUser, userData } = useAuth();
   const toast = useToast();
   const { displayCurrency } = useCurrency();
-  // Default and upper bound for the purchase date.
+  // Default for the purchase date. Future dates are rejected when saving.
   const [today] = useState(() => toDateInputValue(Date.now()));
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<ComboboxOption[]>([]);
@@ -191,160 +192,161 @@ export const InvestmentForm = ({ onAdded }: InvestmentFormProps) => {
     }
   };
 
-  return (
-    <Card variant="strong" className="p-4 sm:p-6">
-      <div className="hidden lg:flex items-center gap-3 mb-6">
-        <div className="grid place-items-center w-10 h-10 rounded-lg bg-accent/10 border border-accent/30">
-          <PlusCircle size={20} className="text-accent" />
+  const form = (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {/* Cryptocurrency Search with Combobox */}
+      <Combobox
+        options={searchResults}
+        value={selectedValue}
+        onSelect={handleSelectAsset}
+        onSearchChange={setSearchQuery}
+        placeholder="Select cryptocurrency..."
+        searchPlaceholder="Type to search Bitcoin, Ethereum, Dogecoin..."
+        emptyText={searchQuery.length < 2 ? 'Type at least 2 characters...' : 'No cryptocurrencies found.'}
+        label="Select Cryptocurrency"
+        error={assetError}
+        isLoading={isSearching}
+      />
+
+      {/* Current Price Display */}
+      {currentPrice !== null && selectedAsset && (
+        <div className="p-3 rounded-xl bg-ink border border-line">
+          <div className="flex items-center justify-between mb-1">
+            <div className="text-[11px] text-muted uppercase tracking-wider">Current Price ({currency || displayCurrency})</div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-accent hover:bg-accent/10 -mr-1"
+              onClick={() => setValue('buyPrice', currentPrice)}
+            >
+              Use as Buy Price
+            </Button>
+          </div>
+          <div className="tnum text-xl font-semibold text-content">
+            {formatCryptoPrice(currentPrice, currency || displayCurrency)}
+          </div>
         </div>
-        <h2 className="text-xl font-bold tracking-tight">Add Investment</h2>
+      )}
+
+      {/* Investment Name (Optional) */}
+      <Input
+        label="Investment Name (Optional)"
+        type="text"
+        placeholder="e.g., Main Portfolio, Testing, Long-term..."
+        {...register('name')}
+      />
+
+      {/* Purchase Date */}
+      <Input
+        label="Purchase Date"
+        type="date"
+        {...register('purchaseDate', { required: 'Purchase date is required' })}
+        error={errors.purchaseDate?.message}
+      />
+
+      {/* Currency Selection */}
+      <div>
+        <label htmlFor="currency" className="block text-sm font-medium text-content mb-1.5">
+          Currency
+        </label>
+        <select
+          id="currency"
+          {...register('currency', { required: 'Currency is required' })}
+          className="w-full h-11 px-4 bg-ink border border-line rounded-xl text-content focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition-colors"
+        >
+          <option value="EUR" className="bg-surface">EUR (€)</option>
+          <option value="USD" className="bg-surface">USD ($)</option>
+          <option value="GBP" className="bg-surface">GBP (£)</option>
+          <option value="JPY" className="bg-surface">JPY (¥)</option>
+          <option value="CHF" className="bg-surface">CHF (Fr)</option>
+          <option value="CAD" className="bg-surface">CAD (C$)</option>
+          <option value="AUD" className="bg-surface">AUD (A$)</option>
+        </select>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Cryptocurrency Search with Combobox */}
-        <Combobox
-          options={searchResults}
-          value={selectedValue}
-          onSelect={handleSelectAsset}
-          onSearchChange={setSearchQuery}
-          placeholder="Select cryptocurrency..."
-          searchPlaceholder="Type to search Bitcoin, Ethereum, Dogecoin..."
-          emptyText={searchQuery.length < 2 ? 'Type at least 2 characters...' : 'No cryptocurrencies found.'}
-          label="Select Cryptocurrency"
-          error={assetError}
-          isLoading={isSearching}
-        />
+      {/* Buy Price */}
+      <Input
+        label={`Buy Price (${currency || displayCurrency})`}
+        type="number"
+        step="any"
+        inputMode="decimal"
+        placeholder="0.00"
+        {...register('buyPrice', {
+          required: 'Buy price is required',
+          valueAsNumber: true,
+          min: { value: 0.000001, message: 'Price must be greater than 0' },
+          // Editing the price re-derives the amount from price × quantity.
+          onChange: () => setLastEditedField(null),
+        })}
+        error={errors.buyPrice?.message}
+      />
 
-        {/* Current Price Display */}
-        {currentPrice !== null && selectedAsset && (
-          <div className="p-3 rounded-lg bg-surface2 border border-line">
-            <div className="flex items-center justify-between mb-1">
-              <div className="text-[11px] text-muted uppercase tracking-wider">Current Price ({currency || displayCurrency})</div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="text-accent hover:bg-accent/10 -mr-1"
-                onClick={() => setValue('buyPrice', currentPrice)}
-              >
-                Use as Buy Price
-              </Button>
-            </div>
-            <div className="tnum text-xl font-semibold text-content">
-              {formatCryptoPrice(currentPrice, currency || displayCurrency)}
-            </div>
-          </div>
-        )}
-
-        {/* Investment Name (Optional) */}
+      {/* Quantity and Investment Amount Side by Side */}
+      <div className="grid grid-cols-2 gap-4">
         <Input
-          label="Investment Name (Optional)"
-          type="text"
-          placeholder="e.g., Main Portfolio, Testing, Long-term..."
-          {...register('name')}
-        />
-
-        {/* Purchase Date */}
-        <Input
-          label="Purchase Date"
-          type="date"
-          max={today}
-          {...register('purchaseDate', { required: 'Purchase date is required' })}
-          error={errors.purchaseDate?.message}
-        />
-
-        {/* Currency Selection */}
-        <div>
-          <label htmlFor="currency" className="block text-sm font-medium text-content mb-1.5">
-            Currency
-          </label>
-          <select
-            id="currency"
-            {...register('currency', { required: 'Currency is required' })}
-            className="w-full px-4 py-2.5 bg-surface2 border border-line rounded-lg text-content focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition-colors"
-          >
-            <option value="EUR" className="bg-surface2">EUR (€)</option>
-            <option value="USD" className="bg-surface2">USD ($)</option>
-            <option value="GBP" className="bg-surface2">GBP (£)</option>
-            <option value="JPY" className="bg-surface2">JPY (¥)</option>
-            <option value="CHF" className="bg-surface2">CHF (Fr)</option>
-            <option value="CAD" className="bg-surface2">CAD (C$)</option>
-            <option value="AUD" className="bg-surface2">AUD (A$)</option>
-          </select>
-        </div>
-
-        {/* Buy Price */}
-        <Input
-          label={`Buy Price (${currency || displayCurrency})`}
+          label="Quantity"
           type="number"
           step="any"
           inputMode="decimal"
           placeholder="0.00"
-          {...register('buyPrice', {
-            required: 'Buy price is required',
+          {...register('quantity', {
+            required: 'Quantity is required',
             valueAsNumber: true,
-            min: { value: 0.000001, message: 'Price must be greater than 0' },
-            // Editing the price re-derives the amount from price × quantity.
-            onChange: () => setLastEditedField(null),
+            min: { value: 0.00000001, message: 'Quantity must be greater than 0' },
+            onChange: () => {
+              setLastEditedField('quantity');
+              // Let the useEffect handle the amount calculation
+            },
           })}
-          error={errors.buyPrice?.message}
+          error={errors.quantity?.message}
         />
 
-        {/* Quantity and Investment Amount Side by Side */}
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Quantity"
-            type="number"
-            step="any"
-            inputMode="decimal"
-            placeholder="0.00"
-            {...register('quantity', {
-              required: 'Quantity is required',
-              valueAsNumber: true,
-              min: { value: 0.00000001, message: 'Quantity must be greater than 0' },
-              onChange: () => {
-                setLastEditedField('quantity');
-                // Let the useEffect handle the amount calculation
-              },
-            })}
-            error={errors.quantity?.message}
-          />
+        <Input
+          label={`Amount (${currency || displayCurrency})`}
+          type="number"
+          step="any"
+          inputMode="decimal"
+          placeholder="0.00"
+          {...register('investmentAmount', {
+            required: 'Investment amount is required',
+            valueAsNumber: true,
+            min: { value: 0.01, message: 'Amount must be greater than 0' },
+            onChange: (e) => {
+              setLastEditedField('amount');
+              const amount = parseFloat(e.target.value);
+              if (!isNaN(amount) && buyPrice && amount > 0) {
+                const calculatedQuantity = amount / buyPrice;
+                // Round to 8 decimal places for crypto precision
+                const roundedQuantity = Math.round(calculatedQuantity * 100000000) / 100000000;
+                setValue('quantity', roundedQuantity);
+              }
+            },
+          })}
+          error={errors.investmentAmount?.message}
+        />
+      </div>
 
-          <Input
-            label={`Amount (${currency || displayCurrency})`}
-            type="number"
-            step="any"
-            inputMode="decimal"
-            placeholder="0.00"
-            {...register('investmentAmount', {
-              required: 'Investment amount is required',
-              valueAsNumber: true,
-              min: { value: 0.01, message: 'Amount must be greater than 0' },
-              onChange: (e) => {
-                setLastEditedField('amount');
-                const amount = parseFloat(e.target.value);
-                if (!isNaN(amount) && buyPrice && amount > 0) {
-                  const calculatedQuantity = amount / buyPrice;
-                  // Round to 8 decimal places for crypto precision
-                  const roundedQuantity = Math.round(calculatedQuantity * 100000000) / 100000000;
-                  setValue('quantity', roundedQuantity);
-                }
-              },
-            })}
-            error={errors.investmentAmount?.message}
-          />
-        </div>
+      {/* Submit Button */}
+      <Button
+        type="submit"
+        className="w-full rounded-full"
+        isLoading={isSubmitting}
+        disabled={!selectedAsset}
+      >
+        Add investment
+      </Button>
+    </form>
+  );
 
-        {/* Submit Button */}
-        <Button
-          type="submit"
-          className="w-full"
-          isLoading={isSubmitting}
-          disabled={!selectedAsset}
-        >
-          Add Investment
-        </Button>
-      </form>
+  if (embedded) {
+    return form;
+  }
+
+  return (
+    <Card className="p-6 rounded-[22px]">
+      <h2 className="text-lg font-semibold tracking-tight mb-5">Add investment</h2>
+      {form}
     </Card>
   );
 };

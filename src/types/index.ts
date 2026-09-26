@@ -34,7 +34,15 @@ export interface Portfolio {
   /** True when at least one holding could not be converted into the selected
    *  display currency, so the totals mix currencies and are approximate. */
   conversionFailed: boolean;
+  /** Each asset's share (0–100) of the total value, largest first. */
+  allocation: AllocationSlice[];
   investments: Investment[];
+}
+
+export interface AllocationSlice {
+  symbol: string;
+  name: string;
+  share: number;
 }
 
 export interface CoinGeckoResponse {

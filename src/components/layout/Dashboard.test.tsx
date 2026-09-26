@@ -8,7 +8,11 @@ vi.mock('../investments/InvestmentForm', () => ({
   InvestmentForm: () => <form aria-label="Add investment form" />,
 }));
 vi.mock('../investments/InvestmentList', () => ({
-  InvestmentList: () => <div data-testid="investment-list" />,
+  InvestmentList: ({ onAdd }: { onAdd?: () => void }) => (
+    <div data-testid="investment-list">
+      {onAdd && <button type="button" onClick={onAdd}>Add investment</button>}
+    </div>
+  ),
 }));
 vi.mock('../../hooks/useInvestments', () => ({
   useInvestments: () => ({ investments: [mockInvestment()], loading: false }),
@@ -36,33 +40,29 @@ const precedes = (a: Element, b: Element) =>
 describe('Dashboard layout', () => {
   beforeEach(() => setViewport(false));
 
-  it('on mobile shows the portfolio summary before the add-investment control', () => {
+  it('on mobile shows the portfolio value before the holdings', () => {
     render(<Dashboard />);
 
-    const summary = screen.getByText('Total Value');
-    const toggle = screen.getByRole('button', { name: /add investment/i });
-    expect(precedes(summary, toggle)).toBe(true);
-    expect(precedes(toggle, screen.getByTestId('investment-list'))).toBe(true);
+    expect(precedes(screen.getByText('Portfolio value'), screen.getByTestId('investment-list'))).toBe(true);
   });
 
-  it('on mobile keeps the form collapsed until the toggle is pressed', () => {
+  it('on mobile opens the form in a dialog from the add tile', () => {
     render(<Dashboard />);
 
     expect(screen.queryByRole('form', { name: 'Add investment form' })).not.toBeInTheDocument();
 
-    const toggle = screen.getByRole('button', { name: /add investment/i });
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole('button', { name: 'Add investment' }));
 
-    expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('form', { name: 'Add investment form' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toContainElement(
+      screen.getByRole('form', { name: 'Add investment form' })
+    );
   });
 
-  it('on desktop always shows the form, without a toggle', () => {
+  it('on desktop always shows the form, without an add tile', () => {
     setViewport(true);
     render(<Dashboard />);
 
     expect(screen.getByRole('form', { name: 'Add investment form' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /add investment/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add investment' })).not.toBeInTheDocument();
   });
 });

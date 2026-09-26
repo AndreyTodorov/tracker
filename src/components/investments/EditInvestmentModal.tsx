@@ -35,7 +35,6 @@ export const EditInvestmentModal = ({ investment, currentPrice, prices, isOpen, 
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastEditedField, setLastEditedField] = useState<'amount' | 'quantity' | null>(null);
-  const [today] = useState(() => toDateInputValue(Date.now()));
 
 
   const { register, handleSubmit, control, setValue, reset, formState: { errors } } = useForm<EditInvestmentFormData>({
@@ -161,14 +160,14 @@ export const EditInvestmentModal = ({ investment, currentPrice, prices, isOpen, 
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
           {/* Asset Info (Read-only) */}
-          <div className="p-3 rounded-lg bg-surface2 border border-line">
+          <div className="p-3 rounded-xl bg-ink border border-line">
             <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Asset</div>
             <div className="text-lg font-bold tracking-tight">{investment.assetName}</div>
             <div className="text-xs text-muted uppercase tracking-widest font-mono">{investment.assetSymbol}</div>
           </div>
 
           {/* Current Price Display */}
-          <div className="p-3 rounded-lg bg-surface2 border border-line">
+          <div className="p-3 rounded-xl bg-ink border border-line">
             <div className="flex items-center justify-between mb-1">
               <div className="text-[11px] text-muted uppercase tracking-wider">Current Price ({liveCurrency})</div>
               <Button
@@ -198,7 +197,6 @@ export const EditInvestmentModal = ({ investment, currentPrice, prices, isOpen, 
           <Input
             label="Purchase Date"
             type="date"
-            max={today}
             {...register('purchaseDate', { required: 'Purchase date is required' })}
             error={errors.purchaseDate?.message}
           />
@@ -214,17 +212,17 @@ export const EditInvestmentModal = ({ investment, currentPrice, prices, isOpen, 
                 required: 'Currency is required',
                 onChange: (event) => handleCurrencyChange(event.target.value),
               })}
-              className="w-full px-4 py-2.5 bg-surface2 border border-line rounded-lg text-content focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition-colors"
+              className="w-full h-11 px-4 bg-ink border border-line rounded-xl text-content focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition-colors"
             >
               {SUPPORTED_CURRENCIES.map(({ code, symbol }) => (
-                <option key={code} value={code} className="bg-surface2">
+                <option key={code} value={code} className="bg-surface">
                   {code} ({symbol})
                 </option>
               ))}
             </select>
             {isRelabelled && (
               <p
-                className={`text-xs mt-1.5 ${conversionRate === null ? 'text-yellow-400' : 'text-muted'}`}
+                className={`text-xs mt-1.5 ${conversionRate === null ? 'text-warning' : 'text-muted'}`}
               >
                 {conversionRate === null
                   ? `Live rate unavailable, so the amounts were left as they were and only relabelled from ${investment.currency} to ${selectedCurrency}. Check them before saving.`

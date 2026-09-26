@@ -9,19 +9,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Trading Terminal palette
-        ink: '#0A0E17',        // app background
-        surface: '#131A26',    // default card / panel
-        surface2: '#1A2332',   // elevated panel, inputs, hovers
-        line: '#232E40',       // borders / hairlines
-        'line-soft': '#1B2433',
-        content: '#EAEEF5',    // primary text
-        muted: '#7E8A9E',      // secondary text
-        accent: '#E5B567',     // brand / interactive (used with restraint)
-        'accent-hover': '#D4A24A',
+        // Carbon palette
+        ink: '#09090B',        // app background
+        surface: '#131316',    // default card / panel
+        surface2: '#1C1C20',   // elevated panel, inputs, hovers
+        line: '#222226',       // borders / hairlines
+        'line-soft': '#18181B',
+        content: '#F4F4F5',    // primary text
+        muted: '#8E8E96',      // secondary text
+        faint: '#56565E',      // de-emphasised figures (cents, minor segments)
+        accent: '#C6F432',     // brand / interactive (used with restraint)
+        'accent-hover': '#B2DE1F',
         // Market semantics — reserved strictly for profit/loss
-        profit: '#0ECB81',
-        loss: '#F6465D',
+        profit: '#3DDC84',
+        loss: '#FF6B6B',
+        // Caution states, e.g. live exchange rates unavailable
+        warning: '#F5C451',
         // Keep the legacy primary scale so nothing references a missing token
         primary: {
           50: '#f0f9ff',
@@ -37,16 +40,16 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['"Space Grotesk"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        sans: ['Geist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       boxShadow: {
-        'glow-sm': '0 0 10px rgba(229, 181, 103, 0.18)',
-        'glow': '0 0 24px rgba(229, 181, 103, 0.22)',
+        'glow-sm': '0 0 10px rgba(198, 244, 50, 0.18)',
+        'glow': '0 0 24px rgba(198, 244, 50, 0.22)',
         'panel': '0 1px 0 0 rgba(255,255,255,0.02) inset, 0 8px 24px -12px rgba(0,0,0,0.6)',
       },
       backgroundImage: {
-        'gradient-accent': 'linear-gradient(135deg, #E5B567 0%, #D4A24A 100%)',
+        'gradient-accent': 'linear-gradient(135deg, #C6F432 0%, #B2DE1F 100%)',
       },
     },
   },

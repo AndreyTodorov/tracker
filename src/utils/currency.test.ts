@@ -409,3 +409,39 @@ describe('calculatePortfolioStats', () => {
     expect(result.totalValue).toBe(1100); // 55000 * 0.02
   });
 });
+describe('portfolio allocation', () => {
+  const prices = new Map([
+    ['bitcoin', new Map([['usd', 60000]])],
+    ['ethereum', new Map([['usd', 3000]])],
+  ]);
+
+  it('gives each asset its share of the total value, largest first', () => {
+    const investments = [
+      mockInvestment({ id: '1', assetName: 'Ethereum', assetSymbol: 'ETH', coinId: 'ethereum', currency: 'USD', buyPrice: 3000, quantity: 10 }),
+      mockInvestment({ id: '2', assetName: 'Bitcoin', assetSymbol: 'BTC', coinId: 'bitcoin', currency: 'USD', buyPrice: 60000, quantity: 1 }),
+    ] as Investment[];
+
+    const { allocation } = calculatePortfolioStats(investments, prices, 'USD');
+
+    // 60,000 of BTC vs 30,000 of ETH
+    expect(allocation).toEqual([
+      { symbol: 'BTC', name: 'Bitcoin', share: expect.closeTo(66.67, 2) },
+      { symbol: 'ETH', name: 'Ethereum', share: expect.closeTo(33.33, 2) },
+    ]);
+  });
+
+  it('merges several purchases of the same asset', () => {
+    const investments = [
+      mockInvestment({ id: '1', assetName: 'Bitcoin', assetSymbol: 'BTC', coinId: 'bitcoin', currency: 'USD', buyPrice: 50000, quantity: 1 }),
+      mockInvestment({ id: '2', assetName: 'Bitcoin', assetSymbol: 'BTC', coinId: 'bitcoin', currency: 'USD', buyPrice: 55000, quantity: 1 }),
+    ] as Investment[];
+
+    const { allocation } = calculatePortfolioStats(investments, prices, 'USD');
+
+    expect(allocation).toEqual([{ symbol: 'BTC', name: 'Bitcoin', share: 100 }]);
+  });
+
+  it('is empty when the portfolio has no value', () => {
+    expect(calculatePortfolioStats([], prices, 'USD').allocation).toEqual([]);
+  });
+});

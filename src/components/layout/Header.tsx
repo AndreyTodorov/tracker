@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { LogOut, TrendingUp, Share2, User } from 'lucide-react';
-import { Button } from '../ui/Button';
+import { LogOut, TrendingUp, Share2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { SUPPORTED_CURRENCIES } from '../../utils/currencies';
@@ -14,6 +13,15 @@ export const Header = () => {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
+  // "Mobile Tester" -> "MT"
+  const initials =
+    (userData?.displayName ?? '')
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((word) => word[0].toUpperCase())
+      .join('') || '?';
+
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -24,68 +32,75 @@ export const Header = () => {
 
   return (
     <>
-      <header className="glass-strong border-b border-line sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-3 sm:py-4">
-          <div className="flex items-center justify-between gap-2">
-            {/* Logo */}
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="grid place-items-center w-10 h-10 flex-shrink-0 rounded-lg bg-accent/10 border border-accent/30">
-                <TrendingUp size={20} className="text-accent" />
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="text-lg font-bold tracking-tight leading-none">Investment Tracker</h1>
-                <p className="text-xs text-muted mt-1">Real-time portfolio monitoring</p>
-              </div>
+      <header className="bg-ink/85 backdrop-blur-lg border-b border-line-soft sticky top-0 z-40">
+        <div className="container mx-auto px-4 lg:px-10">
+          <div className="flex items-center justify-between gap-2 h-16 lg:h-[76px]">
+            {/* Mobile: who's signed in. Desktop: the logo. */}
+            <button
+              type="button"
+              onClick={() => setShowProfileModal(true)}
+              className="lg:hidden flex items-center gap-2.5 min-w-0 rounded-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+              aria-label="Edit your display name"
+            >
+              <span className="grid place-items-center w-10 h-10 flex-shrink-0 rounded-full bg-accent text-ink text-[13px] font-bold">
+                {initials}
+              </span>
+              <span className="min-w-0 flex flex-col">
+                <span className="text-xs text-muted">Portfolio</span>
+                <span className="text-[15px] font-semibold truncate">{userData?.displayName}</span>
+              </span>
+            </button>
+            {/* The heading stays for screen readers on mobile, where the logo is hidden. */}
+            <div className="lg:flex items-center gap-2.5">
+              <span className="hidden lg:grid place-items-center w-7 h-7 rounded-lg bg-accent text-ink">
+                <TrendingUp size={15} strokeWidth={2.6} />
+              </span>
+              <h1 className="sr-only lg:not-sr-only text-[17px] font-bold tracking-[-0.03em]">tracker</h1>
             </div>
 
-            {/* User Menu */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2">
               <select
                 value={displayCurrency}
                 onChange={(event) => setDisplayCurrency(event.target.value)}
                 aria-label="Currency for portfolio totals"
                 title="Portfolio totals are shown in this currency. Investments keep the currency they were bought in."
-                className="px-3 py-2 bg-surface2 border border-line rounded-lg text-sm text-content focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition-colors"
+                className="h-10 px-3 bg-surface border border-line rounded-full text-[13px] font-semibold text-content focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition-colors"
               >
-                {SUPPORTED_CURRENCIES.map(({ code, symbol }) => (
-                  <option key={code} value={code} className="bg-surface2">
-                    {code} ({symbol})
+                {SUPPORTED_CURRENCIES.map(({ code }) => (
+                  <option key={code} value={code} className="bg-surface">
+                    {code}
                   </option>
                 ))}
               </select>
 
-              <Button
-                variant="secondary"
-                size="sm"
+              <button
+                type="button"
                 onClick={() => setShowShareModal(true)}
-                className="flex items-center gap-2"
+                className="h-10 min-w-10 px-2.5 lg:px-4 flex items-center justify-center gap-2 rounded-full bg-surface border border-line text-[13px] font-semibold transition-colors hover:border-faint"
                 aria-label="Share portfolio"
               >
                 <Share2 size={16} />
-                <span className="hidden sm:inline">Share Portfolio</span>
-              </Button>
+                <span className="hidden lg:inline">Share</span>
+              </button>
 
               <button
                 type="button"
                 onClick={() => setShowProfileModal(true)}
-                className="panel-strong rounded-lg px-3 py-2 flex items-center gap-2 transition-colors hover:border-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+                className="hidden lg:grid place-items-center w-10 h-10 rounded-full bg-accent text-ink text-[13px] font-bold transition-colors hover:bg-accent-hover"
                 aria-label="Edit your display name"
+                title={userData?.displayName}
               >
-                <User size={16} className="text-muted" />
-                <span className="text-sm font-medium hidden sm:inline">
-                  {userData?.displayName}
-                </span>
+                {initials}
               </button>
 
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
+                type="button"
                 onClick={handleSignOut}
-                className="text-loss hover:text-loss hover:bg-loss/10"
+                className="grid place-items-center w-10 h-10 rounded-full text-muted transition-colors hover:text-loss hover:bg-loss/10"
                 aria-label="Sign out"
               >
                 <LogOut size={18} />
-              </Button>
+              </button>
             </div>
           </div>
         </div>

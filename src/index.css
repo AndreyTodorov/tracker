@@ -5,17 +5,12 @@
 @layer base {
   body {
     @apply bg-ink text-content min-h-screen antialiased;
-    /* A near-flat ink panel with a single restrained warm glow up top. */
-    background-image:
-      radial-gradient(60rem 40rem at 50% -10%, rgba(229, 181, 103, 0.06), transparent 60%);
-    background-attachment: fixed;
-    font-feature-settings: 'ss01';
   }
 
   /* Financial figures align like a trading screen, not flowing prose. */
   .tnum {
     @apply font-mono tabular-nums;
-    font-feature-settings: 'tnum' 1, 'zero' 1;
+    font-feature-settings: 'tnum' 1;
   }
 
   /* Consistent, visible keyboard focus everywhere. */
