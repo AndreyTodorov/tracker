@@ -67,10 +67,10 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
         </p>
 
         <div className="flex gap-3">
-          <Button variant="secondary" className="flex-1" onClick={onClose} disabled={isSaving}>
+          <Button variant="secondary" className="flex-1 rounded-full" onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
-          <Button className="flex-1" onClick={handleSave} isLoading={isSaving}>
+          <Button className="flex-1 rounded-full" onClick={handleSave} isLoading={isSaving}>
             Save
           </Button>
         </div>

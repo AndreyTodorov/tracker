@@ -64,7 +64,8 @@ export const PortfolioSummary = ({ portfolio, lastUpdate }: PortfolioSummaryProp
       )}
 
       <section className="mb-6 grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:items-end lg:gap-8">
-        <div>
+        {/* A size container, so the headline can scale to its column instead of wrapping. */}
+        <div className="[container-type:inline-size]">
           <div className="flex items-center justify-between gap-3 mb-2 text-[13px] text-muted">
             <span>Portfolio value</span>
             {lastUpdate && (
@@ -81,7 +82,7 @@ export const PortfolioSummary = ({ portfolio, lastUpdate }: PortfolioSummaryProp
             )}
           </div>
           <div
-            className="text-[52px] lg:text-[80px] font-semibold tracking-[-0.05em] leading-[0.95] tabular-nums break-all"
+            className="text-[clamp(32px,15cqi,52px)] lg:text-[clamp(40px,15cqi,80px)] font-semibold tracking-[-0.05em] leading-[0.95] tabular-nums break-all"
             data-testid="portfolio-value"
           >
             {whole}<span className="text-muted">{fraction}</span>

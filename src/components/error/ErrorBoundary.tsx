@@ -76,7 +76,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 <AlertTriangle size={32} className="text-loss" />
               </div>
 
-              <h1 className="text-3xl font-bold tracking-tight mb-2">Something went wrong</h1>
+              <h1 className="text-3xl font-semibold tracking-tight mb-2">Something went wrong</h1>
               <p className="text-muted mb-6">
                 We encountered an unexpected error. Don't worry, your data is safe.
               </p>
@@ -84,9 +84,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               {import.meta.env.DEV && this.state.error && (
                 <details className="w-full mb-6 text-left">
                   <summary className="cursor-pointer text-sm text-muted hover:text-content mb-2">
-                    Error Details (Development Only)
+                    Error details (development only)
                   </summary>
-                  <div className="p-4 rounded-lg bg-surface border border-line">
+                  <div className="p-4 rounded-xl bg-ink border border-line">
                     <p className="text-xs text-loss font-mono mb-2">
                       {this.state.error.toString()}
                     </p>
@@ -100,13 +100,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               )}
 
               <div className="flex gap-3">
-                <Button onClick={this.handleReset} variant="primary">
+                <Button onClick={this.handleReset} variant="primary" className="rounded-full">
                   <RefreshCw size={18} className="mr-2" />
-                  Try Again
+                  Try again
                 </Button>
-                <Button onClick={this.handleGoHome} variant="secondary">
+                <Button onClick={this.handleGoHome} variant="secondary" className="rounded-full">
                   <Home size={18} className="mr-2" />
-                  Go Home
+                  Go home
                 </Button>
               </div>
 

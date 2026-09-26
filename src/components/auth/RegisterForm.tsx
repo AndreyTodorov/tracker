@@ -60,7 +60,7 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
   return (
     <div className="w-full max-w-md">
       <div className="panel-strong rounded-2xl p-8">
-        <h2 className="text-2xl font-bold tracking-tight text-center mb-1">Create account</h2>
+        <h2 className="text-2xl font-semibold tracking-tight text-center mb-1">Create account</h2>
         <p className="text-muted text-center mb-6">Join us and start tracking your investments</p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -125,12 +125,12 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
           />
 
           {error && (
-            <div className="p-3 rounded-lg bg-loss/10 border border-loss/40">
+            <div className="p-3 rounded-xl bg-loss/10 border border-loss/40">
               <p className="text-loss text-sm">{error}</p>
             </div>
           )}
 
-          <Button type="submit" className="w-full" isLoading={isLoading}>
+          <Button type="submit" className="w-full rounded-full" isLoading={isLoading}>
             Create account
           </Button>
         </form>

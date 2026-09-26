@@ -151,7 +151,7 @@ describe('getColorClass', () => {
   });
 
   it('should return gray color for zero', () => {
-    expect(getColorClass(0)).toBe('text-gray-400');
+    expect(getColorClass(0)).toBe('text-muted');
   });
 });
 
@@ -167,7 +167,7 @@ describe('getBgColorClass', () => {
   });
 
   it('should return gray background for zero', () => {
-    expect(getBgColorClass(0)).toBe('bg-gray-400/10');
+    expect(getBgColorClass(0)).toBe('bg-muted/10');
   });
 });
 

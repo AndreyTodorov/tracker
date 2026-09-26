@@ -131,17 +131,17 @@ export const EditInvestmentModal = ({ investment, currentPrice, prices, isOpen, 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent size="md">
         <DialogHeader>
-          <DialogTitle>Edit Investment</DialogTitle>
+          <DialogTitle>Edit investment</DialogTitle>
           <DialogDescription>
             Update your investment details including buy price, quantity, and currency.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Asset Info (Read-only) */}
           <div className="p-3 rounded-xl bg-ink border border-line">
             <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Asset</div>
-            <div className="text-lg font-bold tracking-tight">{investment.assetName}</div>
+            <div className="text-lg font-semibold tracking-tight">{investment.assetName}</div>
             <div className="text-xs text-muted uppercase tracking-widest font-mono">{investment.assetSymbol}</div>
           </div>
 
@@ -196,17 +196,17 @@ export const EditInvestmentModal = ({ investment, currentPrice, prices, isOpen, 
               type="button"
               variant="secondary"
               onClick={onClose}
-              className="flex-1"
+              className="flex-1 rounded-full"
               disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="flex-1"
+              className="flex-1 rounded-full"
               isLoading={isSubmitting}
             >
-              Save Changes
+              Save changes
             </Button>
           </div>
         </form>

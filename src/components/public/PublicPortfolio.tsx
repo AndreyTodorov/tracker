@@ -106,7 +106,7 @@ export const PublicPortfolio = () => {
                   <Share2 size={24} className="text-accent" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tight">Enter share code</h2>
+                  <h2 className="text-2xl font-semibold tracking-tight">Enter share code</h2>
                   <p className="text-muted">View someone's portfolio by entering their share code</p>
                 </div>
               </div>
