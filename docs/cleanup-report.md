@@ -25,7 +25,7 @@ Estimated reclaimable: 2 dependencies, ~90 lines of code and CSS, 0 whole files 
 - `c4e249c` removed the dead code.
 - `475fbe2` removed the unused CSS utilities (plus `.panel`, found unused while applying) and the unused theme tokens.
 
-Not applied: the test-only code (left for later), and every Medium and Low item, which need a decision first.
+Not applied: the test-only code (left for later), the Medium items, and the remaining Low items. The two duplication items were fixed afterwards (see below).
 
 The codebase is small (~93 tracked files, ~8,400 lines) and already fairly clean: no unused imports, no commented-out code, no dead routes.
 
@@ -92,7 +92,7 @@ Ordered by confidence, then impact.
 - **Risks:** removing it breaks live prices for any holding saved before `coinId` existed.
 - **Verify first:** query the database for investments without `coinId`. If there are none, or after backfilling them, the fallback can go.
 
-### [LOW] Duplicate logic: the add and edit forms share about 80 lines
+### [LOW · fixed] Duplicate logic: the add and edit forms share about 80 lines
 - **Where:** `src/components/investments/InvestmentForm.tsx` and `src/components/investments/EditInvestmentModal.tsx`.
 - **What's duplicated:**
   - the `lastEditedField` state and the effect that recalculates the amount from price × quantity (same rounding);
@@ -100,11 +100,13 @@ Ordered by confidence, then impact.
   - the "Current price … Use as Buy Price" box;
   - the buy price / quantity / amount field registrations and validation messages.
 - **Simpler form:** a `useAmountQuantitySync(control, setValue)` hook and a `<CurrentPriceBox>` component used by both. This needs judgment because the edit form's currency conversion interacts with the same fields.
+- **Resolution:** both forms now use `PriceFields`, `CurrentPriceBox` and `CurrencySelect` from `InvestmentFields.tsx`, plus the shared `InvestmentFormValues` type. Tests covering the amount/quantity maths were added first and pass before and after. Along the way this turned up and fixed an existing bug: the add form didn't clear its price, quantity, amount or name after a successful add.
 
-### [LOW] Duplicate currency list in the add form
+### [LOW · fixed] Duplicate currency list in the add form
 - **Where:** `InvestmentForm.tsx:257–265` hard-codes seven `<option>`s, while `utils/currencies.ts` already exports `SUPPORTED_CURRENCIES`, which the header and edit dialog use.
 - **Risk of leaving it:** adding a currency means remembering this third place.
 - **Simpler form:** `{SUPPORTED_CURRENCIES.map(({ code, symbol }) => <option …>{code} ({symbol})</option>)}`, as the edit dialog does.
+- **Resolution:** both forms render the shared `CurrencySelect`, which lists `SUPPORTED_CURRENCIES`.
 
 ### [LOW] Exports that don't need to be exported
 - `DialogPortal`, `DialogOverlay` (`Modal.tsx`), `UPDATE_INTERVAL` (`useCryptoPrices.ts`), `ensureUserRecord` (`auth.service.ts`) and `MockAuthProvider` (`test-utils.tsx`) are only used inside their own files (knip, confirmed by search).

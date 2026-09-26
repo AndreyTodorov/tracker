@@ -6,21 +6,13 @@ import { Card } from '../ui/Card';
 import { Combobox, type ComboboxOption } from '../ui/Combobox';
 import { searchCrypto, getCryptoDetails } from '../../services/coingecko.service';
 import { addInvestment } from '../../services/investment.service';
-import { formatCryptoPrice, toDateInputValue, fromDateInputValue } from '../../utils/formatters';
+import { toDateInputValue, fromDateInputValue } from '../../utils/formatters';
+import { CurrencySelect, CurrentPriceBox, PriceFields } from './InvestmentFields';
+import { EMPTY_PRICE_FIELDS, type InvestmentFormValues } from './investmentFormValues';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useToast } from '../../context/ToastContext';
 import type { SelectedCryptoAsset, CoinGeckoSearchResult } from '../../types';
-
-interface InvestmentFormData {
-  name?: string;
-  buyPrice: number;
-  investmentAmount: number;
-  quantity: number;
-  currency: string;
-  /** 'yyyy-MM-dd', as used by the date input. */
-  purchaseDate: string;
-}
 
 interface InvestmentFormProps {
   /** Called after an investment has been saved. */
@@ -43,17 +35,15 @@ export const InvestmentForm = ({ onAdded, embedded = false }: InvestmentFormProp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [assetError, setAssetError] = useState('');
-  const [lastEditedField, setLastEditedField] = useState<'amount' | 'quantity' | null>(null);
 
-  const { register, handleSubmit, control, reset, setValue, formState: { errors } } = useForm<InvestmentFormData>({
+  const form = useForm<InvestmentFormValues>({
     defaultValues: {
       currency: displayCurrency,
       purchaseDate: today,
     },
   });
 
-  const buyPrice = useWatch({ control, name: 'buyPrice' });
-  const quantity = useWatch({ control, name: 'quantity' });
+  const { register, handleSubmit, control, reset, setValue, formState: { errors } } = form;
   const currency = useWatch({ control, name: 'currency' });
 
   // Search for cryptocurrencies
@@ -105,17 +95,6 @@ export const InvestmentForm = ({ onAdded, embedded = false }: InvestmentFormProp
     }
   }, [currency, displayCurrency, selectedAsset, selectedValue, toast]);
 
-  // Update investment amount when quantity or buy price changes
-  // But only if the user is NOT currently editing the amount field
-  useEffect(() => {
-    if (buyPrice && quantity && lastEditedField !== 'amount') {
-      const calculatedAmount = buyPrice * quantity;
-      // Round to avoid floating point precision issues
-      const roundedAmount = Math.round(calculatedAmount * 100) / 100;
-      setValue('investmentAmount', roundedAmount);
-    }
-  }, [quantity, buyPrice, setValue, lastEditedField]);
-
   const handleSelectAsset = async (value: string) => {
     setSelectedValue(value);
     setAssetError('');
@@ -146,7 +125,7 @@ export const InvestmentForm = ({ onAdded, embedded = false }: InvestmentFormProp
     }
   };
 
-  const onSubmit = async (data: InvestmentFormData) => {
+  const onSubmit = async (data: InvestmentFormValues) => {
     if (!currentUser || !userData || !selectedAsset) {
       setAssetError('Please select a cryptocurrency');
       toast.error('Please select a cryptocurrency before adding an investment');
@@ -172,8 +151,10 @@ export const InvestmentForm = ({ onAdded, embedded = false }: InvestmentFormProp
 
       // Reset form
       reset({
+        name: '',
         currency: displayCurrency,
         purchaseDate: today,
+        ...EMPTY_PRICE_FIELDS,
       });
       setSelectedAsset(null);
       setSelectedValue('');
@@ -192,7 +173,7 @@ export const InvestmentForm = ({ onAdded, embedded = false }: InvestmentFormProp
     }
   };
 
-  const form = (
+  const fields = (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {/* Cryptocurrency Search with Combobox */}
       <Combobox
@@ -210,23 +191,11 @@ export const InvestmentForm = ({ onAdded, embedded = false }: InvestmentFormProp
 
       {/* Current Price Display */}
       {currentPrice !== null && selectedAsset && (
-        <div className="p-3 rounded-xl bg-ink border border-line">
-          <div className="flex items-center justify-between mb-1">
-            <div className="text-[11px] text-muted uppercase tracking-wider">Current Price ({currency || displayCurrency})</div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="text-accent hover:bg-accent/10 -mr-1"
-              onClick={() => setValue('buyPrice', currentPrice)}
-            >
-              Use as Buy Price
-            </Button>
-          </div>
-          <div className="tnum text-xl font-semibold text-content">
-            {formatCryptoPrice(currentPrice, currency || displayCurrency)}
-          </div>
-        </div>
+        <CurrentPriceBox
+          price={currentPrice}
+          currency={currency || displayCurrency}
+          onUse={() => setValue('buyPrice', currentPrice)}
+        />
       )}
 
       {/* Investment Name (Optional) */}
@@ -246,86 +215,10 @@ export const InvestmentForm = ({ onAdded, embedded = false }: InvestmentFormProp
       />
 
       {/* Currency Selection */}
-      <div>
-        <label htmlFor="currency" className="block text-sm font-medium text-content mb-1.5">
-          Currency
-        </label>
-        <select
-          id="currency"
-          {...register('currency', { required: 'Currency is required' })}
-          className="w-full h-11 px-4 bg-ink border border-line rounded-xl text-content focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition-colors"
-        >
-          <option value="EUR" className="bg-surface">EUR (€)</option>
-          <option value="USD" className="bg-surface">USD ($)</option>
-          <option value="GBP" className="bg-surface">GBP (£)</option>
-          <option value="JPY" className="bg-surface">JPY (¥)</option>
-          <option value="CHF" className="bg-surface">CHF (Fr)</option>
-          <option value="CAD" className="bg-surface">CAD (C$)</option>
-          <option value="AUD" className="bg-surface">AUD (A$)</option>
-        </select>
-      </div>
+      <CurrencySelect id="currency" registration={register('currency', { required: 'Currency is required' })} />
 
-      {/* Buy Price */}
-      <Input
-        label={`Buy Price (${currency || displayCurrency})`}
-        type="number"
-        step="any"
-        inputMode="decimal"
-        placeholder="0.00"
-        {...register('buyPrice', {
-          required: 'Buy price is required',
-          valueAsNumber: true,
-          min: { value: 0.000001, message: 'Price must be greater than 0' },
-          // Editing the price re-derives the amount from price × quantity.
-          onChange: () => setLastEditedField(null),
-        })}
-        error={errors.buyPrice?.message}
-      />
-
-      {/* Quantity and Investment Amount Side by Side */}
-      <div className="grid grid-cols-2 gap-4">
-        <Input
-          label="Quantity"
-          type="number"
-          step="any"
-          inputMode="decimal"
-          placeholder="0.00"
-          {...register('quantity', {
-            required: 'Quantity is required',
-            valueAsNumber: true,
-            min: { value: 0.00000001, message: 'Quantity must be greater than 0' },
-            onChange: () => {
-              setLastEditedField('quantity');
-              // Let the useEffect handle the amount calculation
-            },
-          })}
-          error={errors.quantity?.message}
-        />
-
-        <Input
-          label={`Amount (${currency || displayCurrency})`}
-          type="number"
-          step="any"
-          inputMode="decimal"
-          placeholder="0.00"
-          {...register('investmentAmount', {
-            required: 'Investment amount is required',
-            valueAsNumber: true,
-            min: { value: 0.01, message: 'Amount must be greater than 0' },
-            onChange: (e) => {
-              setLastEditedField('amount');
-              const amount = parseFloat(e.target.value);
-              if (!isNaN(amount) && buyPrice && amount > 0) {
-                const calculatedQuantity = amount / buyPrice;
-                // Round to 8 decimal places for crypto precision
-                const roundedQuantity = Math.round(calculatedQuantity * 100000000) / 100000000;
-                setValue('quantity', roundedQuantity);
-              }
-            },
-          })}
-          error={errors.investmentAmount?.message}
-        />
-      </div>
+      {/* Buy Price, Quantity and Amount */}
+      <PriceFields form={form} currency={currency || displayCurrency} />
 
       {/* Submit Button */}
       <Button
@@ -340,13 +233,13 @@ export const InvestmentForm = ({ onAdded, embedded = false }: InvestmentFormProp
   );
 
   if (embedded) {
-    return form;
+    return fields;
   }
 
   return (
     <Card className="p-6 rounded-[22px]">
       <h2 className="text-lg font-semibold tracking-tight mb-5">Add investment</h2>
-      {form}
+      {fields}
     </Card>
   );
 };

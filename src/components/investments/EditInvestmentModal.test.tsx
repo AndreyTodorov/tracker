@@ -84,6 +84,43 @@ describe('EditInvestmentModal', () => {
     });
   });
 
+  describe('keeping amount and quantity in step', () => {
+    // eurHolding: buy price 50,000, quantity 2, amount 100,000
+
+    it('recalculates the amount when the quantity changes', async () => {
+      const user = userEvent.setup();
+      renderModal(eurHolding());
+
+      await user.clear(screen.getByLabelText('Quantity'));
+      await user.type(screen.getByLabelText('Quantity'), '3');
+
+      expect(screen.getByLabelText(/Amount/)).toHaveValue(150000);
+    });
+
+    it('recalculates the quantity when the amount changes', async () => {
+      const user = userEvent.setup();
+      renderModal(eurHolding());
+
+      await user.clear(screen.getByLabelText(/Amount/));
+      await user.type(screen.getByLabelText(/Amount/), '25000');
+
+      expect(screen.getByLabelText('Quantity')).toHaveValue(0.5);
+    });
+
+    it('recalculates the amount from price x quantity when the price changes', async () => {
+      const user = userEvent.setup();
+      renderModal(eurHolding());
+
+      await user.clear(screen.getByLabelText(/Amount/));
+      await user.type(screen.getByLabelText(/Amount/), '25000');
+      await user.clear(screen.getByLabelText(/Buy Price/));
+      await user.type(screen.getByLabelText(/Buy Price/), '40000');
+
+      // quantity is now 0.5, so 40,000 x 0.5
+      expect(screen.getByLabelText(/Amount/)).toHaveValue(20000);
+    });
+  });
+
   describe('changing the currency', () => {
     it('converts the buy price instead of silently relabelling it', async () => {
       const user = userEvent.setup();
