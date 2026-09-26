@@ -166,8 +166,9 @@ export const calculatePortfolioStats = (
   return {
     totalValue: Number(totalValue.toFixed(2)),
     totalInvested: Number(totalInvested.toFixed(2)),
-    totalProfit: Number(totalProfit.toFixed(2)),
-    totalProfitPercentage: Number(totalProfitPercentage.toFixed(2)),
+    // A break-even total can land a hair below zero and round to -0.
+    totalProfit: Number(totalProfit.toFixed(2)) || 0,
+    totalProfitPercentage: Number(totalProfitPercentage.toFixed(2)) || 0,
     totalsCurrency: conversionFailed ? largestHoldingCurrency(rows, display) : display,
     conversionFailed,
     allocation,

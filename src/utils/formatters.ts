@@ -69,11 +69,11 @@ export const fromDateInputValue = (value: string): number => parseISO(value).get
 export const getColorClass = (value: number): string => {
   if (value > 0) return 'text-profit';
   if (value < 0) return 'text-loss';
-  return 'text-gray-400';
+  return 'text-muted';
 };
 
 export const getBgColorClass = (value: number): string => {
   if (value > 0) return 'bg-profit/10';
   if (value < 0) return 'bg-loss/10';
-  return 'bg-gray-400/10';
+  return 'bg-muted/10';
 };

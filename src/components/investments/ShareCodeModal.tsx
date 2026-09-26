@@ -137,27 +137,27 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Share Portfolio" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Share portfolio" size="md">
       <div className="space-y-6">
         {/* Your Share Code */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Share2 size={20} className="text-accent" />
-            <h3 className="text-lg font-semibold">Your share code</h3>
+            <h3 className="text-base font-semibold">Your share code</h3>
           </div>
           <p className="text-sm text-muted mb-3">
             Share this code with friends so they can view your investments
           </p>
           <div className="flex gap-2">
-            <div className="flex-1 panel-strong rounded-lg p-4">
-              <div className="tnum text-3xl font-bold text-center tracking-[0.3em] text-accent">
+            <div className="flex-1 panel-strong rounded-xl p-4">
+              <div className="tnum text-3xl font-semibold text-center tracking-[0.3em] text-accent">
                 {userData?.shareCode || 'Loading...'}
               </div>
             </div>
             <Button
               variant="secondary"
               onClick={handleCopy}
-              className="px-4"
+              className="px-4 rounded-xl"
               aria-label="Copy share code"
             >
               {copied ? <Check size={20} /> : <Copy size={20} />}
@@ -165,7 +165,7 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
           </div>
 
           {/* Public Link */}
-          <div className="mt-4 p-3 rounded-lg bg-accent/10 border border-accent/25">
+          <div className="mt-4 p-3 rounded-xl bg-accent/10 border border-accent/25">
             <div className="flex items-center gap-2 mb-2">
               <Link size={16} className="text-accent" />
               <p className="text-sm font-medium text-accent">Shareable link</p>
@@ -174,14 +174,14 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
               Send this link to anyone with an account so they can view your portfolio
             </p>
             <div className="flex gap-2">
-              <div className="flex-1 panel-strong rounded-lg px-3 py-2 overflow-hidden">
+              <div className="flex-1 panel-strong rounded-xl px-3 py-2 overflow-hidden">
                 <p className="text-xs text-content/80 truncate">{publicLink}</p>
               </div>
               <Button
                 variant="secondary"
                 size="sm"
                 onClick={handleCopyLink}
-                className="px-3"
+                className="px-3 rounded-xl"
                 aria-label="Copy public link"
               >
                 {linkCopied ? <Check size={16} /> : <Copy size={16} />}
@@ -197,7 +197,7 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Globe size={20} className="text-accent" />
-            <h3 className="text-lg font-semibold">Public listing</h3>
+            <h3 className="text-base font-semibold">Public listing</h3>
           </div>
           <label className="flex items-start gap-3 cursor-pointer">
             <input
@@ -224,7 +224,7 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Plus size={20} className="text-accent" />
-            <h3 className="text-lg font-semibold">Join a portfolio</h3>
+            <h3 className="text-base font-semibold">Join a portfolio</h3>
           </div>
           <p className="text-sm text-muted mb-3">
             Enter a friend's share code to view their investments
@@ -238,18 +238,18 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
               className="tnum tracking-[0.2em]"
             />
             {joinError && (
-              <div className="p-3 rounded-lg bg-loss/10 border border-loss/40">
+              <div className="p-3 rounded-xl bg-loss/10 border border-loss/40">
                 <p className="text-loss text-sm">{joinError}</p>
               </div>
             )}
             {joinSuccess && (
-              <div className="p-3 rounded-lg bg-profit/10 border border-profit/40">
+              <div className="p-3 rounded-xl bg-profit/10 border border-profit/40">
                 <p className="text-profit text-sm">{joinSuccess}</p>
               </div>
             )}
             <Button
               onClick={handleJoinPortfolio}
-              className="w-full"
+              className="w-full rounded-full"
               isLoading={isJoining}
               disabled={joinCode.trim().length !== 8}
             >
@@ -263,10 +263,10 @@ export const ShareCodeModal = ({ isOpen, onClose }: ShareCodeModalProps) => {
           <>
             <div className="border-t border-line" />
             <div>
-              <h3 className="text-lg font-semibold mb-3">Joined portfolios</h3>
+              <h3 className="text-base font-semibold mb-3">Joined portfolios</h3>
               <div className="space-y-2">
                 {Object.entries(userData.sharedPortfolios).map(([ownerUid, code]) => (
-                  <div key={ownerUid} className="panel-strong rounded-lg p-3 flex items-center justify-between">
+                  <div key={ownerUid} className="panel-strong rounded-xl p-3 flex items-center justify-between">
                     <span className="font-mono tracking-wider">{code}</span>
                     <div className="flex items-center gap-1">
                       <Check size={16} className="text-profit" />

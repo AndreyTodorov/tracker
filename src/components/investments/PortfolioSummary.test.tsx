@@ -22,7 +22,8 @@ describe('PortfolioSummary Component', () => {
       <PortfolioSummary portfolio={mockPortfolio({ totalProfit: 2000, totalProfitPercentage: 25.5 })} />
     );
 
-    expect(screen.getByText('+$2,000.00 (+25.50%)')).toBeInTheDocument();
+    expect(screen.getByText('+$2,000.00')).toBeInTheDocument();
+    expect(screen.getByText('+25.50%')).toBeInTheDocument();
   });
 
   it('should render a loss with its percentage', () => {
@@ -30,7 +31,27 @@ describe('PortfolioSummary Component', () => {
       <PortfolioSummary portfolio={mockPortfolio({ totalProfit: -500, totalProfitPercentage: -10.5 })} />
     );
 
-    expect(screen.getByText('-$500.00 (-10.50%)')).toBeInTheDocument();
+    expect(screen.getByText('-$500.00')).toBeInTheDocument();
+    expect(screen.getByText('-10.50%')).toBeInTheDocument();
+  });
+
+  describe('return panel', () => {
+    const panel = () => screen.getByTestId('portfolio-value').parentElement!;
+
+    it('is tinted green when the portfolio is up', () => {
+      render(<PortfolioSummary portfolio={mockPortfolio({ totalProfit: 2000, totalProfitPercentage: 25 })} />);
+      expect(panel()).toHaveClass('bg-profit/[0.06]', 'border-profit/20');
+    });
+
+    it('is tinted red when the portfolio is down', () => {
+      render(<PortfolioSummary portfolio={mockPortfolio({ totalProfit: -500, totalProfitPercentage: -10 })} />);
+      expect(panel()).toHaveClass('bg-loss/[0.06]', 'border-loss/20');
+    });
+
+    it('stays neutral at break-even', () => {
+      render(<PortfolioSummary portfolio={mockPortfolio({ totalProfit: 0, totalProfitPercentage: 0 })} />);
+      expect(panel()).toHaveClass('bg-surface', 'border-line');
+    });
   });
 
   it('should count unique assets correctly', () => {

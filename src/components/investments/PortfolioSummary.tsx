@@ -1,5 +1,5 @@
 import { AlertTriangle } from 'lucide-react';
-import { formatCurrency, formatPercentage, formatDateTime, formatTime, getColorClass } from '../../utils/formatters';
+import { formatCurrency, formatPercentage, formatDateTime, formatTime, getColorClass, getBgColorClass } from '../../utils/formatters';
 import type { AllocationSlice, Portfolio } from '../../types';
 
 interface PortfolioSummaryProps {
@@ -11,6 +11,13 @@ interface PortfolioSummaryProps {
 // Largest slices first: the accent marks the biggest holding, then the ramp fades.
 const SLICE_COLORS = ['bg-accent', 'bg-content', 'bg-muted', 'bg-faint'];
 const OTHER_COLOR = 'bg-line';
+
+// Keyed by the sign of the total return.
+const PANEL_TONE: Record<number, string> = {
+  1: 'bg-profit/[0.06] border-profit/20',
+  [-1]: 'bg-loss/[0.06] border-loss/20',
+  0: 'bg-surface border-line',
+};
 
 // Keeps the bar readable: anything past the named slices is grouped as "Other".
 const groupSlices = (allocation: AllocationSlice[]): AllocationSlice[] => {
@@ -64,7 +71,9 @@ export const PortfolioSummary = ({ portfolio, lastUpdate }: PortfolioSummaryProp
       )}
 
       <section className="mb-6 grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:items-end lg:gap-8">
-        <div>
+        {/* A size container, so the headline can scale to its column instead of wrapping.
+            The panel takes the return's colour, so the state reads at a glance. */}
+        <div className={`[container-type:inline-size] p-5 lg:p-6 rounded-[22px] border ${PANEL_TONE[Math.sign(portfolio.totalProfit)]}`}>
           <div className="flex items-center justify-between gap-3 mb-2 text-[13px] text-muted">
             <span>Portfolio value</span>
             {lastUpdate && (
@@ -81,18 +90,24 @@ export const PortfolioSummary = ({ portfolio, lastUpdate }: PortfolioSummaryProp
             )}
           </div>
           <div
-            className="text-[52px] lg:text-[80px] font-semibold tracking-[-0.05em] leading-[0.95] tabular-nums break-all"
+            className="text-[clamp(32px,15cqi,52px)] lg:text-[clamp(40px,15cqi,80px)] font-semibold tracking-[-0.05em] leading-[0.95] tabular-nums break-all"
             data-testid="portfolio-value"
           >
             {whole}<span className="text-muted">{fraction}</span>
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[13px] lg:text-sm">
-            <span className={`font-semibold ${getColorClass(portfolio.totalProfit)}`}>
-              {profitSign}{formatCurrency(portfolio.totalProfit, displayCurrency)} ({formatPercentage(portfolio.totalProfitPercentage)})
+          <div className={`mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-2 ${getColorClass(portfolio.totalProfit)}`}>
+            <span className="text-[22px] lg:text-[26px] font-semibold tracking-[-0.03em] tabular-nums leading-none">
+              {portfolio.totalProfit !== 0 && (
+                <span aria-hidden="true" className="text-[0.75em] mr-1">{portfolio.totalProfit > 0 ? '▲' : '▼'} </span>
+              )}
+              {profitSign}{formatCurrency(portfolio.totalProfit, displayCurrency)}
             </span>
-            <span className="text-muted">
-              on {formatCurrency(portfolio.totalInvested, displayCurrency)} · {uniqueAssets} {uniqueAssets === 1 ? 'asset' : 'assets'}
+            <span className={`px-2.5 py-1 rounded-full font-mono text-[13px] lg:text-sm font-semibold ${getBgColorClass(portfolio.totalProfit)}`}>
+              {formatPercentage(portfolio.totalProfitPercentage)}
             </span>
+          </div>
+          <div className="mt-2.5 font-mono text-[13px] text-muted">
+            on {formatCurrency(portfolio.totalInvested, displayCurrency)} invested · {uniqueAssets} {uniqueAssets === 1 ? 'asset' : 'assets'}
           </div>
         </div>
 

@@ -106,14 +106,14 @@ export const PublicPortfolio = () => {
                   <Share2 size={24} className="text-accent" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tight">Enter share code</h2>
+                  <h2 className="text-2xl font-semibold tracking-tight">Enter share code</h2>
                   <p className="text-muted">View someone's portfolio by entering their share code</p>
                 </div>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <Input
-                  label="Share Code"
+                  label="Share code"
                   placeholder="Enter 8-character code"
                   value={inputCode}
                   onChange={(e) => setInputCode(e.target.value.toUpperCase())}
@@ -126,7 +126,7 @@ export const PublicPortfolio = () => {
                   isLoading={loading}
                   disabled={inputCode.trim().length !== 8}
                 >
-                  View Portfolio
+                  View portfolio
                 </Button>
               </form>
 

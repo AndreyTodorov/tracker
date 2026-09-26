@@ -15,9 +15,11 @@ export const calculateProfit = (
   const absolute = currentValue - investedAmount;
   const percentage = investedAmount > 0 ? (absolute / investedAmount) * 100 : 0;
 
+  // `|| 0` turns a loss that rounds to nothing (-0) into 0, which would
+  // otherwise render as "-$0.00" next to "+0.00%".
   return {
-    absolute: Number(absolute.toFixed(2)),
-    percentage: Number(percentage.toFixed(2)),
+    absolute: Number(absolute.toFixed(2)) || 0,
+    percentage: Number(percentage.toFixed(2)) || 0,
   };
 };
 

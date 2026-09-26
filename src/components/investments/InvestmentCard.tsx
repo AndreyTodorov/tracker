@@ -10,6 +10,13 @@ import { EditInvestmentModal } from './EditInvestmentModal';
 import { useToast } from '../../context/ToastContext';
 import type { DisplayValues } from '../../utils/currency';
 
+// Keyed by the sign of the return, so the band's edge matches its tint.
+const BAND_BORDER: Record<number, string> = {
+  1: 'border-profit/20',
+  [-1]: 'border-loss/20',
+  0: 'border-line',
+};
+
 interface InvestmentCardProps {
   investment: Investment;
   /** Figures already expressed in the portfolio's display currency. */
@@ -76,25 +83,11 @@ export const InvestmentCard = ({ investment, display, nativeCurrentPrice, prices
       <button
         type="button"
         onClick={() => setIsDetailsOpen(true)}
-        className="w-full flex flex-col gap-5 lg:gap-7 p-4 lg:p-5 rounded-[20px] bg-surface border border-line text-left transition-colors hover:border-faint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        className="w-full flex flex-col gap-5 lg:gap-7 pt-4 px-4 lg:pt-5 lg:px-5 rounded-[20px] bg-surface border border-line text-left overflow-hidden transition-colors hover:border-faint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
       >
-        {/* Narrow tiles stack the badge under the name; wide ones sit it beside. */}
-        <span className="w-full flex flex-col items-start gap-1.5 lg:flex-row lg:justify-between lg:gap-2">
-          <span className="min-w-0 max-w-full flex flex-col gap-0.5">
-            <span className="text-[15px] lg:text-base font-semibold break-words">{investment.assetName}</span>
-            <span className="font-mono text-xs text-muted truncate">{subtitle}</span>
-          </span>
-          {priceMissing ? (
-            <span className="flex-shrink-0 px-2 py-0.5 rounded-full font-mono text-[11px] lg:text-xs font-semibold bg-warning/10 text-warning">
-              No live price
-            </span>
-          ) : (
-            <span
-              className={`flex-shrink-0 px-2 py-0.5 rounded-full font-mono text-[11px] lg:text-xs font-semibold ${getBgColorClass(profit.percentage)} ${getColorClass(profit.percentage)}`}
-            >
-              {formatPercentage(profit.percentage)}
-            </span>
-          )}
+        <span className="min-w-0 max-w-full flex flex-col gap-0.5">
+          <span className="text-[15px] lg:text-base font-semibold break-words">{investment.assetName}</span>
+          <span className="font-mono text-xs text-muted truncate">{subtitle}</span>
         </span>
         <span className="flex flex-col gap-1 min-w-0">
           <span className="text-xl lg:text-[28px] font-semibold tracking-[-0.03em] tabular-nums truncate">
@@ -108,6 +101,22 @@ export const InvestmentCard = ({ investment, display, nativeCurrentPrice, prices
             {quantity} @ {formatCryptoPrice(display.buyPrice, display.currency)} → {formatCryptoPrice(display.currentPrice, display.currency)}
           </span>
         </span>
+        {/* The return runs along the foot of the tile, so a grid of tiles reads as one row of colour. */}
+        {priceMissing ? (
+          <span className="-mx-4 lg:-mx-5 -mt-2 px-4 lg:px-5 py-2.5 lg:py-3 bg-warning/10 border-t border-warning/20 font-mono text-[13px] lg:text-base font-semibold text-warning">
+            No live price
+          </span>
+        ) : (
+          <span
+            className={`-mx-4 lg:-mx-5 -mt-2 px-4 lg:px-5 py-2.5 lg:py-3 flex flex-wrap justify-between gap-x-2 border-t font-mono text-[13px] lg:text-base font-semibold tabular-nums ${getBgColorClass(profit.absolute)} ${BAND_BORDER[Math.sign(profit.absolute)]} ${getColorClass(profit.absolute)}`}
+          >
+            <span>
+              {profit.absolute !== 0 && <span aria-hidden="true" className="text-[0.8em]">{profit.absolute > 0 ? '▲' : '▼'} </span>}
+              {profit.absolute > 0 ? '+' : ''}{formatCurrency(profit.absolute, display.currency)}
+            </span>
+            <span>{formatPercentage(profit.percentage)}</span>
+          </span>
+        )}
       </button>
 
       <Modal
@@ -127,26 +136,26 @@ export const InvestmentCard = ({ investment, display, nativeCurrentPrice, prices
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-4">
           <div>
-            <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Buy Price</div>
+            <div className="text-[13px] text-muted mb-1">Buy Price</div>
             <div className="tnum text-sm text-content">{formatCryptoPrice(display.buyPrice, display.currency)}</div>
           </div>
           <div>
-            <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Current Price</div>
+            <div className="text-[13px] text-muted mb-1">Current Price</div>
             <div className="tnum text-sm text-content">{formatCryptoPrice(display.currentPrice, display.currency)}</div>
           </div>
           <div>
-            <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Quantity</div>
+            <div className="text-[13px] text-muted mb-1">Quantity</div>
             <div className="tnum text-sm text-content">{quantity}</div>
           </div>
           <div>
-            <div className="text-[11px] text-muted uppercase tracking-wider mb-1">Invested</div>
+            <div className="text-[13px] text-muted mb-1">Invested</div>
             <div className="tnum text-sm text-content">{formatCurrency(display.invested, display.currency)}</div>
           </div>
         </div>
 
         <div className="flex items-center justify-between mb-4 pt-3 border-t border-line">
-          <span className="text-[11px] text-muted uppercase tracking-wider">Current Value</span>
-          <span className="tnum text-base font-semibold text-content">
+          <span className="text-[13px] text-muted">Current Value</span>
+          <span className="text-base font-semibold tracking-[-0.02em] tabular-nums text-content">
             {formatCurrency(display.currentValue, display.currency)}
           </span>
         </div>
@@ -160,8 +169,8 @@ export const InvestmentCard = ({ investment, display, nativeCurrentPrice, prices
                 <TrendingDown size={20} className="text-loss" />
               )}
               <div>
-                <div className="text-[11px] text-muted uppercase tracking-wider">Profit/Loss</div>
-                <div className={`tnum text-2xl font-semibold ${getColorClass(profit.absolute)}`}>
+                <div className="text-[13px] text-muted">Profit/Loss</div>
+                <div className={`text-2xl font-semibold tracking-[-0.03em] tabular-nums ${getColorClass(profit.absolute)}`}>
                   {formatCurrency(profit.absolute, display.currency)}
                 </div>
               </div>

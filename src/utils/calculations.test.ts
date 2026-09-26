@@ -6,6 +6,12 @@ import {
 } from './calculations';
 
 describe('calculateProfit', () => {
+  it('reports a loss that rounds to nothing as a plain zero, not -0', () => {
+    const result = calculateProfit(250, 249.999, 4); // -0.004, i.e. -0.0004%
+    expect(Object.is(result.absolute, 0)).toBe(true);
+    expect(Object.is(result.percentage, 0)).toBe(true);
+  });
+
   it('should calculate profit for profitable investment', () => {
     const result = calculateProfit(100, 150, 2);
     expect(result.absolute).toBe(100); // (150 - 100) * 2 = 100

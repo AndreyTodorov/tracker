@@ -57,7 +57,7 @@ const DialogContent = forwardRef<
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-lg p-1 text-muted transition-colors hover:text-content hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none">
+        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-lg p-1 text-muted transition-colors hover:text-content hover:bg-surface2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none">
           <X className="h-5 w-5" />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>
@@ -73,7 +73,7 @@ const DialogHeader = ({
 }: HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      'flex flex-col space-y-1.5 text-center sm:text-left mb-4',
+      'flex flex-col space-y-1.5 text-left mb-4',
       className
     )}
     {...props}
@@ -88,7 +88,7 @@ const DialogTitle = forwardRef<
   <DialogPrimitive.Title
     ref={ref}
     className={cn(
-      'text-2xl font-bold leading-none tracking-tight text-content',
+      'text-lg font-semibold leading-none tracking-tight text-content',
       className
     )}
     {...props}
