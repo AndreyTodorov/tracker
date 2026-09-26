@@ -50,5 +50,3 @@ if (import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true') {
   connectDatabaseEmulator(db, '127.0.0.1', 9000);
   console.info('[firebase] Connected to local emulators (Auth :9099, Database :9000)');
 }
-
-export default app;
