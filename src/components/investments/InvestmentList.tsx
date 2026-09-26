@@ -9,9 +9,11 @@ interface InvestmentListProps {
   investments: Investment[];
   prices: Map<string, Map<string, number>>;
   loading: boolean;
+  /** Show each holding as a compact, expandable row instead of a full card. */
+  compact?: boolean;
 }
 
-export const InvestmentList = ({ investments, prices, loading }: InvestmentListProps) => {
+export const InvestmentList = ({ investments, prices, loading, compact = false }: InvestmentListProps) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -28,14 +30,14 @@ export const InvestmentList = ({ investments, prices, loading }: InvestmentListP
         </div>
         <h3 className="text-xl font-bold tracking-tight mb-2">No investments yet</h3>
         <p className="text-muted max-w-md">
-          Start tracking your crypto investments by adding your first one using the form on the left.
+          Start tracking your crypto investments by adding your first one using the Add Investment form.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className={compact ? 'space-y-2' : 'grid grid-cols-1 lg:grid-cols-2 gap-4'}>
       {investments.map((investment) => {
         const symbolPrices = prices.get(getPriceKey(investment));
 
@@ -48,6 +50,7 @@ export const InvestmentList = ({ investments, prices, loading }: InvestmentListP
             display={toDisplayValues(investment, prices, investment.currency)}
             nativeCurrentPrice={symbolPrices?.get(investment.currency.toLowerCase())}
             prices={prices}
+            collapsible={compact}
           />
         );
       })}

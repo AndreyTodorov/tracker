@@ -25,21 +25,21 @@ export const Header = () => {
   return (
     <>
       <header className="glass-strong border-b border-line sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+        <div className="container mx-auto px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
             {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="grid place-items-center w-10 h-10 rounded-lg bg-accent/10 border border-accent/30">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="grid place-items-center w-10 h-10 flex-shrink-0 rounded-lg bg-accent/10 border border-accent/30">
                 <TrendingUp size={20} className="text-accent" />
               </div>
-              <div>
+              <div className="hidden sm:block">
                 <h1 className="text-lg font-bold tracking-tight leading-none">Investment Tracker</h1>
                 <p className="text-xs text-muted mt-1">Real-time portfolio monitoring</p>
               </div>
             </div>
 
             {/* User Menu */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <select
                 value={displayCurrency}
                 onChange={(event) => setDisplayCurrency(event.target.value)}

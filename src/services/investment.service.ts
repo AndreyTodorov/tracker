@@ -41,6 +41,15 @@ const validateInvestmentInput = (
   }
 };
 
+const validatePurchaseDate = (purchaseDate: number): void => {
+  if (!Number.isFinite(purchaseDate)) {
+    throw new Error('Purchase date is invalid');
+  }
+  if (purchaseDate > Date.now()) {
+    throw new Error('Purchase date cannot be in the future');
+  }
+};
+
 // Read all investments stored under a single user's node.
 const snapshotToInvestments = (snapshot: DataSnapshot): Investment[] => {
   const investments: Investment[] = [];
@@ -68,13 +77,15 @@ export const addInvestment = async (
   investmentAmount: number,
   quantity: number,
   currency: string,
-  name?: string
+  name?: string,
+  purchaseDate: number = Date.now()
 ): Promise<string> => {
   // Validate inputs
   if (!userId || !userName || !assetName || !assetSymbol || !coinId) {
     throw new Error('Missing required fields');
   }
   validateInvestmentInput(buyPrice, investmentAmount, quantity, currency);
+  validatePurchaseDate(purchaseDate);
 
   const investmentData = {
     userId,
@@ -86,7 +97,7 @@ export const addInvestment = async (
     investmentAmount,
     quantity,
     currency: currency.toUpperCase(),
-    purchaseDate: Date.now(),
+    purchaseDate,
     createdAt: Date.now(),
     ...(name && { name }), // Only include name if provided
   };
@@ -121,6 +132,9 @@ export const updateInvestment = async (
   }
   if (updates.quantity !== undefined && updates.quantity <= 0) {
     throw new Error('Quantity must be greater than 0');
+  }
+  if (updates.purchaseDate !== undefined) {
+    validatePurchaseDate(updates.purchaseDate);
   }
   if (updates.currency !== undefined && !VALID_CURRENCIES.includes(updates.currency.toUpperCase())) {
     throw new Error(`Invalid currency. Supported currencies: ${VALID_CURRENCIES.join(', ')}`);

@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { updateInvestment } from '../../services/investment.service';
-import { formatCryptoPrice } from '../../utils/formatters';
+import { formatCryptoPrice, toDateInputValue, fromDateInputValue } from '../../utils/formatters';
 import type { Investment } from '../../types';
 import { deriveRate } from '../../utils/currency';
 import { SUPPORTED_CURRENCIES } from '../../utils/currencies';
@@ -16,6 +16,8 @@ interface EditInvestmentFormData {
   investmentAmount: number;
   quantity: number;
   currency: string;
+  /** 'yyyy-MM-dd', as used by the date input. */
+  purchaseDate: string;
 }
 
 interface EditInvestmentModalProps {
@@ -33,6 +35,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, prices, isOpen, 
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastEditedField, setLastEditedField] = useState<'amount' | 'quantity' | null>(null);
+  const [today] = useState(() => toDateInputValue(Date.now()));
 
 
   const { register, handleSubmit, control, setValue, reset, formState: { errors } } = useForm<EditInvestmentFormData>({
@@ -42,6 +45,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, prices, isOpen, 
       investmentAmount: investment.investmentAmount,
       quantity: investment.quantity,
       currency: investment.currency,
+      purchaseDate: toDateInputValue(investment.purchaseDate),
     },
   });
 
@@ -117,6 +121,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, prices, isOpen, 
         investmentAmount: data.investmentAmount,
         quantity: data.quantity,
         currency: data.currency,
+        purchaseDate: fromDateInputValue(data.purchaseDate),
       });
 
       toast.success('Investment updated successfully!');
@@ -139,6 +144,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, prices, isOpen, 
         investmentAmount: investment.investmentAmount,
         quantity: investment.quantity,
         currency: investment.currency,
+        purchaseDate: toDateInputValue(investment.purchaseDate),
       });
     }
   }, [isOpen, investment, reset]);
@@ -188,6 +194,15 @@ export const EditInvestmentModal = ({ investment, currentPrice, prices, isOpen, 
             {...register('name')}
           />
 
+          {/* Purchase Date */}
+          <Input
+            label="Purchase Date"
+            type="date"
+            max={today}
+            {...register('purchaseDate', { required: 'Purchase date is required' })}
+            error={errors.purchaseDate?.message}
+          />
+
           {/* Currency Selection */}
           <div>
             <label htmlFor="edit-currency" className="block text-sm font-medium text-content mb-1.5">
@@ -223,6 +238,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, prices, isOpen, 
             label={`Buy Price (${currency || investment.currency})`}
             type="number"
             step="any"
+            inputMode="decimal"
             placeholder="0.00"
             {...register('buyPrice', {
               required: 'Buy price is required',
@@ -240,6 +256,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, prices, isOpen, 
               label="Quantity"
               type="number"
               step="any"
+              inputMode="decimal"
               placeholder="0.00"
               {...register('quantity', {
                 required: 'Quantity is required',
@@ -257,6 +274,7 @@ export const EditInvestmentModal = ({ investment, currentPrice, prices, isOpen, 
               label={`Amount (${currency || investment.currency})`}
               type="number"
               step="any"
+              inputMode="decimal"
               placeholder="0.00"
               {...register('investmentAmount', {
                 required: 'Investment amount is required',

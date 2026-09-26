@@ -7,8 +7,9 @@ import { Card } from '../ui/Card';
 import { Combobox, type ComboboxOption } from '../ui/Combobox';
 import { searchCrypto, getCryptoDetails } from '../../services/coingecko.service';
 import { addInvestment } from '../../services/investment.service';
-import { formatCryptoPrice } from '../../utils/formatters';
+import { formatCryptoPrice, toDateInputValue, fromDateInputValue } from '../../utils/formatters';
 import { useAuth } from '../../context/AuthContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { useToast } from '../../context/ToastContext';
 import type { SelectedCryptoAsset, CoinGeckoSearchResult } from '../../types';
 
@@ -18,11 +19,21 @@ interface InvestmentFormData {
   investmentAmount: number;
   quantity: number;
   currency: string;
+  /** 'yyyy-MM-dd', as used by the date input. */
+  purchaseDate: string;
 }
 
-export const InvestmentForm = () => {
+interface InvestmentFormProps {
+  /** Called after an investment has been saved. */
+  onAdded?: () => void;
+}
+
+export const InvestmentForm = ({ onAdded }: InvestmentFormProps) => {
   const { currentUser, userData } = useAuth();
   const toast = useToast();
+  const { displayCurrency } = useCurrency();
+  // Default and upper bound for the purchase date.
+  const [today] = useState(() => toDateInputValue(Date.now()));
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<ComboboxOption[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<SelectedCryptoAsset | null>(null);
@@ -35,7 +46,8 @@ export const InvestmentForm = () => {
 
   const { register, handleSubmit, control, reset, setValue, formState: { errors } } = useForm<InvestmentFormData>({
     defaultValues: {
-      currency: 'EUR',
+      currency: displayCurrency,
+      purchaseDate: today,
     },
   });
 
@@ -78,7 +90,7 @@ export const InvestmentForm = () => {
     if (selectedAsset && selectedValue) {
       const fetchPriceInNewCurrency = async () => {
         try {
-          const selectedCurrency = currency || 'EUR';
+          const selectedCurrency = currency || displayCurrency;
           const details = await getCryptoDetails(selectedValue, selectedCurrency);
           if (details) {
             setCurrentPrice(details.current_price);
@@ -90,7 +102,7 @@ export const InvestmentForm = () => {
       };
       fetchPriceInNewCurrency();
     }
-  }, [currency, selectedAsset, selectedValue, toast]);
+  }, [currency, displayCurrency, selectedAsset, selectedValue, toast]);
 
   // Update investment amount when quantity or buy price changes
   // But only if the user is NOT currently editing the amount field
@@ -115,7 +127,7 @@ export const InvestmentForm = () => {
 
     // Fetch full asset details and current price in selected currency
     try {
-      const selectedCurrency = currency || 'EUR';
+      const selectedCurrency = currency || displayCurrency;
       const details = await getCryptoDetails(value, selectedCurrency);
       if (details) {
         setSelectedAsset({
@@ -153,12 +165,14 @@ export const InvestmentForm = () => {
         data.investmentAmount,
         data.quantity,
         data.currency,
-        data.name
+        data.name,
+        fromDateInputValue(data.purchaseDate)
       );
 
       // Reset form
       reset({
-        currency: 'EUR',
+        currency: displayCurrency,
+        purchaseDate: today,
       });
       setSelectedAsset(null);
       setSelectedValue('');
@@ -167,6 +181,7 @@ export const InvestmentForm = () => {
       setSearchResults([]);
 
       toast.success('Investment added successfully!');
+      onAdded?.();
     } catch (error: unknown) {
       console.error('Error adding investment:', error);
       const errorMessage = (error as { message?: string })?.message || 'Failed to add investment. Please try again.';
@@ -177,8 +192,8 @@ export const InvestmentForm = () => {
   };
 
   return (
-    <Card variant="strong" className="p-6">
-      <div className="flex items-center gap-3 mb-6">
+    <Card variant="strong" className="p-4 sm:p-6">
+      <div className="hidden lg:flex items-center gap-3 mb-6">
         <div className="grid place-items-center w-10 h-10 rounded-lg bg-accent/10 border border-accent/30">
           <PlusCircle size={20} className="text-accent" />
         </div>
@@ -204,7 +219,7 @@ export const InvestmentForm = () => {
         {currentPrice !== null && selectedAsset && (
           <div className="p-3 rounded-lg bg-surface2 border border-line">
             <div className="flex items-center justify-between mb-1">
-              <div className="text-[11px] text-muted uppercase tracking-wider">Current Price ({currency || 'EUR'})</div>
+              <div className="text-[11px] text-muted uppercase tracking-wider">Current Price ({currency || displayCurrency})</div>
               <Button
                 type="button"
                 variant="ghost"
@@ -216,7 +231,7 @@ export const InvestmentForm = () => {
               </Button>
             </div>
             <div className="tnum text-xl font-semibold text-content">
-              {formatCryptoPrice(currentPrice, currency || 'EUR')}
+              {formatCryptoPrice(currentPrice, currency || displayCurrency)}
             </div>
           </div>
         )}
@@ -227,6 +242,15 @@ export const InvestmentForm = () => {
           type="text"
           placeholder="e.g., Main Portfolio, Testing, Long-term..."
           {...register('name')}
+        />
+
+        {/* Purchase Date */}
+        <Input
+          label="Purchase Date"
+          type="date"
+          max={today}
+          {...register('purchaseDate', { required: 'Purchase date is required' })}
+          error={errors.purchaseDate?.message}
         />
 
         {/* Currency Selection */}
@@ -251,9 +275,10 @@ export const InvestmentForm = () => {
 
         {/* Buy Price */}
         <Input
-          label={`Buy Price (${currency || 'EUR'})`}
+          label={`Buy Price (${currency || displayCurrency})`}
           type="number"
           step="any"
+          inputMode="decimal"
           placeholder="0.00"
           {...register('buyPrice', {
             required: 'Buy price is required',
@@ -271,6 +296,7 @@ export const InvestmentForm = () => {
             label="Quantity"
             type="number"
             step="any"
+            inputMode="decimal"
             placeholder="0.00"
             {...register('quantity', {
               required: 'Quantity is required',
@@ -285,9 +311,10 @@ export const InvestmentForm = () => {
           />
 
           <Input
-            label={`Amount (${currency || 'EUR'})`}
+            label={`Amount (${currency || displayCurrency})`}
             type="number"
             step="any"
+            inputMode="decimal"
             placeholder="0.00"
             {...register('investmentAmount', {
               required: 'Investment amount is required',

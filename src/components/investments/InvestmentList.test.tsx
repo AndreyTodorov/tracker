@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render } from '../../test/test-utils';
+import { render, screen } from '../../test/test-utils';
 import { InvestmentList } from './InvestmentList';
 import { mockInvestment } from '../../test/test-utils';
 import type { Investment } from '../../types';
@@ -37,5 +37,13 @@ describe('InvestmentList', () => {
     );
 
     expect(container.textContent).not.toContain('$');
+  });
+
+  it('renders compact rows when asked to', () => {
+    const investments = [mockInvestment({ id: '1', assetName: 'Bitcoin' })] as Investment[];
+
+    render(<InvestmentList investments={investments} prices={prices} loading={false} compact />);
+
+    expect(screen.getByRole('button', { name: /Bitcoin/ })).toHaveAttribute('aria-expanded', 'false');
   });
 });

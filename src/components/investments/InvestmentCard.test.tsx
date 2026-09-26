@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '../../test/test-utils';
+import { render, screen, within } from '../../test/test-utils';
 import userEvent from '@testing-library/user-event';
 import { InvestmentCard } from './InvestmentCard';
 import { mockInvestment } from '../../test/test-utils';
 import * as AuthContext from '../../context/AuthContext';
 import { toDisplayValues } from '../../utils/currency';
+import { deleteInvestment } from '../../services/investment.service';
 import { getPriceKey } from '../../utils/calculations';
 import type { Investment } from '../../types';
 
@@ -60,14 +61,36 @@ describe('InvestmentCard Component', () => {
     const investment = mockInvestment({
       assetName: 'Bitcoin',
       assetSymbol: 'BTC',
-      userName: 'John Doe',
     });
 
     render(cardElement(investment));
 
     expect(screen.getByText('Bitcoin')).toBeInTheDocument();
     expect(screen.getByText('BTC')).toBeInTheDocument();
+  });
+
+  it('shows the owner name on someone else\'s investment', () => {
+    vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
+      currentUser: { uid: 'different-user' } as any,
+      userData: null,
+      loading: false,
+    });
+
+    render(cardElement(mockInvestment({ userId: 'test-user', userName: 'John Doe' })));
+
     expect(screen.getByText('John Doe')).toBeInTheDocument();
+  });
+
+  it('hides the owner name on your own investment', () => {
+    vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
+      currentUser: { uid: 'test-user' } as any,
+      userData: null,
+      loading: false,
+    });
+
+    render(cardElement(mockInvestment({ userId: 'test-user', userName: 'John Doe' })));
+
+    expect(screen.queryByText('John Doe')).not.toBeInTheDocument();
   });
 
   it('should display buy price and current price', () => {
@@ -82,33 +105,8 @@ describe('InvestmentCard Component', () => {
     expect(screen.getByText('Current Price')).toBeInTheDocument();
   });
 
-  it('should use buy price as current price when currentPrice not provided', () => {
-    const investment = mockInvestment({
-      buyPrice: 50000,
-    });
-
-    render(cardElement(investment));
-
-    // Should not show LIVE indicator when using buy price
-    expect(screen.queryByText('LIVE')).not.toBeInTheDocument();
-  });
-
-  it('should show LIVE indicator when current price is different from buy price', () => {
-    const investment = mockInvestment({
-      buyPrice: 50000,
-    });
-
-    render(cardElement(investment, 60000));
-
-    expect(screen.getByText('LIVE')).toBeInTheDocument();
-  });
-
-  it('should not show LIVE indicator when current price equals buy price', () => {
-    const investment = mockInvestment({
-      buyPrice: 50000,
-    });
-
-    render(cardElement(investment, 50000));
+  it('leaves the live indicator to the portfolio summary', () => {
+    render(cardElement(mockInvestment({ buyPrice: 50000 }), 60000));
 
     expect(screen.queryByText('LIVE')).not.toBeInTheDocument();
   });
@@ -259,6 +257,90 @@ describe('InvestmentCard Component', () => {
 
     rerender(cardElement(gbpInvestment));
     expect(container.textContent).toContain('£');
+  });
+
+  describe('deleting', () => {
+    beforeEach(() => {
+      vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
+        currentUser: { uid: 'test-user' } as any,
+        userData: null,
+        loading: false,
+      });
+    });
+
+    it('asks for confirmation in the app instead of deleting straight away', async () => {
+      const user = userEvent.setup();
+      render(cardElement(mockInvestment({ userId: 'test-user', assetName: 'Bitcoin' })));
+
+      await user.click(screen.getByLabelText('Delete investment'));
+
+      expect(screen.getByRole('dialog')).toHaveTextContent(/delete this Bitcoin investment/i);
+      expect(deleteInvestment).not.toHaveBeenCalled();
+    });
+
+    it('deletes once confirmed', async () => {
+      const user = userEvent.setup();
+      render(cardElement(mockInvestment({ userId: 'test-user', id: 'inv-1' })));
+
+      await user.click(screen.getByLabelText('Delete investment'));
+      await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }));
+
+      expect(deleteInvestment).toHaveBeenCalledWith('test-user', 'inv-1');
+    });
+
+    it('keeps the investment when cancelled', async () => {
+      const user = userEvent.setup();
+      render(cardElement(mockInvestment({ userId: 'test-user' })));
+
+      await user.click(screen.getByLabelText('Delete investment'));
+      await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
+
+      expect(deleteInvestment).not.toHaveBeenCalled();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('collapsible row', () => {
+    const rowElement = () => {
+      const investment = mockInvestment({
+        assetName: 'Bitcoin',
+        buyPrice: 50000,
+        quantity: 0.02,
+        currency: 'USD',
+      }) as Investment;
+      const prices = new Map([[getPriceKey(investment), new Map([['usd', 60000]])]]);
+      return (
+        <InvestmentCard
+          investment={investment}
+          display={toDisplayValues(investment, prices, 'USD')}
+          nativeCurrentPrice={60000}
+          prices={prices}
+          collapsible
+        />
+      );
+    };
+
+    it('shows the asset, its value and its return while collapsed', () => {
+      render(rowElement());
+
+      expect(screen.getByText('Bitcoin')).toBeInTheDocument();
+      expect(screen.getByText('$1,200.00')).toBeInTheDocument();
+      expect(screen.getByText('+20.00%')).toBeInTheDocument();
+      expect(screen.queryByText('Buy Price')).not.toBeInTheDocument();
+    });
+
+    it('expands to the full details when tapped', async () => {
+      const user = userEvent.setup();
+      render(rowElement());
+
+      const toggle = screen.getByRole('button', { name: /Bitcoin/ });
+      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      await user.click(toggle);
+
+      expect(toggle).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByText('Buy Price')).toBeInTheDocument();
+      expect(screen.getByLabelText('Edit investment')).toBeInTheDocument();
+    });
   });
 
   describe('rendering the values it is given', () => {

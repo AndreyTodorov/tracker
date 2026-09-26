@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 // Intl throws a RangeError on a currency code that is not three letters, and
 // a stored record can carry one. Formatting is called during render, so a
@@ -54,6 +54,17 @@ export const formatDateTime = (timestamp: number | Date): string => {
   const date = typeof timestamp === 'number' ? new Date(timestamp) : timestamp;
   return format(date, 'MMM dd, yyyy HH:mm');
 };
+
+export const formatTime = (timestamp: number | Date): string => {
+  const date = typeof timestamp === 'number' ? new Date(timestamp) : timestamp;
+  return format(date, 'HH:mm');
+};
+
+// <input type="date"> works in 'yyyy-MM-dd' strings. Both directions use the
+// local time zone, so the day picked is the day that is displayed.
+export const toDateInputValue = (timestamp: number | Date): string => format(timestamp, 'yyyy-MM-dd');
+
+export const fromDateInputValue = (value: string): number => parseISO(value).getTime();
 
 export const getColorClass = (value: number): string => {
   if (value > 0) return 'text-profit';

@@ -55,6 +55,35 @@ describe('EditInvestmentModal', () => {
     });
   });
 
+  describe('purchase date', () => {
+    it('shows the stored purchase date and submits a changed one', async () => {
+      const user = userEvent.setup();
+      renderModal(eurHolding({ purchaseDate: new Date(2024, 0, 15).getTime() }));
+
+      const dateInput = screen.getByLabelText(/Purchase Date/i);
+      expect(dateInput).toHaveValue('2024-01-15');
+
+      await user.clear(dateInput);
+      await user.type(dateInput, '2023-06-01');
+      await user.click(screen.getByRole('button', { name: /save/i }));
+
+      await waitFor(() => expect(updateInvestment).toHaveBeenCalled());
+      expect(vi.mocked(updateInvestment).mock.calls[0][2]).toMatchObject({
+        purchaseDate: new Date(2023, 5, 1).getTime(),
+      });
+    });
+  });
+
+  describe('number fields', () => {
+    it('ask mobile browsers for a decimal keypad', () => {
+      renderModal(eurHolding());
+
+      for (const label of [/Buy Price/i, /Quantity/i, /Amount/i]) {
+        expect(screen.getByLabelText(label)).toHaveAttribute('inputmode', 'decimal');
+      }
+    });
+  });
+
   describe('changing the currency', () => {
     it('converts the buy price instead of silently relabelling it', async () => {
       const user = userEvent.setup();

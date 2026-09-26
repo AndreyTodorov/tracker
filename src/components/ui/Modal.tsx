@@ -47,7 +47,7 @@ const DialogContent = forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          'fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%]',
+          'fixed left-[50%] top-[50%] z-50 w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%]',
           'bg-surface2 border border-line rounded-2xl p-6 shadow-panel',
           'max-h-[90vh] overflow-y-auto',
           'data-[state=open]:animate-in data-[state=closed]:animate-out',

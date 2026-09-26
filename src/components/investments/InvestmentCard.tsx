@@ -1,8 +1,9 @@
-import { Trash2, TrendingUp, TrendingDown, User, Pencil } from 'lucide-react';
+import { Trash2, TrendingUp, TrendingDown, User, Pencil, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import type { Investment } from '../../types';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
+import { Modal } from '../ui/Modal';
 import { formatCurrency, formatCryptoPrice, formatPercentage, formatDate, getColorClass, getBgColorClass } from '../../utils/formatters';
 import { useAuth } from '../../context/AuthContext';
 import { deleteInvestment } from '../../services/investment.service';
@@ -19,26 +20,27 @@ interface InvestmentCardProps {
   nativeCurrentPrice?: number;
   /** Passed to the edit modal so changing a currency can convert the amounts. */
   prices: Map<string, Map<string, number>>;
+  /** Render as a compact row that expands to the full details (used on mobile). */
+  collapsible?: boolean;
 }
 
-export const InvestmentCard = ({ investment, display, nativeCurrentPrice, prices }: InvestmentCardProps) => {
+export const InvestmentCard = ({ investment, display, nativeCurrentPrice, prices, collapsible = false }: InvestmentCardProps) => {
   const { currentUser } = useAuth();
   const toast = useToast();
   const isOwner = currentUser?.uid === investment.userId;
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const nativePrice = nativeCurrentPrice ?? investment.buyPrice;
   const profit = display.profit;
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this investment?')) {
-      return;
-    }
-
     setIsDeleting(true);
     try {
       await deleteInvestment(investment.userId, investment.id);
+      setIsDeleteConfirmOpen(false);
       toast.success('Investment deleted successfully!');
     } catch (error: unknown) {
       console.error('Error deleting investment:', error);
@@ -49,56 +51,14 @@ export const InvestmentCard = ({ investment, display, nativeCurrentPrice, prices
     }
   };
 
-  return (
-    <Card hover className="p-6 relative">
-      {/* User Info */}
-      <div className="flex items-center gap-2 mb-4">
-        <div className="grid place-items-center w-6 h-6 rounded-full bg-surface2 border border-line">
-          <User size={12} className="text-muted" />
-        </div>
-        <span className="text-sm text-muted">{investment.userName}</span>
-      </div>
+  const nameBadge = investment.name && (
+    <span className="text-[11px] text-accent px-2 py-0.5 rounded-md bg-accent/10 border border-accent/25">
+      {investment.name}
+    </span>
+  );
 
-      {/* Asset Name */}
-      <div className="flex items-start justify-between mb-4 gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-xl font-bold tracking-tight">{investment.assetName}</h3>
-            {investment.name && (
-              <span className="text-[11px] text-accent px-2 py-0.5 rounded-md bg-accent/10 border border-accent/25">
-                {investment.name}
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-muted uppercase tracking-widest font-mono mt-0.5">{investment.assetSymbol}</p>
-        </div>
-        {isOwner && (
-          <div className="flex gap-1 -mr-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsEditModalOpen(true)}
-              className="text-muted hover:text-accent hover:bg-accent/10"
-              disabled={isDeleting}
-              aria-label="Edit investment"
-            >
-              <Pencil size={16} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDelete}
-              className="text-muted hover:text-loss hover:bg-loss/10"
-              isLoading={isDeleting}
-              disabled={isDeleting}
-              aria-label="Delete investment"
-            >
-              <Trash2 size={16} />
-            </Button>
-          </div>
-        )}
-      </div>
-
+  const details = (
+    <>
       {/* Purchase Info */}
       <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-4">
         <div>
@@ -155,30 +115,159 @@ export const InvestmentCard = ({ investment, display, nativeCurrentPrice, prices
       <div className="mt-3 text-[11px] text-muted text-right">
         Purchased {formatDate(investment.purchaseDate)}
       </div>
+    </>
+  );
 
-      {/* Live Update Indicator */}
-      {nativeCurrentPrice !== undefined && nativeCurrentPrice !== investment.buyPrice && (
-        <div className="absolute top-4 right-4">
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-profit/10 border border-profit/30">
-            <span className="relative flex w-1.5 h-1.5">
-              <span className="absolute inline-flex w-full h-full rounded-full bg-profit opacity-60 animate-ping" />
-              <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-profit" />
-            </span>
-            <span className="text-[10px] text-profit font-medium tracking-wider">LIVE</span>
+  const modals = isOwner && (
+    <>
+      <EditInvestmentModal
+        investment={investment}
+        currentPrice={nativePrice}
+        prices={prices}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+      />
+
+      <Modal
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        title="Delete investment?"
+        size="sm"
+      >
+        <p className="text-sm text-muted mb-6">
+          Delete this {investment.assetName} investment? This can't be undone.
+        </p>
+        <div className="flex gap-3">
+          <Button
+            variant="secondary"
+            className="flex-1"
+            onClick={() => setIsDeleteConfirmOpen(false)}
+            disabled={isDeleting}
+          >
+            Cancel
+          </Button>
+          <Button variant="danger" className="flex-1" onClick={handleDelete} isLoading={isDeleting}>
+            Delete
+          </Button>
+        </div>
+      </Modal>
+    </>
+  );
+
+  if (collapsible) {
+    return (
+      <Card className="overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setIsExpanded((open) => !open)}
+          aria-expanded={isExpanded}
+          className="w-full flex items-center gap-3 p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/30"
+        >
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <h3 className="font-bold tracking-tight truncate">{investment.assetName}</h3>
+              {nameBadge}
+            </div>
+            <p className="text-xs text-muted mt-0.5 truncate">
+              <span className="uppercase tracking-widest font-mono">{investment.assetSymbol}</span>
+              {!isOwner && <> · {investment.userName}</>}
+            </p>
           </div>
+          <div className="text-right flex-shrink-0">
+            <div className="tnum font-semibold">{formatCurrency(display.currentValue, display.currency)}</div>
+            <div className={`tnum text-xs mt-0.5 ${getColorClass(profit.percentage)}`}>
+              {formatPercentage(profit.percentage)}
+            </div>
+          </div>
+          <ChevronDown
+            size={18}
+            className={`flex-shrink-0 text-muted transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          />
+        </button>
+
+        {isExpanded && (
+          <div className="px-4 pb-4 pt-4 border-t border-line">
+            {details}
+            {isOwner && (
+              <div className="flex gap-3 mt-4">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="flex-1 gap-2"
+                  onClick={() => setIsEditModalOpen(true)}
+                  aria-label="Edit investment"
+                >
+                  <Pencil size={14} /> Edit
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="flex-1 gap-2 text-loss hover:border-loss/40"
+                  onClick={() => setIsDeleteConfirmOpen(true)}
+                  aria-label="Delete investment"
+                >
+                  <Trash2 size={14} /> Delete
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {modals}
+      </Card>
+    );
+  }
+
+  return (
+    <Card hover className="p-4 sm:p-6">
+      {/* Owner, shown only on other people's investments */}
+      {!isOwner && (
+        <div className="flex items-center gap-2 mb-4">
+          <div className="grid place-items-center w-6 h-6 rounded-full bg-surface2 border border-line">
+            <User size={12} className="text-muted" />
+          </div>
+          <span className="text-sm text-muted">{investment.userName}</span>
         </div>
       )}
 
-      {/* Edit Investment Modal */}
-      {isOwner && (
-        <EditInvestmentModal
-          investment={investment}
-          currentPrice={nativePrice}
-          prices={prices}
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-        />
-      )}
+      {/* Asset Name */}
+      <div className="flex items-start justify-between mb-4 gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-xl font-bold tracking-tight">{investment.assetName}</h3>
+            {nameBadge}
+          </div>
+          <p className="text-xs text-muted uppercase tracking-widest font-mono mt-0.5">{investment.assetSymbol}</p>
+        </div>
+        {isOwner && (
+          <div className="flex gap-1 -mr-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditModalOpen(true)}
+              className="text-muted hover:text-accent hover:bg-accent/10"
+              disabled={isDeleting}
+              aria-label="Edit investment"
+            >
+              <Pencil size={16} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsDeleteConfirmOpen(true)}
+              className="text-muted hover:text-loss hover:bg-loss/10"
+              disabled={isDeleting}
+              aria-label="Delete investment"
+            >
+              <Trash2 size={16} />
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {details}
+
+      {modals}
     </Card>
   );
 };

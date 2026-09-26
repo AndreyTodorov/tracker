@@ -210,4 +210,10 @@ describe('PortfolioSummary Component', () => {
       expect(screen.getByText('£1,500.00')).toBeInTheDocument();
     });
   });
+
+  it('shows when prices were last updated', () => {
+    render(<PortfolioSummary portfolio={mockPortfolio()} lastUpdate={new Date(2026, 8, 26, 10, 59)} />);
+
+    expect(screen.getByText(/Live/)).toHaveTextContent('Live · 10:59');
+  });
 });
