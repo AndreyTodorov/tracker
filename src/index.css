@@ -21,37 +21,13 @@
 }
 
 @layer utilities {
-  /* One surface system. `glass`/`glass-strong`/`card-surface` all resolve to
-     the same panel treatment so the app reads as one material. */
-  .panel {
-    @apply bg-surface border border-line;
-  }
-
+  /* Shared panel treatments, so older components read as the same material. */
   .panel-strong {
     @apply bg-surface2 border border-line;
   }
 
-  .glass {
-    @apply bg-surface/80 border border-line backdrop-blur-md;
-  }
-
   .glass-strong {
     @apply bg-surface2/80 border border-line backdrop-blur-lg;
-  }
-
-  .card-surface {
-    @apply bg-surface border border-line;
-  }
-
-  .card-surface-hover {
-    @apply bg-surface border border-line transition-colors duration-200;
-  }
-  .card-surface-hover:hover {
-    @apply bg-surface2 border-line;
-  }
-
-  .input-surface {
-    @apply bg-surface2 border border-line;
   }
 }
 
