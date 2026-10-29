@@ -21,7 +21,7 @@
     "shareCodeIndex": {
       "$code": {
         ".read": "auth != null",
-        ".write": "auth != null && newData.child('uid').val() === auth.uid && (!data.exists() || data.child('uid').val() === auth.uid) && root.child('users').child(auth.uid).child('shareCode').val() === $code",
+        ".write": "auth != null && ((newData.child('uid').val() === auth.uid && (!data.exists() || data.child('uid').val() === auth.uid) && root.child('users').child(auth.uid).child('shareCode').val() === $code) || (!newData.exists() && data.child('uid').val() === auth.uid))",
         ".validate": "newData.hasChildren(['uid', 'displayName']) && $code.matches(/^[A-Z0-9]{8}$/)",
         "uid": { ".validate": "newData.isString()" },
         "displayName": { ".validate": "newData.isString() && newData.val().length <= 64" },
