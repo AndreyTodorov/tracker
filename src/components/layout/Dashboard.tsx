@@ -4,6 +4,7 @@ import { InvestmentForm } from '../investments/InvestmentForm';
 import { InvestmentList } from '../investments/InvestmentList';
 import { PortfolioSummary } from '../investments/PortfolioSummary';
 import { Modal } from '../ui/Modal';
+import { LegalLinks } from '../ui/LegalLinks';
 import { useInvestments } from '../../hooks/useInvestments';
 import { useCryptoPrices } from '../../hooks/useCryptoPrices';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
@@ -88,6 +89,8 @@ export const Dashboard = () => {
           )}
         </div>
       </main>
+
+      <LegalLinks />
 
       {/* Mobile: the form opens from the add tile */}
       {!isDesktop && (

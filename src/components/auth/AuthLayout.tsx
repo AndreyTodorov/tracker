@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { LoginForm } from './LoginForm';
 import { RegisterForm } from './RegisterForm';
 import { TrendingUp } from 'lucide-react';
+import { LegalLinks } from '../ui/LegalLinks';
 
 export const AuthLayout = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -24,6 +25,8 @@ export const AuthLayout = () => {
         ) : (
           <RegisterForm onToggleMode={() => setIsLogin(true)} />
         )}
+
+        <LegalLinks />
       </div>
     </div>
   );

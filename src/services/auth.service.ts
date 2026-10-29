@@ -3,6 +3,9 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   updateProfile,
+  reauthenticateWithCredential,
+  deleteUser,
+  EmailAuthProvider,
 } from 'firebase/auth';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { ref, set, get, update, onValue } from 'firebase/database';
@@ -153,6 +156,42 @@ export const updateDisplayName = async (
 
   await update(ref(db), updates);
   await updateProfile(user, { displayName: name });
+};
+
+/**
+ * Deletes the account and everything stored about it (Art. 17 GDPR).
+ *
+ * Firebase only deletes a sign-in account after a recent login, so the password
+ * is confirmed first; a wrong one stops here, before anything is removed.
+ *
+ * The data goes in one multi-path update. Investments are removed one by one
+ * because the rules allow writes on each investment, not on the owner's node.
+ * The sign-in account is deleted last: if that step fails, signing in again
+ * recreates an empty record and the user can retry.
+ */
+export const deleteAccount = async (user: FirebaseUser, password: string): Promise<void> => {
+  await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email ?? '', password));
+
+  const userSnapshot = await get(ref(db, `users/${user.uid}`));
+  const shareCode = userSnapshot.exists() ? (userSnapshot.val() as User).shareCode : undefined;
+
+  const updates: Record<string, null> = {
+    [`users/${user.uid}`]: null,
+    [`publicProfiles/${user.uid}`]: null,
+  };
+  if (shareCode) {
+    updates[`shareCodeIndex/${shareCode}`] = null;
+  }
+
+  const investments = await get(ref(db, `investments/${user.uid}`));
+  if (investments.exists()) {
+    Object.keys(investments.val() as Record<string, unknown>).forEach((investmentId) => {
+      updates[`investments/${user.uid}/${investmentId}`] = null;
+    });
+  }
+
+  await update(ref(db), updates);
+  await deleteUser(user);
 };
 
 export const signIn = async (email: string, password: string): Promise<FirebaseUser> => {

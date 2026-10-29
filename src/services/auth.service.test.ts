@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { signUp, signIn, updateDisplayName, MAX_DISPLAY_NAME_LENGTH } from './auth.service';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { signUp, signIn, updateDisplayName, deleteAccount, MAX_DISPLAY_NAME_LENGTH } from './auth.service';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
+  reauthenticateWithCredential,
+  deleteUser,
+} from 'firebase/auth';
 import { get, set, update } from 'firebase/database';
 
 vi.mock('../config/firebase', () => ({ auth: {}, db: {} }));
@@ -10,6 +16,9 @@ vi.mock('firebase/auth', () => ({
   signInWithEmailAndPassword: vi.fn(),
   signOut: vi.fn(),
   updateProfile: vi.fn(async () => undefined),
+  reauthenticateWithCredential: vi.fn(async () => undefined),
+  deleteUser: vi.fn(async () => undefined),
+  EmailAuthProvider: { credential: vi.fn((email: string, password: string) => ({ email, password })) },
 }));
 
 vi.mock('firebase/database', () => ({
@@ -186,5 +195,66 @@ describe('updateDisplayName', () => {
   it('refuses to rename an account with no record rather than writing a partial one', async () => {
     await expect(updateDisplayName(user as never, 'Grace')).rejects.toThrow();
     expect(update).not.toHaveBeenCalled();
+  });
+});
+
+describe('deleteAccount', () => {
+  const fullAccount = () => {
+    store.set('users/u1', { id: 'u1', email: 'a@b.c', displayName: 'Ada', createdAt: 1, shareCode: 'ABC12345' });
+    store.set('investments/u1', { i1: { userName: 'Ada' }, i2: { userName: 'Ada' } });
+  };
+
+  it('confirms the password before anything is removed', async () => {
+    fullAccount();
+
+    await deleteAccount(user as never, 'secret');
+
+    expect(reauthenticateWithCredential).toHaveBeenCalledWith(user, { email: 'a@b.c', password: 'secret' });
+    expect(vi.mocked(reauthenticateWithCredential).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(update).mock.invocationCallOrder[0]
+    );
+  });
+
+  it('removes every record of the user in a single atomic write', async () => {
+    fullAccount();
+
+    await deleteAccount(user as never, 'secret');
+
+    // Investments one by one: the rules only allow writes on each investment, not on the owner's node.
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(update).mock.calls[0][1]).toEqual({
+      'users/u1': null,
+      'publicProfiles/u1': null,
+      'shareCodeIndex/ABC12345': null,
+      'investments/u1/i1': null,
+      'investments/u1/i2': null,
+    });
+  });
+
+  it('deletes the sign-in account after the data', async () => {
+    fullAccount();
+
+    await deleteAccount(user as never, 'secret');
+
+    expect(deleteUser).toHaveBeenCalledWith(user);
+    expect(vi.mocked(update).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(deleteUser).mock.invocationCallOrder[0]
+    );
+  });
+
+  it('still deletes an account whose record was never written', async () => {
+    await deleteAccount(user as never, 'secret');
+
+    expect(vi.mocked(update).mock.calls[0][1]).toEqual({ 'users/u1': null, 'publicProfiles/u1': null });
+    expect(deleteUser).toHaveBeenCalledWith(user);
+  });
+
+  it('deletes nothing when the password is wrong', async () => {
+    fullAccount();
+    vi.mocked(reauthenticateWithCredential).mockRejectedValueOnce(new Error('auth/wrong-password'));
+
+    await expect(deleteAccount(user as never, 'nope')).rejects.toThrow('auth/wrong-password');
+    expect(update).not.toHaveBeenCalled();
+    expect(deleteUser).not.toHaveBeenCalled();
   });
 });
