@@ -133,6 +133,14 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
           <Button type="submit" className="w-full rounded-full" isLoading={isLoading}>
             Create account
           </Button>
+
+          <p className="text-xs text-muted text-center">
+            Your account and portfolio are stored with Google Firebase. See the{' '}
+            <a href="/privacy/" className="underline hover:text-content">
+              privacy policy
+            </a>{' '}
+            for what is stored, who can see it and how to delete it.
+          </p>
         </form>
 
         <div className="mt-6 text-center">

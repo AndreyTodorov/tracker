@@ -6,6 +6,7 @@ import { PortfolioSummary } from '../investments/PortfolioSummary';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
+import { LegalLinks } from '../ui/LegalLinks';
 import { Share2, Lock, TrendingUp } from 'lucide-react';
 import { getPublicPortfolio } from '../../services/investment.service';
 import { useCryptoPrices } from '../../hooks/useCryptoPrices';
@@ -202,6 +203,8 @@ export const PublicPortfolio = () => {
           </div>
         )}
       </main>
+
+      <LegalLinks />
     </div>
   );
 };

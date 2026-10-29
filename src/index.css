@@ -2,6 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Self-hosted so no page request goes to Google. Latin subsets; see public/fonts/LICENSES.md. */
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/geist-400-700-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('/fonts/geist-mono-400-600-latin.woff2') format('woff2');
+}
+
 @layer base {
   body {
     @apply bg-ink text-content min-h-screen antialiased;
